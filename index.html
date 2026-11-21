@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#FDF7F9" />
+  <title>AM Luxury Beauty Salon</title>
+  <link rel="icon" type="image/png" href="img/logo.png" />
+  <link rel="stylesheet" href="css/estilos.css?v=114" />
+</head>
+<body>
+  <div id="espera" class="espera oculto">
+    <div class="espera-caja">
+      <div class="espera-anillo"></div>
+      <p class="espera-msg" id="espera-msg">Cargando…</p>
+    </div>
+  </div>
+
+  <div id="aviso-zona" class="aviso-zona"></div>
+
+  <header id="cabecera" class="cabecera oculto">
+    <div class="cabecera-inner">
+      <a class="marca" href="#/agenda">
+        <img src="img/logo.png" alt="AM Luxury" class="marca-logo" />
+        <span class="marca-txt">AM LUXURY</span>
+      </a>
+      <nav id="nav-chips" class="nav-chips"></nav>
+      <span id="chip-usuario" class="chip-usuario" title="Sesión iniciada">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true">
+          <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+        </svg>
+        <span id="usuario-nombre"></span>
+      </span>
+      <button id="btn-salir" class="btn-salir" type="button">Salir</button>
+    </div>
+  </header>
+
+  <main id="app" class="app"></main>
+
+  <!-- Acciones rápidas: fija abajo, tipo dock en PC y barra completa en móvil. -->
+  <nav id="menu-inferior" class="menu-inferior oculto" aria-label="Acciones rápidas"></nav>
+
+  <div id="modal-zona"></div>
+
+  <script type="module" src="js/app.js?v=118"></script>
+</body>
+</html>
