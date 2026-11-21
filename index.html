@@ -2,12 +2,16 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#FDF7F9" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="img/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#000000">
   <title>AM Luxury Beauty Salon</title>
   <link rel="icon" type="image/png" href="img/logo.png" />
   <link rel="stylesheet" href="css/estilos.css?v=114" />
-</head>
+</head> 
 <body>
   <div id="espera" class="espera oculto">
     <div class="espera-caja">
@@ -43,5 +47,8 @@
   <div id="modal-zona"></div>
 
   <script type="module" src="js/app.js?v=118"></script>
+  <script>
+   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+  </script>
 </body>
 </html>
