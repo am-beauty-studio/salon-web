@@ -1,7 +1,7 @@
 // Inventario de productos (solo admin). Agrupado por categoría, igual que el
 // catálogo de servicios. Equivalente a src/app/productos/index.tsx.
 
-import { get } from "../api.js?v=48";
+import { get } from "../api.js?v=49";
 import {
   $, compararCategorias, escapeHtml, mostrarCategoria, textoSubtipo,
   colorCategoria, colorCategoriaCabecera,

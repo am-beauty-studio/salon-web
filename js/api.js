@@ -4,6 +4,7 @@
 // - Mensajes de error legibles a partir del "detail" de FastAPI.
 
 import { apiUrl } from "./config.js?v=50";
+import { seguirEspera } from "./espera.js?v=1";
 
 let alNoAutorizado = null;
 export function setUnauthorizedHandler(fn) { alNoAutorizado = fn; }
@@ -66,25 +67,41 @@ export async function request(path, opciones = {}, reintentos = 3) {
   const esGet = !opciones.method || opciones.method === "GET";
   const config = { ...opciones, headers: cabeceras };
 
-  let ultimoError = null;
-  for (let i = 0; i < reintentos; i++) {
-    try {
-      return await intento(path, config, !!token);
-    } catch (e) {
-      if (e instanceof ApiError) throw e;
-      ultimoError = e;
-      // Red caída o aborto: reintentar solo en GET (peticiones idempotentes).
-      if (esGet && i < reintentos - 1) {
-        await pausa(4000);
-        continue;
+  // Mientras la petición esté en curso, si tarda más de 4 s se muestra la
+  // pantalla de espera con el logo y la barra de tiempo (Render despertando).
+  const terminarEspera = seguirEspera();
+
+  try {
+    let ultimoError = null;
+    for (let i = 0; i < reintentos; i++) {
+      try {
+        return await intento(path, config, !!token);
+      } catch (e) {
+        const esApi = e instanceof ApiError;
+        // 502/503 = Render aún arrancando (la petición no llegó a la API).
+        const arrancando = esApi && (e.status === 502 || e.status === 503);
+        // Errores de validación, sesión, etc.: no se reintentan.
+        if (esApi && !arrancando) throw e;
+
+        ultimoError = e;
+        // Un tiempo de espera agotado no se repite: ya se esperó lo suficiente.
+        const abortada = !esApi && e?.name === "AbortError";
+        // Reintentar solo GET (idempotente).
+        if (esGet && !abortada && i < reintentos - 1) {
+          await pausa(4000);
+          continue;
+        }
+        if (arrancando) throw e;
+        throw new ApiError(
+          "No se pudo conectar con el servidor. Revisa tu conexión.",
+          0
+        );
       }
-      throw new ApiError(
-        "No se pudo conectar con el servidor. Revisa tu conexión.",
-        0
-      );
     }
+    throw ultimoError;
+  } finally {
+    terminarEspera();
   }
-  throw ultimoError;
 }
 
 export const get = (path) => request(path);
@@ -97,5 +114,14 @@ export const put = (path, datos) =>
 export const del = (path) => request(path, { method: "DELETE" });
 
 /** Ping sin autenticación para "despertar" el servidor (Render dormido). */
-export const calentarServidor = () =>
-  fetch(apiUrl() + "/").catch(() => {});
+export const calentarServidor = () => {
+  const terminarEspera = seguirEspera();
+  const control = new AbortController();
+  const temporizador = setTimeout(() => control.abort(), 75000);
+  return fetch(apiUrl() + "/", { signal: control.signal })
+    .catch(() => {})
+    .finally(() => {
+      clearTimeout(temporizador);
+      terminarEspera();
+    });
+};

@@ -1,6 +1,6 @@
 // Listado de clientas. Equivalente a src/app/clientes/index.tsx.
 
-import { get } from "../api.js?v=48";
+import { get } from "../api.js?v=49";
 import { $, escapeHtml } from "../util.js?v=52";
 import { icono } from "../iconos.js?v=64";
 

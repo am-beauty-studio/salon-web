@@ -7,7 +7,7 @@
 //   (dos especialistas a la vez).
 // Equivalente a src/app/cita/nueva.tsx.
 
-import { get, post } from "../api.js?v=48";
+import { get, post } from "../api.js?v=49";
 import {
   $, $$, aviso, escapeHtml, aISO, etiqueta, hora, usd, duracionTxt,
   compatible, combinables, textoSubtipo, mostrarCategoria, sumarDias, nombreCorto,
@@ -16,7 +16,7 @@ import {
 import { crearSelectorDia, crearHorarios, consultaDisponibilidad } from "./componentes.js?v=49";
 import { icono, icoCategoria } from "../iconos.js?v=64";
 import { mostrarExitoCita } from "../modal-exito.js?v=49";
-import { esAdmin } from "../auth.js?v=50";
+import { esAdmin } from "../auth.js?v=51";
 
 const MAX_SERVICIOS = 3;
 

@@ -1,6 +1,6 @@
 // Gestión de servicios (solo admin). Equivalente a src/app/servicios/index.tsx.
 
-import { get } from "../api.js?v=48";
+import { get } from "../api.js?v=49";
 import { $, categoriasDe, escapeHtml, mostrarCategoria, usd, compararCategorias, colorCategoria, colorCategoriaCabecera, textoSubtipo } from "../util.js?v=52";
 import { icono, icoCategoria } from "../iconos.js?v=64";
 

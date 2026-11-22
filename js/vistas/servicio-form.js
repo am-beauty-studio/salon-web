@@ -1,7 +1,7 @@
 // Formulario de servicio (nuevo / editar, solo admin).
 // Equivalente a ServicioForm + zonas de peligro de src/app/servicios/*.
 
-import { get, post, patch, del } from "../api.js?v=48";
+import { get, post, patch, del } from "../api.js?v=49";
 import { $, $$, aviso, confirmar, escapeHtml, categoriasDe, mostrarCategoria, categoriaCanonica, nombreCorto, compararCategorias, normalizarClave, usd } from "../util.js?v=52";
 import { icono, icoCategoria } from "../iconos.js?v=64";
 

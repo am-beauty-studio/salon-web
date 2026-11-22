@@ -1,10 +1,10 @@
 // Barra inferior fija de acciones rápidas (equivalente a MenuInferior de salon_app).
 // En PC se muestra como un dock centrado; en móvil, como barra de ancho completo.
 
-import { del, get, put } from "./api.js?v=48";
+import { del, get, put } from "./api.js?v=49";
 import {
   actualizarUsuario, cerrarSesion, esAdmin, haySesion, usuario,
-} from "./auth.js?v=50";
+} from "./auth.js?v=51";
 import { icono } from "./iconos.js?v=64";
 import { $, aviso, escapeHtml } from "./util.js?v=52";
 

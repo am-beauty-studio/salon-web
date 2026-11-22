@@ -1,7 +1,7 @@
 // Gestión de usuarios (solo el superadministrador).
 // Equivalente a src/app/usuarios/index.tsx.
 
-import { get } from "../api.js?v=48";
+import { get } from "../api.js?v=49";
 import { $, escapeHtml } from "../util.js?v=52";
 import { icono } from "../iconos.js?v=64";
 

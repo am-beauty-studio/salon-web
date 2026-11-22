@@ -1,12 +1,12 @@
 // Detalle de cita: ver, cambiar subtipo, reprogramar, completar o cancelar.
 // Equivalente a src/app/cita/[id].tsx.
 
-import { get, patch } from "../api.js?v=48";
+import { get, patch } from "../api.js?v=49";
 import {
   $, $$, aviso, confirmar, desdeISO, escapeHtml, etiqueta, hora, usd,
   badgeCita, textoSubtipo, marcarReprogramadas, nombreCorto, esReprogramada,
 } from "../util.js?v=52";
-import { esAdmin } from "../auth.js?v=50";
+import { esAdmin } from "../auth.js?v=51";
 import { icono } from "../iconos.js?v=64";
 import { crearSelectorDia, crearHorarios, consultaDisponibilidad } from "./componentes.js?v=49";
 import { mostrarExitoReprogramar } from "../modal-exito.js?v=49";

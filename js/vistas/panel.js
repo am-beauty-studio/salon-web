@@ -3,7 +3,7 @@
 // (reabrir o eliminar) y el borrado masivo de datos de citas.
 // Equivalente a src/app/panel/index.tsx de salon_app.
 
-import { del, get, patch } from "../api.js?v=48";
+import { del, get, patch } from "../api.js?v=49";
 import { animarCifras } from "../contador.js?v=1";
 import { icono } from "../iconos.js?v=64";
 import { confirmarPeligro } from "../modal-confirmar.js?v=1";

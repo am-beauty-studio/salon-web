@@ -1,13 +1,13 @@
 // Ficha de clienta: ver/editar datos + historial de citas.
 // Equivalente a src/app/clientes/[id].tsx y clientes/nuevo.tsx (modo nueva).
 
-import { get, post, patch, del } from "../api.js?v=48";
+import { get, post, patch, del } from "../api.js?v=49";
 import {
   $, $$, aviso, confirmar, escapeHtml, hora, usd, badgeCita, textoSubtipo,
   errorTelefonoCuba, esReprogramada,
 } from "../util.js?v=52";
 import { icono } from "../iconos.js?v=64";
-import { esAdmin } from "../auth.js?v=50";
+import { esAdmin } from "../auth.js?v=51";
 
 const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 

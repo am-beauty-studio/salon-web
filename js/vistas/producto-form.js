@@ -1,7 +1,7 @@
 // Formulario de producto (nuevo / editar, solo admin).
 // Equivalente a ProductoForm + zonas de peligro de src/app/productos/*.
 
-import { get, post, patch, del } from "../api.js?v=48";
+import { get, post, patch, del } from "../api.js?v=49";
 import {
   $, $$, aviso, confirmar, escapeHtml, categoriasDe, categoriaCanonica,
   compararCategorias, mostrarCategoria, normalizarClave, textoSubtipo,

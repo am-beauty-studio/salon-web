@@ -10,9 +10,37 @@
   <meta name="theme-color" content="#000000">
   <title>AM Luxury Beauty Salon</title>
   <link rel="icon" type="image/png" href="img/logo.png" />
-  <link rel="stylesheet" href="css/estilos.css?v=114" />
+  <link rel="stylesheet" href="css/estilos.css?v=115" />
+  <style>
+    /* Mínimo crítico: si el CSS tarda, la pantalla de bienvenida igual cubre
+       todo y nunca se ve la página en blanco. */
+    html, body { background: #FDF7F9; }
+    .despertar {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
 </head> 
 <body>
+  <!-- Pantalla de bienvenida: se ve desde el primer instante, también mientras
+       Render despierta. La oculta app.js cuando la primera vista está lista. -->
+  <div id="despertar" class="despertar" role="status" aria-live="polite">
+    <div class="despertar-caja">
+      <img class="despertar-logo" src="img/logo.png" alt="AM Luxury Beauty Salon" />
+      <div class="despertar-marca">AM LUXURY</div>
+      <div class="despertar-sub">Beauty Studio</div>
+      <div class="despertar-pista" aria-hidden="true">
+        <div id="despertar-barra" class="despertar-barra"></div>
+      </div>
+      <p id="despertar-msg" class="despertar-msg">Conectando con el servidor…</p>
+      <div id="despertar-seg" class="despertar-seg">0 s</div>
+    </div>
+  </div>
+
   <div id="espera" class="espera oculto">
     <div class="espera-caja">
       <div class="espera-anillo"></div>
@@ -46,7 +74,7 @@
 
   <div id="modal-zona"></div>
 
-  <script type="module" src="js/app.js?v=118"></script>
+  <script type="module" src="js/app.js?v=119"></script>
   <script>
    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
   </script>

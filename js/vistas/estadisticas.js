@@ -1,6 +1,6 @@
 // Estadísticas (solo admin). Dashboard distinto al de barras de Ganancias.
 
-import { get } from "../api.js?v=48";
+import { get } from "../api.js?v=49";
 import { animarCifras } from "../contador.js?v=1";
 import {
   $, $$, aISO, escapeHtml, fechaCorta, sumarDias, sumarMeses, etiquetaSemana,

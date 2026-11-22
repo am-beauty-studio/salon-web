@@ -1,8 +1,8 @@
 // Panel de notificaciones: alertas de stock (calculadas por la API) y avisos
 // persistentes de citas nuevas, reprogramadas y canceladas.
 
-import { get, patch, del } from "../api.js?v=48";
-import { esAdmin } from "../auth.js?v=50";
+import { get, patch, del } from "../api.js?v=49";
+import { esAdmin } from "../auth.js?v=51";
 import { icono } from "../iconos.js?v=64";
 import { confirmarPeligro } from "../modal-confirmar.js?v=1";
 import { refrescarBadgeNotificaciones } from "../menu-inferior.js?v=54";

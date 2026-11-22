@@ -1,11 +1,11 @@
 // Pantalla de login. Equivalente a src/app/login.tsx.
 // Los datos de acceso se pueden recordar en el dispositivo si la usuaria lo pide.
 
-import { entrar } from "../auth.js?v=50";
+import { entrar } from "../auth.js?v=51";
 import {
   apiUrl, fijarApiUrl, API_URL_LOCAL, API_URL_RENDER,
 } from "../config.js?v=50";
-import { calentarServidor } from "../api.js?v=48";
+import { calentarServidor } from "../api.js?v=49";
 import { $, aviso } from "../util.js?v=52";
 import { icono } from "../iconos.js?v=64";
 

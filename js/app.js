@@ -4,9 +4,10 @@
 import { $, esperar, soltar } from "./util.js?v=52";
 import {
   haySesion, esAdmin, esSuperadmin, usuario, cerrarSesion, restaurarSesion,
-} from "./auth.js?v=50";
+} from "./auth.js?v=51";
 import { icono } from "./iconos.js?v=64";
 import { cerrarCuenta, marcarMenuInferior, pintarMenuInferior } from "./menu-inferior.js?v=55";
+import { iniciarDespertar, terminarDespertar } from "./espera.js?v=1";
 
 import { render as vistaLogin } from "./vistas/login.js?v=61";
 import { render as vistaAgenda } from "./vistas/agenda.js?v=61";
@@ -132,6 +133,7 @@ async function navegar() {
         Esta sección es solo para administradoras.
       </p></div>`;
     marcarChipActiva(ruta);
+    terminarDespertar();
     return;
   }
 
@@ -141,6 +143,7 @@ async function navegar() {
         Esta sección es solo para el superadministrador.
       </p></div>`;
     marcarChipActiva(ruta);
+    terminarDespertar();
     return;
   }
 
@@ -160,10 +163,17 @@ async function navegar() {
       </div>`;
   } finally {
     soltar();
+    // La primera vista ya está pintada: se retira la pantalla de bienvenida.
+    // En navegaciones posteriores no hace nada (ya está oculta).
+    terminarDespertar();
   }
 }
 
 async function arrancar() {
+  // El logo y la barra de tiempo se ven desde el HTML; aquí arranca el
+  // contador mientras se verifica la sesión contra el servidor.
+  iniciarDespertar();
+
   window.addEventListener("hashchange", navegar);
 
   // Salir desde la cabecera (además de la hoja de cuenta del menú inferior).

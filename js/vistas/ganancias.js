@@ -1,6 +1,6 @@
 // Ganancias (solo admin). Equivalente a src/app/ganancias.tsx.
 
-import { get } from "../api.js?v=48";
+import { get } from "../api.js?v=49";
 import {
   $, $$, escapeHtml, sumarDias, sumarMeses, etiqueta, etiquetaSemana, tituloMes,
   tituloTrimestre, tituloSemestre, tituloAnio, mesCorto,

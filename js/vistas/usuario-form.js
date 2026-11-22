@@ -1,8 +1,8 @@
 // Formulario de usuario (nuevo / editar, solo superadministrador).
 // Equivalente a src/app/usuarios/* y components/UsuarioForm.tsx.
 
-import { get, post, patch, del } from "../api.js?v=48";
-import { actualizarUsuario, usuario as usuarioActual } from "../auth.js?v=50";
+import { get, post, patch, del } from "../api.js?v=49";
+import { actualizarUsuario, usuario as usuarioActual } from "../auth.js?v=51";
 import { $, $$, aviso, confirmar, escapeHtml } from "../util.js?v=52";
 import { icono } from "../iconos.js?v=64";
 

@@ -1,7 +1,7 @@
 // Componentes compartidos entre vistas: selector de día y slots de horario.
 // Equivalen a SelectorDia y Horarios de salon_app.
 
-import { get } from "../api.js?v=48";
+import { get } from "../api.js?v=49";
 import {
   $, $$, escapeHtml, aISO, sumarDias, sumarMeses, etiqueta, esHoy, hora,
   tituloMes,

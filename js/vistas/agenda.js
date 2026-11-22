@@ -1,11 +1,11 @@
 // Agenda: pantalla principal. Equivalente a src/app/index.tsx.
 
-import { get, patch } from "../api.js?v=48";
+import { get, patch } from "../api.js?v=49";
 import {
   $, $$, aviso, confirmar, escapeHtml, aISO, sumarDias, etiqueta,
   esHoy, hora, usd, textoSubtipo, badgeCita, nombreCorto, esReprogramada,
 } from "../util.js?v=52";
-import { esAdmin } from "../auth.js?v=50";
+import { esAdmin } from "../auth.js?v=51";
 import { icono } from "../iconos.js?v=64";
 import { abrirCalendario } from "./componentes.js?v=49";
 
