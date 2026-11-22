@@ -1746,7 +1746,7 @@ textarea.input { resize: vertical; min-height: 70px; }
 }
 
 /* ===== Clientas: secciones alfabéticas ===== */
-.clientes-seccion { margin-bottom: 4px; }
+.clientes-seccion { margin-bottom: 14px; }
 .clientes-letra {
   position: sticky;
   top: 56px; /* debajo de la cabecera fija */
@@ -1783,6 +1783,43 @@ textarea.input { resize: vertical; min-height: 70px; }
   font-weight: 600;
   order: 3;
 }
+
+/* Todas las clientas de una misma letra van en un único contenedor
+   translúcido; solo las separa una línea fina. */
+.clientes-grupo {
+  background: rgba(255, 255, 255, .68);
+  border: 1px solid rgba(227, 188, 204, .7);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(150, 64, 92, .05);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  backdrop-filter: blur(12px) saturate(120%);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  /* Sin desenfoque: algo más de opacidad para no perder legibilidad. */
+  .clientes-grupo { background: rgba(255, 255, 255, .82); }
+}
+.clientes-grupo .lista-fila {
+  position: relative;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  margin: 0;
+  padding: 12px 14px;
+  transition: background .15s;
+}
+.clientes-grupo .lista-fila::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 0;
+  height: 1px;
+  background: rgba(227, 188, 204, .55);
+}
+.clientes-grupo .lista-fila:last-child::after { display: none; }
+.clientes-grupo .lista-fila:hover { background: rgba(206, 124, 148, .07); }
+.clientes-grupo .lista-fila:active { background: rgba(206, 124, 148, .13); }
 
 /* Icono de categoria (.webp): tamaño fijo acorde al texto.
    22px en encabezados (13px), 19px dentro de chips. */

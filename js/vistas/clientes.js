@@ -35,13 +35,15 @@ export async function render(raiz) {
           <span>${escapeHtml(letra)}</span>
           <small>${clientas.length}</small>
         </div>
-        ${clientas.map((c) => `
-          <a class="lista-fila" href="#/clientes/${c.id}">
-            <span class="lista-principal">
-              <span class="ico-lista" style="display:inline-flex">${icono.usuario()}</span>${escapeHtml(c.nombre)}
-            </span>
-            <span class="lista-secundario">${escapeHtml(c.telefono || "Sin teléfono")}</span>
-          </a>`).join("")}
+        <div class="clientes-grupo">
+          ${clientas.map((c) => `
+            <a class="lista-fila" href="#/clientes/${c.id}">
+              <span class="lista-principal">
+                <span class="ico-lista" style="display:inline-flex">${icono.usuario()}</span>${escapeHtml(c.nombre)}
+              </span>
+              <span class="lista-secundario">${escapeHtml(c.telefono || "Sin teléfono")}</span>
+            </a>`).join("")}
+        </div>
       </section>`).join("");
   }
 
