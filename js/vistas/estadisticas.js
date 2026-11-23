@@ -27,6 +27,7 @@ function colorRosa(valor, maximo, minimo = 0) {
 export async function render(raiz) {
   let periodo = "mes";
   let fecha = new Date();
+  let observadorDonut = null;
 
   raiz.innerHTML = `
     <div class="vista-cab">
@@ -88,6 +89,7 @@ export async function render(raiz) {
 
   async function cargar() {
     pintarTitulo();
+    if (observadorDonut) observadorDonut.disconnect();
     $("#dash").innerHTML = `<div class="cargando">Cargando…</div>`;
     try {
       const r = await get(
@@ -96,6 +98,7 @@ export async function render(raiz) {
       const $dash = $("#dash");
       $dash.innerHTML = dashboard(r);
       animarCifras($dash);
+      observadorDonut = observarDonut($dash);
     } catch (e) {
       $("#dash").innerHTML = `
         <div class="tarjeta">
@@ -105,6 +108,41 @@ export async function render(raiz) {
   }
 
   cargar();
+}
+
+/**
+ * El donut espera a entrar en pantalla para animarse. Mientras no se ve, el
+ * anillo queda velado y la leyenda en espera; al visualizarse se dibuja y el
+ * total empieza a contar.
+ */
+function observarDonut(dash) {
+  const wrap = dash.querySelector(".dash-donut-wrap");
+  if (!wrap) return null;
+
+  const activar = () => {
+    wrap.classList.remove("pendiente");
+    const cifra = wrap.querySelector("[data-contar-diferido]");
+    if (cifra) {
+      cifra.dataset.contar = cifra.dataset.contarDiferido;
+      delete cifra.dataset.contarDiferido;
+      animarCifras(cifra.parentElement || wrap);
+    }
+  };
+
+  if (!("IntersectionObserver" in window)) {
+    activar();
+    return null;
+  }
+
+  wrap.classList.add("pendiente");
+  const observador = new IntersectionObserver((entradas) => {
+    if (entradas.some((e) => e.isIntersecting)) {
+      observador.disconnect();
+      activar();
+    }
+  }, { threshold: 0.3 });
+  observador.observe(wrap);
+  return observador;
 }
 
 function dashboard(r) {
@@ -162,7 +200,7 @@ function dashboard(r) {
         ? `<p class="dash-vacio">Sin categorías con movimiento en este período.</p>`
         : `${donutHtml(categorias, Number(t.ingresos))}
            <div class="dash-cats">
-             ${categorias.map((c) => filaCategoria(c, Number(t.ingresos), maxCategoria, minCategoria)).join("")}
+             ${categorias.map((c, i) => filaCategoria(c, Number(t.ingresos), maxCategoria, minCategoria, i)).join("")}
            </div>`}
     </div>
 
@@ -211,12 +249,12 @@ function donutHtml(categorias, total) {
       <div class="dash-donut" style="background:conic-gradient(${paradas})">
         <div class="dash-donut-centro">
           <span>Total recaudado</span>
-          <strong>${usd(total)}</strong>
+          <strong data-contar-diferido="${usd(total)}">${usd(total)}</strong>
         </div>
       </div>
       <ul class="dash-donut-leyenda">
-        ${categorias.map((c) => `
-          <li>
+        ${categorias.map((c, i) => `
+          <li style="--i:${i}">
             <i style="background:${colorRosa(c.ingresos, max, min)}"></i>
             <span>${escapeHtml(mostrarCategoria(c.categoria))}</span>
             <strong>${total > 0 ? ((Number(c.ingresos) / total) * 100).toFixed(0) : 0}%</strong>
@@ -225,12 +263,12 @@ function donutHtml(categorias, total) {
     </div>`;
 }
 
-function filaCategoria(c, total, max, min) {
+function filaCategoria(c, total, max, min, i = 0) {
   const color = colorRosa(c.ingresos, max, min);
   const ico = icoCategoria(c.categoria);
   const share = total > 0 ? (Number(c.ingresos) / total) * 100 : 0;
   return `
-    <div class="dash-cat">
+    <div class="dash-cat" style="--i:${i}">
       <div class="dash-cat-cab">
         <span class="dash-cat-ico">
           ${ico ? `<img class="cat-ico" src="${ico}" alt="" />` : `<i class="dash-dot" style="background:${color}"></i>`}
