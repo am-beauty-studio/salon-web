@@ -167,19 +167,35 @@ export async function render(raiz, params, query) {
         </div>
 
         <div class="campo" id="pf-bloque-servicio">
-          <label class="etiqueta" for="pf-servicio">Servicio vinculado</label>
-          <div class="campo-ico">
-            ${icono.lista()}
-            <select class="input" id="pf-servicio">
-              <option value="">— En todos —</option>
-              ${servicios.map((sv) => `
-                <option value="${sv.id}" ${Number(producto?.servicio_id) === Number(sv.id) ? "selected" : ""}>
-                  ${escapeHtml(sv.nombre)} · ${escapeHtml(mostrarCategoria(sv.categoria))}${sv.activo ? "" : " (inactivo)"}
-                </option>`).join("")}
-            </select>
-          </div>
-          <p class="servicio-elegido" id="pf-servicio-elegido"></p>
-          <p class="nota" id="pf-servicio-nota">«En todos» aplica el producto a toda la categoría. El stock se rebaja al completar la cita.</p>
+          <label class="etiqueta">Servicio vinculado</label>
+          <select class="oculto" id="pf-servicio" tabindex="-1" aria-hidden="true">
+            <option value="">— En todos —</option>
+            ${servicios.map((sv) => `
+              <option value="${sv.id}" ${Number(producto?.servicio_id) === Number(sv.id) ? "selected" : ""}>
+                ${escapeHtml(sv.nombre)} · ${escapeHtml(mostrarCategoria(sv.categoria))}${sv.activo ? "" : " (inactivo)"}
+              </option>`).join("")}
+          </select>
+          <details class="acordeon servicio-plegable" id="pf-servicio-plegable">
+            <summary>
+              <span class="acordeon-flecha">›</span>
+              <span class="acordeon-titulo">
+                <span class="servicio-plegable-nombre" id="pf-servicio-nombre">Todos los servicios</span>
+                <span class="lista-secundario" id="pf-servicio-detalle">Aplica a toda la categoría</span>
+              </span>
+              <span class="servicio-plegable-cambio">Cambiar</span>
+            </summary>
+            <div class="acordeon-cuerpo">
+              <div class="campo-ico servicio-buscador">
+                ${icono.lupa()}
+                <input class="input" id="pf-servicio-buscar" type="search"
+                       placeholder="Buscar servicio..." autocomplete="off" />
+              </div>
+              <div class="servicio-lista" id="pf-servicio-lista" role="listbox"
+                   aria-label="Servicio vinculado"></div>
+              <p class="servicio-vacio oculto" id="pf-servicio-vacio">No hay servicios que coincidan.</p>
+              <p class="nota" id="pf-servicio-nota">«En todos» aplica el producto a toda la categoría. El stock se rebaja al completar la cita.</p>
+            </div>
+          </details>
         </div>
 
         <div class="campo" id="pf-bloque-subtipo" style="margin-bottom:0">
@@ -350,15 +366,25 @@ export async function render(raiz, params, query) {
   }
 
   function pintarServicioElegido() {
-    const caja = $("#pf-servicio-elegido");
-    if (!caja) return;
     const servicio = servicioDeSelect();
-    caja.classList.toggle("sin", !servicio);
-    caja.innerHTML = servicio
-      ? `${icono.etiqueta(13)}
-         <span class="servicio-elegido-nombre">${escapeHtml(servicio.nombre)}</span>
-         ${servicio.activo ? "" : `<span class="servicio-elegido-estado">Inactivo</span>`}`
-      : `${icono.lista(13)}<span class="servicio-elegido-nombre">Todos los servicios de la categoría</span>`;
+    const nombre = $("#pf-servicio-nombre");
+    const detalle = $("#pf-servicio-detalle");
+    if (nombre) nombre.textContent = servicio ? servicio.nombre : "Todos los servicios";
+    if (detalle) {
+      detalle.textContent = servicio
+        ? `${mostrarCategoria(servicio.categoria)}${servicio.activo ? "" : " · Inactivo"}`
+        : "Aplica a toda la categoría";
+    }
+
+    // Refleja la selección en la lista plegable sin reconstruirla.
+    const valor = $("#pf-servicio").value;
+    $$("#pf-servicio-lista [data-servicio]").forEach((opcion) => {
+      const activa = opcion.dataset.servicio === valor;
+      opcion.classList.toggle("activo", activa);
+      opcion.setAttribute("aria-selected", activa ? "true" : "false");
+      const check = opcion.querySelector(".servicio-opcion-check");
+      if (check) check.innerHTML = activa ? icono.check(15) : "";
+    });
 
     const nota = $("#pf-servicio-nota");
     if (nota) {
@@ -366,6 +392,59 @@ export async function render(raiz, params, query) {
         ? "El stock se rebaja al completar las citas de este servicio."
         : "«En todos» aplica el producto a toda la categoría. El stock se rebaja al completar la cita.";
     }
+  }
+
+  /** Lista plegable de servicios: filas grandes, con categoría y búsqueda. */
+  function pintarListaServicios(lista, mismaCategoria) {
+    const caja = $("#pf-servicio-lista");
+    if (!caja) return;
+
+    const opciones = [
+      {
+        id: "",
+        nombre: "Todos los servicios",
+        detalle: "Aplica a toda la categoría",
+        buscar: "todos los servicios categoria",
+      },
+      ...lista.map((sv) => ({
+        id: String(sv.id),
+        nombre: sv.nombre,
+        detalle: [
+          mostrarCategoria(sv.categoria),
+          sv.activo ? "" : "Inactivo",
+          mismaCategoria(sv) ? "" : "Otra categoría",
+        ].filter(Boolean).join(" · "),
+        buscar: `${sv.nombre} ${mostrarCategoria(sv.categoria)}`,
+      })),
+    ];
+
+    caja.innerHTML = opciones.map((o) => `
+      <button class="servicio-opcion" type="button" role="option"
+              data-servicio="${escapeHtml(o.id)}"
+              data-buscar="${escapeHtml(normalizarClave(o.buscar))}"
+              aria-selected="false">
+        <span class="servicio-opcion-ico">${o.id ? icono.etiqueta(15) : icono.lista(15)}</span>
+        <span class="servicio-opcion-txt">
+          <span class="servicio-opcion-nombre">${escapeHtml(o.nombre)}</span>
+          <span class="servicio-opcion-sub">${escapeHtml(o.detalle)}</span>
+        </span>
+        <span class="servicio-opcion-check"></span>
+      </button>`).join("");
+
+    caja.querySelectorAll("[data-servicio]").forEach((boton) => {
+      boton.onclick = () => {
+        const select = $("#pf-servicio");
+        select.value = boton.dataset.servicio;
+        select.dispatchEvent(new Event("change"));
+        const plegable = $("#pf-servicio-plegable");
+        if (plegable) plegable.open = false;
+      };
+    });
+
+    const buscador = $("#pf-servicio-buscar");
+    if (buscador) buscador.value = "";
+    $("#pf-servicio-vacio")?.classList.add("oculto");
+    pintarServicioElegido();
   }
 
   function pintarServicios() {
@@ -405,7 +484,7 @@ export async function render(raiz, params, query) {
       })
       .join("");
 
-    pintarServicioElegido();
+    pintarListaServicios(lista, mismaCategoria);
     pintarSubtipos();
   }
 
@@ -496,6 +575,16 @@ export async function render(raiz, params, query) {
     subtipoGuardado = "";
     pintarServicioElegido();
     pintarSubtipos();
+  });
+  $("#pf-servicio-buscar").addEventListener("input", () => {
+    const texto = normalizarClave($("#pf-servicio-buscar").value);
+    let visibles = 0;
+    $$("#pf-servicio-lista .servicio-opcion").forEach((opcion) => {
+      const coincide = !texto || opcion.dataset.buscar.includes(texto);
+      opcion.classList.toggle("oculto", !coincide);
+      if (coincide) visibles += 1;
+    });
+    $("#pf-servicio-vacio").classList.toggle("oculto", visibles > 0);
   });
   ["#pf-cantidad", "#pf-stock-minimo", "#pf-consumo-cantidad", "#pf-consumo-citas", "#pf-unidad"]
     .forEach((sel) => $(sel).addEventListener("input", pintarResumen));

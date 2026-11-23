@@ -490,6 +490,108 @@ textarea.input { resize: vertical; min-height: 70px; }
   font-weight: 600;
 }
 
+/* Selector plegable de servicio vinculado (formulario de producto) */
+.servicio-plegable { margin-top: 2px; }
+.servicio-plegable summary { padding: 10px 12px; gap: 10px; }
+.servicio-plegable .acordeon-titulo {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 14px;
+}
+.servicio-plegable-nombre {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.servicio-plegable-cambio {
+  flex-shrink: 0;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(206, 124, 148, .4);
+  background: rgba(206, 124, 148, .12);
+  color: var(--gold-dark);
+  font-size: 12px;
+  font-weight: 700;
+}
+.servicio-plegable[open] .servicio-plegable-cambio { display: none; }
+.servicio-buscador { margin: 8px 0 10px; }
+.servicio-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 2px;
+  margin: 0 -2px;
+  scrollbar-width: thin;
+}
+.servicio-opcion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 11px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  text-align: left;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.servicio-opcion:hover { border-color: #E3BCCC; background: #FDF7F9; }
+.servicio-opcion.activo {
+  border-color: var(--gold);
+  background: #FBEDF2;
+  box-shadow: inset 0 0 0 1px rgba(206, 124, 148, .22);
+}
+.servicio-opcion-ico {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(206, 124, 148, .12);
+  color: var(--gold-dark);
+  flex-shrink: 0;
+}
+.servicio-opcion-ico .ico { vertical-align: 0; }
+.servicio-opcion-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.servicio-opcion-nombre {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.servicio-opcion-sub {
+  margin-top: 1px;
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.servicio-opcion-check {
+  width: 20px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  color: var(--gold-dark);
+}
+.servicio-opcion-check .ico { vertical-align: 0; }
+.servicio-vacio {
+  padding: 10px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 /* El campo activo resalta también su etiqueta para ubicarse mejor. */
 .campo:focus-within > .etiqueta { color: var(--gold-dark); }
 
@@ -4488,6 +4590,8 @@ a.notif-fila:hover { border-color: rgba(206, 124, 148, .55); }
   .form-acciones .btn { width: 100%; }
   .resumen-metricas { grid-template-columns: 1fr; }
   .stock-chip { margin-left: 0; }
+  .servicio-lista { max-height: 45vh; }
+  .servicio-opcion { padding: 12px 11px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
