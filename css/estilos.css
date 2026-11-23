@@ -4605,6 +4605,14 @@ a.notif-fila:hover { border-color: rgba(206, 124, 148, .55); }
   .stock-chip { margin-left: 0; }
   .servicio-lista { max-height: 45vh; }
   .servicio-opcion { padding: 12px 11px; }
+  /* En el móvil los nombres ocupan todo el ancho: sin logo y con salto de línea. */
+  .extra-opcion .cat-ico { display: none; }
+  .extra-nombre {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.3;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
