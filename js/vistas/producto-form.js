@@ -348,12 +348,21 @@ export async function render(raiz, params, query) {
         </div>` : ""}
     </div>`;
 
-  const CLAVES_CON_SERVICIO = new Set(["cejas", "pestanas"]);
   // Tipo guardado del producto: se conserva hasta que el desplegable lo pinta.
   let subtipoGuardado = limpiar(producto?.subtipo);
 
+  // El vínculo con un servicio solo se pide cuando la categoría tiene más de
+  // un servicio principal entre los que elegir.
+  function serviciosDeCategoria(valor) {
+    const clave = normalizarClave(valor);
+    if (!clave) return [];
+    return servicios.filter(
+      (sv) => !sv.es_adicional && categoriasDe(sv).some((c) => normalizarClave(c) === clave)
+    );
+  }
+
   function usaServicioVinculado(valor = $("#pf-categoria").value) {
-    return CLAVES_CON_SERVICIO.has(normalizarClave(valor));
+    return serviciosDeCategoria(valor).length > 1;
   }
 
   function servicioDeSelect() {
