@@ -21,11 +21,13 @@ function colorRosa(valor, maximo, minimo = 0) {
   return ROSAS[paso];
 }
 
-export async function render(raiz, params) {
+export async function render(raiz, params, query) {
   const nuevo = params.modo === "nuevo";
   let servicio = nuevo ? null : await get(`/servicios/${params.id}`);
   const servicios = await get("/servicios");
   const empleados = await get("/empleados");
+  // Categoría preseleccionada al llegar desde el "+" de una categoría.
+  const categoriaInicial = nuevo ? (query?.get("categoria") || "").trim() : "";
 
   const categoriasExistentes = [
     ...new Set(servicios.flatMap((s) => categoriasDe(s))),
@@ -40,7 +42,9 @@ export async function render(raiz, params) {
         <div>
           <h1 class="vista-titulo">${nuevo ? "Nuevo servicio" : "Editar servicio"}</h1>
           <p class="form-sub">${nuevo
-            ? "Añade un servicio al catálogo del salón."
+            ? (categoriaInicial
+              ? `Añade un servicio a la categoría «${escapeHtml(mostrarCategoria(categoriaInicial))}».`
+              : "Añade un servicio al catálogo del salón.")
             : `Actualiza los datos de «${escapeHtml(servicio.nombre)}».`}</p>
         </div>
       </div>
@@ -67,7 +71,7 @@ export async function render(raiz, params) {
           <label class="etiqueta" for="sv-categoria">Categoría *</label>
           <div class="campo-ico">
             ${icono.etiqueta()}
-            <input class="input" id="sv-categoria" value="${escapeHtml(servicio?.categoria || "")}"
+            <input class="input" id="sv-categoria" value="${escapeHtml(servicio?.categoria || categoriaInicial)}"
                    placeholder="Ej.: Manicura" />
           </div>
           <div class="chips" style="margin-top:8px">

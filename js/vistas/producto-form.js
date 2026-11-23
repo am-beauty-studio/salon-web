@@ -41,7 +41,7 @@ function plural(unidad, cantidad) {
   return /[aeiouáéíóú]$/i.test(u) ? `${u}s` : `${u}es`;
 }
 
-export async function render(raiz, params) {
+export async function render(raiz, params, query) {
   const nuevo = params.modo === "nuevo";
   const [producto, productos, servicios, movimientos] = await Promise.all([
     nuevo ? Promise.resolve(null) : get(`/productos/${params.id}`),
@@ -50,6 +50,8 @@ export async function render(raiz, params) {
     nuevo ? Promise.resolve([]) : get(`/productos/${params.id}/movimientos?limit=12`)
       .catch(() => []),
   ]);
+  // Categoría preseleccionada al llegar desde el "+" de una categoría.
+  const categoriaInicial = nuevo ? (query?.get("categoria") || "").trim() : "";
 
   // "Paquete" y "Full Service" se ven igual: se unen en un solo chip.
   const categorias = [...new Map(
@@ -61,6 +63,20 @@ export async function render(raiz, params) {
       .map((cat) => [normalizarClave(mostrarCategoria(cat)), cat])
   ).values()].sort(compararCategorias);
 
+  // Se compara el texto visible: "Paquete" y "Full Service" son la misma.
+  const claveVisible = (texto) => normalizarClave(mostrarCategoria(texto));
+  // Categorías adicionales ya guardadas; se reutiliza la grafía del listado.
+  const extras = new Set(
+    (producto?.categorias_extra || [])
+      .map((cat) => categorias.find((c) => claveVisible(c) === claveVisible(cat)) || cat)
+  );
+  const categoriasExtra = [...categorias];
+  extras.forEach((cat) => {
+    if (!categoriasExtra.some((c) => claveVisible(c) === claveVisible(cat))) {
+      categoriasExtra.push(cat);
+    }
+  });
+
   raiz.innerHTML = `
     <div class="form-vista">
       <div class="vista-cab">
@@ -68,7 +84,9 @@ export async function render(raiz, params) {
         <div>
           <h1 class="vista-titulo">${nuevo ? "Nuevo producto" : "Editar producto"}</h1>
           <p class="form-sub">${nuevo
-            ? "Añade un producto al inventario del salón."
+            ? (categoriaInicial
+              ? `Añade un producto a la categoría «${escapeHtml(mostrarCategoria(categoriaInicial))}».`
+              : "Añade un producto al inventario del salón.")
             : `Actualiza los datos de «${escapeHtml(producto.nombre)}».`}</p>
         </div>
       </div>
@@ -95,7 +113,7 @@ export async function render(raiz, params) {
           <label class="etiqueta" for="pf-categoria">Categoría *</label>
           <div class="campo-ico">
             ${icono.etiqueta()}
-            <input class="input" id="pf-categoria" value="${escapeHtml(producto?.categoria || "")}"
+            <input class="input" id="pf-categoria" value="${escapeHtml(producto?.categoria || categoriaInicial)}"
                    placeholder="Ej.: Manicura SPA" />
           </div>
           <div class="chips" style="margin-top:8px">
@@ -109,14 +127,33 @@ export async function render(raiz, params) {
         </div>
 
         <div class="campo" style="margin-bottom:0">
-          <label class="etiqueta" for="pf-extra">Categorías adicionales (opcional)</label>
-          <div class="campo-ico">
-            ${icono.capas()}
-            <input class="input" id="pf-extra"
-                   value="${escapeHtml((producto?.categorias_extra || []).join(", "))}"
-                   placeholder="Ej.: Pedicura SPA" />
-          </div>
-          <p class="nota">Sepáralas con coma. Útil para productos que comparten dos categorías, como los de SPA Manicura y SPA Pedicura.</p>
+          <details class="acordeon extras-plegable"${extras.size ? " open" : ""}>
+            <summary>
+              <span class="acordeon-flecha">›</span>
+              <span class="acordeon-titulo">
+                Categorías adicionales
+                <span class="lista-secundario">Opcional: elige las que comparten este producto</span>
+              </span>
+              <span class="extras-contador" id="pf-extras-cuenta">${extras.size}</span>
+            </summary>
+            <div class="acordeon-cuerpo">
+              <div class="extras-grid" id="pf-extras">
+                ${categoriasExtra.map((cat) => {
+                  const ico = icoCategoria(cat);
+                  const marcada = [...extras].some(
+                    (e) => claveVisible(e) === claveVisible(cat)
+                  );
+                  return `<label class="extra-opcion" data-extra-opcion="${escapeHtml(cat)}">
+                    <input type="checkbox" data-extra="${escapeHtml(cat)}"${marcada ? " checked" : ""} />
+                    <span class="extra-casilla"></span>
+                    ${ico ? `<img class="cat-ico" src="${ico}" alt="" />` : ""}
+                    <span class="extra-nombre">${escapeHtml(mostrarCategoria(cat))}</span>
+                  </label>`;
+                }).join("")}
+              </div>
+              <p class="nota">Marca las categorías que también comparten este producto. Se guardan al seleccionarlas.</p>
+            </div>
+          </details>
         </div>
       </section>
 
@@ -466,8 +503,6 @@ export async function render(raiz, params) {
   // Categoría señalada: el chip elegido se marca con el fondo oscuro del
   // proyecto, igual que en el formulario de servicio.
   const chipsCategoria = $$("[data-cat]");
-  // Se compara el texto visible: "Paquete" y "Full Service" son la misma.
-  const claveVisible = (texto) => normalizarClave(mostrarCategoria(texto));
   const marcarCategoria = () => {
     const valor = claveVisible($("#pf-categoria").value);
     chipsCategoria.forEach((chip) => {
@@ -477,21 +512,57 @@ export async function render(raiz, params) {
       );
     });
   };
+
+  // Categorías adicionales: se eligen con un clic en su casilla. La categoría
+  // principal no puede repetirse como adicional, así que se oculta de la lista.
+  const chipsExtra = $$("[data-extra]");
+  const cuentaExtra = $("#pf-extras-cuenta");
+  const quitarExtra = (cat) => {
+    const clave = claveVisible(cat);
+    for (const guardada of [...extras]) {
+      if (claveVisible(guardada) === clave) extras.delete(guardada);
+    }
+  };
+  const marcarExtras = () => {
+    const principal = claveVisible($("#pf-categoria").value);
+    chipsExtra.forEach((input) => {
+      const clave = claveVisible(input.dataset.extra);
+      const esPrincipal = Boolean(principal) && clave === principal;
+      if (esPrincipal) quitarExtra(input.dataset.extra);
+      const opcion = input.closest("[data-extra-opcion]");
+      if (opcion) opcion.classList.toggle("oculto", esPrincipal);
+      input.checked = !esPrincipal
+        && [...extras].some((cat) => claveVisible(cat) === clave);
+    });
+    if (cuentaExtra) cuentaExtra.textContent = String(extras.size);
+  };
+  chipsExtra.forEach((input) => {
+    input.addEventListener("change", () => {
+      const cat = input.dataset.extra;
+      if (input.checked) extras.add(cat);
+      else quitarExtra(cat);
+      marcarExtras();
+    });
+  });
+
   chipsCategoria.forEach((chip) => {
     chip.onclick = () => {
       $("#pf-categoria").value = chip.dataset.cat;
       marcarCategoria();
       pintarServicios();
+      marcarExtras();
     };
   });
   $("#pf-categoria").addEventListener("input", () => {
     marcarCategoria();
     pintarServicios();
+    marcarExtras();
   });
 
   pintarServicios();
   pintarResumen();
   marcarCategoria();
+  marcarExtras();
 
   function leerFormulario() {
     const error = $("#pf-error");
@@ -505,10 +576,6 @@ export async function render(raiz, params) {
     const consumoCantidad = numero($("#pf-consumo-cantidad").value, NaN);
     const consumoCitas = numero($("#pf-consumo-citas").value, NaN);
     const servicioId = $("#pf-servicio").value;
-    const extra = $("#pf-extra").value
-      .split(",")
-      .map((c) => c.trim())
-      .filter(Boolean);
 
     if (nombre.length < 2) return fallo("Escribe el nombre del producto (mínimo 2 letras).");
     if (categoria.length < 2) return fallo("Escribe la categoría del producto.");
@@ -529,6 +596,9 @@ export async function render(raiz, params) {
     categoria = categoriaCanonica(categoria, categorias);
     $("#pf-categoria").value = categoria;
     const conServicio = usaServicioVinculado(categoria);
+    // Nunca se repite la categoría principal como adicional.
+    const clavePrincipal = claveVisible(categoria);
+    const extra = [...extras].filter((cat) => claveVisible(cat) !== clavePrincipal);
 
     return {
       nombre,

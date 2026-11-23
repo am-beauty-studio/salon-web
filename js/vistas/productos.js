@@ -7,6 +7,7 @@ import {
   colorCategoria, colorCategoriaCabecera,
 } from "../util.js?v=52";
 import { icono, icoCategoria } from "../iconos.js?v=64";
+import { activarFabAlDesplazar } from "../fab-flotante.js?v=1";
 
 /** "69.00" -> "69"; "0.350" -> "0.35" (sin ceros sobrantes). */
 function num(valor) {
@@ -49,7 +50,7 @@ export async function render(raiz, _params, query) {
     <div class="vista-cab">
       <span class="vista-ico">${icono.caja(22)}</span>
       <h1 class="vista-titulo">Productos</h1>
-      <a class="chip-enlace" href="#/productos/nuevo">＋ Nuevo</a>
+      <a class="chip-enlace" id="btn-nuevo-producto" href="#/productos/nuevo">＋ Nuevo</a>
     </div>
     <div class="buscador-fila">
       <div class="campo-ico" style="flex:1">
@@ -61,7 +62,9 @@ export async function render(raiz, _params, query) {
       <button class="chip ${mostrarInactivos ? "activo" : ""}" id="chip-inactivos" type="button">Mostrar inactivos</button>
       <span class="contador" id="contador"></span>
     </div>
-    <div id="lista"></div>`;
+    <div id="lista"></div>
+    <a class="fab-nueva" id="fab-nuevo-producto" href="#/productos/nuevo"
+       aria-label="Nuevo producto" title="Nuevo producto">${icono.mas(24)}</a>`;
 
   $("#chip-inactivos").onclick = () => {
     mostrarInactivos = !mostrarInactivos;
@@ -114,6 +117,9 @@ export async function render(raiz, _params, query) {
           <div class="grupo-cat-cab" style="background:${fondoOscuro}">
             ${ico ? `<img class="cat-ico" src="${ico}" alt="" />` : ""}
             <span class="grupo-cat-titulo">${escapeHtml(mostrarCategoria(cat))}</span>
+            <a class="grupo-cat-add" href="#/productos/nuevo?categoria=${encodeURIComponent(cat)}"
+               title="Añadir producto a ${escapeHtml(mostrarCategoria(cat))}"
+               aria-label="Añadir producto a ${escapeHtml(mostrarCategoria(cat))}">${icono.mas(14)}</a>
             <span class="grupo-cat-chip">${lista.length}</span>
           </div>
           <div class="cat-cuerpo-lista">
@@ -153,4 +159,11 @@ export async function render(raiz, _params, query) {
   }
 
   pintar();
+
+  // Botón flotante: sustituye al "+ Nuevo" cuando este se oculta al bajar.
+  activarFabAlDesplazar(
+    $("#btn-nuevo-producto"),
+    $("#fab-nuevo-producto"),
+    document.querySelector(".cabecera")
+  );
 }

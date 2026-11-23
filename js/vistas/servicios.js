@@ -3,6 +3,7 @@
 import { get } from "../api.js?v=49";
 import { $, categoriasDe, escapeHtml, mostrarCategoria, usd, compararCategorias, colorCategoria, colorCategoriaCabecera, textoSubtipo } from "../util.js?v=52";
 import { icono, icoCategoria } from "../iconos.js?v=64";
+import { activarFabAlDesplazar } from "../fab-flotante.js?v=1";
 
 /** Duración compacta para el catálogo: "45m", "1h", "1h 30m". */
 function duracionCorta(min) {
@@ -24,7 +25,7 @@ export async function render(raiz) {
     <div class="vista-cab">
       <span class="vista-ico">${icono.etiqueta(22)}</span>
       <h1 class="vista-titulo">Servicios</h1>
-      <a class="chip-enlace" href="#/servicios/nuevo">＋ Nuevo</a>
+      <a class="chip-enlace" id="btn-nuevo-servicio" href="#/servicios/nuevo">＋ Nuevo</a>
     </div>
     <div class="buscador-fila">
       <div class="campo-ico" style="flex:1">
@@ -36,7 +37,9 @@ export async function render(raiz) {
       <button class="chip" id="chip-inactivos" type="button">Mostrar inactivos</button>
       <span class="contador" id="contador"></span>
     </div>
-    <div id="lista"></div>`;
+    <div id="lista"></div>
+    <a class="fab-nueva" id="fab-nuevo-servicio" href="#/servicios/nuevo"
+       aria-label="Nuevo servicio" title="Nuevo servicio">${icono.mas(24)}</a>`;
 
   $("#chip-inactivos").onclick = () => {
     mostrarInactivos = !mostrarInactivos;
@@ -86,6 +89,9 @@ export async function render(raiz) {
           <div class="grupo-cat-cab" style="background:${fondoOscuro}">
             ${ico ? `<img class="cat-ico" src="${ico}" alt="" />` : ""}
             <span class="grupo-cat-titulo">${escapeHtml(mostrarCategoria(cat))}</span>
+            <a class="grupo-cat-add" href="#/servicios/nuevo?categoria=${encodeURIComponent(cat)}"
+               title="Añadir servicio a ${escapeHtml(mostrarCategoria(cat))}"
+               aria-label="Añadir servicio a ${escapeHtml(mostrarCategoria(cat))}">${icono.mas(14)}</a>
             <span class="grupo-cat-chip">${lista.length}</span>
           </div>
           <div class="cat-cuerpo-lista">
@@ -126,4 +132,11 @@ export async function render(raiz) {
   }
 
   pintar();
+
+  // Botón flotante: sustituye al "+ Nuevo" cuando este se oculta al bajar.
+  activarFabAlDesplazar(
+    $("#btn-nuevo-servicio"),
+    $("#fab-nuevo-servicio"),
+    document.querySelector(".cabecera")
+  );
 }

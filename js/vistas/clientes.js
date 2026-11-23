@@ -3,6 +3,7 @@
 import { get } from "../api.js?v=49";
 import { $, escapeHtml } from "../util.js?v=52";
 import { icono } from "../iconos.js?v=64";
+import { activarFabAlDesplazar } from "../fab-flotante.js?v=1";
 
 export async function render(raiz) {
   let temporizador = null;
@@ -11,7 +12,7 @@ export async function render(raiz) {
     <div class="vista-cab">
       <span class="vista-ico">${icono.personas(22)}</span>
       <h1 class="vista-titulo">Clientas</h1>
-      <a class="chip-enlace" href="#/clientes/nueva">＋ Nueva</a>
+      <a class="chip-enlace" id="btn-nueva-cliente" href="#/clientes/nueva">＋ Nueva</a>
     </div>
     <div class="buscador-fila">
       <div class="campo-ico" style="flex:1">
@@ -19,7 +20,9 @@ export async function render(raiz) {
         <input class="input" id="buscar" placeholder="Buscar por nombre o teléfono" />
       </div>
     </div>
-    <div id="lista"></div>`;
+    <div id="lista"></div>
+    <a class="fab-nueva" id="fab-nueva-cliente" href="#/clientes/nueva"
+       aria-label="Nueva clienta" title="Nueva clienta">${icono.mas(24)}</a>`;
 
   async function cargar(texto = "") {
     const caja = $("#lista");
@@ -52,6 +55,13 @@ export async function render(raiz) {
     const texto = e.target.value;
     temporizador = setTimeout(() => cargar(texto), 300);
   });
+
+  // Botón flotante: sustituye al "+ Nueva" cuando este se oculta al bajar.
+  activarFabAlDesplazar(
+    $("#btn-nueva-cliente"),
+    $("#fab-nueva-cliente"),
+    document.querySelector(".cabecera")
+  );
 
   await cargar();
 }
