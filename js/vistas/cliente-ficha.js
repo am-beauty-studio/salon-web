@@ -7,7 +7,7 @@ import {
   errorTelefonoCuba, esReprogramada,
 } from "../util.js?v=52";
 import { icono } from "../iconos.js?v=64";
-import { esAdmin } from "../auth.js?v=51";
+import { esAdmin } from "../auth.js?v=52";
 
 const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 

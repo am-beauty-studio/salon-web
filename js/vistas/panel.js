@@ -4,10 +4,17 @@
 // Equivalente a src/app/panel/index.tsx de salon_app.
 
 import { del, get, patch } from "../api.js?v=49";
+import { usuario as usuarioActual } from "../auth.js?v=52";
 import { animarCifras } from "../contador.js?v=1";
 import { icono } from "../iconos.js?v=64";
 import { confirmarPeligro } from "../modal-confirmar.js?v=1";
 import { $, $$, aviso, escapeHtml, fechaCorta, hora, usd } from "../util.js?v=52";
+
+const ETIQUETA_ROL = {
+  superadmin: "Superadmin",
+  admin: "Administrador",
+  usuario: "Usuario",
+};
 
 function kpi(titulo, valor, sub, ico, destacado = false) {
   return `
@@ -72,20 +79,83 @@ function estadoVacio(ico, titulo, detalle) {
     </div>`;
 }
 
-function filaAcceso(href, ico, titulo, detalle) {
+/** "hace 3 min" a partir de la hora del servidor y la de la actividad. */
+function haceTiempo(iso, ahora) {
+  if (!iso) return "sin actividad";
+  const segundos = Math.max(0, (new Date(ahora) - new Date(iso)) / 1000);
+  if (segundos < 60) return "ahora mismo";
+  const minutos = Math.floor(segundos / 60);
+  if (minutos < 60) return `hace ${minutos} min`;
+  const horas = Math.floor(minutos / 60);
+  if (horas < 24) return `hace ${horas} h`;
+  return `hace ${Math.floor(horas / 24)} d`;
+}
+
+/** "hoy, 09:15" o "22/11/2026, 18:40" en la hora del dispositivo. */
+function fechaHoraCorta(iso) {
+  if (!iso) return "nunca";
+  const fecha = new Date(iso);
+  const textoHora = fecha.toLocaleTimeString("es-ES", {
+    hour: "2-digit", minute: "2-digit",
+  });
+  if (fecha.toDateString() === new Date().toDateString()) {
+    return `hoy, ${textoHora}`;
+  }
+  return `${fecha.toLocaleDateString("es-ES")}, ${textoHora}`;
+}
+
+function iniciales(nombre) {
+  const partes = String(nombre || "?").trim().split(/\s+/).filter(Boolean);
+  return partes.slice(0, 2).map((p) => p[0].toUpperCase()).join("") || "?";
+}
+
+/** Tarjeta pequeña de resumen de la sección de accesos. */
+function statAcceso(ico, valor, etiqueta, clase = "") {
   return `
-    <a class="lista-fila" href="${href}">
-      <span class="ico-lista" style="display:inline-flex">${ico}</span>
-      <span class="lista-principal">
-        ${escapeHtml(titulo)}
-        <br/><span class="lista-secundario">${escapeHtml(detalle)}</span>
+    <div class="acceso-stat ${clase}">
+      <span class="acceso-stat-ico">${ico}</span>
+      <span>
+        <b>${escapeHtml(String(valor))}</b>
+        <small>${escapeHtml(etiqueta)}</small>
       </span>
-      <span class="lista-secundario" aria-hidden="true">›</span>
-    </a>`;
+    </div>`;
+}
+
+function filaUsuarioAcceso(u, ahora) {
+  const soyYo = usuarioActual?.id === u.id;
+  const detalle = u.en_linea
+    ? `Activo ${haceTiempo(u.ultima_actividad, ahora)}`
+    : `Último acceso: ${fechaHoraCorta(u.ultimo_acceso)}`;
+  return `
+    <div class="acceso-fila ${u.en_linea ? "en-linea" : ""} ${u.activo ? "" : "inactiva"}">
+      <span class="acceso-avatar">
+        ${escapeHtml(iniciales(u.nombre))}
+        <span class="acceso-punto ${u.en_linea ? "on" : ""}" aria-hidden="true"></span>
+      </span>
+      <span class="acceso-datos">
+        <span class="acceso-nombre">
+          ${escapeHtml(u.nombre)}
+          ${soyYo ? `<span class="badge badge-dorado">Tú</span>` : ""}
+          ${u.activo ? "" : `<span class="badge badge-rojo">Inactivo</span>`}
+        </span>
+        <span class="acceso-meta">
+          @${escapeHtml(u.usuario || "sin usuario")} · ${escapeHtml(ETIQUETA_ROL[u.rol] || u.rol)}
+        </span>
+      </span>
+      <span class="acceso-estado ${u.en_linea ? "on" : ""}">
+        <b>${u.en_linea ? "En línea" : "Desconectado"}</b>
+        <small>${escapeHtml(detalle)}</small>
+      </span>
+      <span class="acceso-hoy" title="Inicios de sesión hoy">
+        <b>${u.accesos_hoy}</b>
+        <small>${u.accesos_hoy === 1 ? "acceso hoy" : "accesos hoy"}</small>
+      </span>
+    </div>`;
 }
 
 export async function render(raiz) {
   let resumen = null;
+  let accesos = null;
   let completadas = { total: 0, citas: [] };
   let filtro = "";
   let categoria = "completadas";
@@ -105,14 +175,24 @@ export async function render(raiz) {
       <div class="dash-vacio">Cargando resumen…</div>
     </div>
 
-    <div class="dash-card">
+    <div class="dash-card panel-accesos-card">
       <div class="dash-cab">
         <div>
-          <h2>Accesos de control</h2>
-          <p>La sección reservada para el superadministrador.</p>
+          <h2>Control de acceso</h2>
+          <p>Quién está en línea y cuántas veces se ha entrado hoy. El contador se reinicia a las 0:00.</p>
+        </div>
+        <div class="acceso-cab-acciones">
+          <button class="btn btn-mini btn-suave" id="panel-accesos-refresh" type="button">
+            ${icono.repetir(14)} Actualizar
+          </button>
+          <a class="btn btn-mini btn-contorno" href="#/usuarios">
+            ${icono.personas(14)} Gestionar usuarios
+          </a>
         </div>
       </div>
-      <div id="panel-accesos"></div>
+      <div id="panel-accesos">
+        <div class="dash-vacio">Cargando accesos…</div>
+      </div>
     </div>
 
     <div class="dash-card">
@@ -169,6 +249,7 @@ export async function render(raiz) {
 
   const $kpis = $("#panel-kpis");
   const $accesos = $("#panel-accesos");
+  const $refrescarAccesos = $("#panel-accesos-refresh");
   const $citas = $("#panel-citas");
   const $contador = $("#panel-contador");
   const $filtro = $("#panel-filtro");
@@ -191,12 +272,42 @@ export async function render(raiz) {
       kpi("Avisos", r.notificaciones_sin_leer, "sin leer", icono.campana(17)),
     ].join("");
 
-    $accesos.innerHTML = [
-      filaAcceso("#/usuarios", icono.personas(), "Usuarios y roles",
-        "Crear, editar, activar o desactivar cuentas"),
-    ].join("");
-
     animarCifras($kpis);
+  }
+
+  function pintarAccesos() {
+    if (!accesos) return;
+    $accesos.innerHTML = `
+      <div class="acceso-resumen" aria-live="polite">
+        ${statAcceso(icono.usuario(16), accesos.en_linea, "En línea", "en-linea")}
+        ${statAcceso(icono.usuario(16), accesos.desconectados, "Desconectados", "fuera")}
+        ${statAcceso(icono.reloj(16), accesos.accesos_hoy, "Accesos hoy", "total")}
+      </div>
+      <div class="acceso-lista">
+        ${accesos.usuarios.map((u) => filaUsuarioAcceso(u, accesos.ahora)).join("")}
+      </div>
+      <p class="acceso-pie">
+        Actualizado ${escapeHtml(fechaHoraCorta(accesos.ahora))} ·
+        En línea = actividad en los últimos 5 minutos.
+      </p>`;
+  }
+
+  async function cargarAccesos(silencioso = false) {
+    if (!silencioso) {
+      $accesos.innerHTML = `<div class="dash-vacio">Cargando accesos…</div>`;
+    }
+    try {
+      accesos = await get("/panel/accesos");
+      pintarAccesos();
+    } catch (e) {
+      // Una actualización automática fallida no borra los datos ya visibles.
+      if (silencioso) return;
+      $accesos.innerHTML = estadoVacio(
+        icono.equis(24),
+        "No se pudo cargar el control de acceso",
+        e.message || "Inténtalo de nuevo en unos segundos."
+      );
+    }
   }
 
   function usuarioEtiqueta(c) {
@@ -320,7 +431,11 @@ export async function render(raiz) {
   }
 
   async function cargar() {
-    await Promise.all([cargarResumen(), buscado ? buscarCitas() : null]);
+    await Promise.all([
+      cargarResumen(),
+      cargarAccesos(),
+      buscado ? buscarCitas() : null,
+    ]);
   }
 
   function datosCita(c) {
@@ -445,6 +560,24 @@ export async function render(raiz) {
       $borrarTodo.disabled = false;
     }
   };
+
+  $refrescarAccesos.onclick = async () => {
+    $refrescarAccesos.disabled = true;
+    try {
+      await cargarAccesos();
+    } finally {
+      $refrescarAccesos.disabled = false;
+    }
+  };
+
+  // Mientras esta vista siga montada, actualiza presencia y accesos cada minuto.
+  const refrescoAccesos = setInterval(() => {
+    if (!document.body.contains($accesos)) {
+      clearInterval(refrescoAccesos);
+      return;
+    }
+    if (document.visibilityState === "visible") cargarAccesos(true);
+  }, 60000);
 
   await cargar();
 }

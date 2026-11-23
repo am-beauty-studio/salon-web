@@ -16,7 +16,7 @@ import {
 import { crearSelectorDia, crearHorarios, consultaDisponibilidad } from "./componentes.js?v=49";
 import { icono, icoCategoria } from "../iconos.js?v=64";
 import { mostrarExitoCita } from "../modal-exito.js?v=49";
-import { esAdmin } from "../auth.js?v=51";
+import { esAdmin } from "../auth.js?v=52";
 
 const MAX_SERVICIOS = 3;
 

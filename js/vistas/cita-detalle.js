@@ -6,7 +6,7 @@ import {
   $, $$, aviso, confirmar, desdeISO, escapeHtml, etiqueta, hora, usd,
   badgeCita, textoSubtipo, marcarReprogramadas, nombreCorto, esReprogramada,
 } from "../util.js?v=52";
-import { esAdmin } from "../auth.js?v=51";
+import { esAdmin } from "../auth.js?v=52";
 import { icono } from "../iconos.js?v=64";
 import { crearSelectorDia, crearHorarios, consultaDisponibilidad } from "./componentes.js?v=49";
 import { mostrarExitoReprogramar } from "../modal-exito.js?v=49";

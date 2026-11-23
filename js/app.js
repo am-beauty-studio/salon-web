@@ -4,17 +4,18 @@
 import { $, esperar, soltar } from "./util.js?v=52";
 import {
   haySesion, esAdmin, esSuperadmin, usuario, cerrarSesion, restaurarSesion,
-} from "./auth.js?v=51";
+  iniciarPresencia,
+} from "./auth.js?v=52";
 import { icono } from "./iconos.js?v=64";
-import { cerrarCuenta, marcarMenuInferior, pintarMenuInferior } from "./menu-inferior.js?v=56";
+import { cerrarCuenta, marcarMenuInferior, pintarMenuInferior } from "./menu-inferior.js?v=57";
 import { iniciarDespertar, terminarDespertar } from "./espera.js?v=1";
 
-import { render as vistaLogin } from "./vistas/login.js?v=61";
-import { render as vistaAgenda } from "./vistas/agenda.js?v=61";
-import { render as vistaCitaNueva } from "./vistas/cita-nueva.js?v=53";
-import { render as vistaCitaDetalle } from "./vistas/cita-detalle.js?v=64";
+import { render as vistaLogin } from "./vistas/login.js?v=62";
+import { render as vistaAgenda } from "./vistas/agenda.js?v=62";
+import { render as vistaCitaNueva } from "./vistas/cita-nueva.js?v=54";
+import { render as vistaCitaDetalle } from "./vistas/cita-detalle.js?v=65";
 import { render as vistaClientes } from "./vistas/clientes.js?v=52";
-import { render as vistaClienteFicha } from "./vistas/cliente-ficha.js?v=62";
+import { render as vistaClienteFicha } from "./vistas/cliente-ficha.js?v=63";
 import { render as vistaServicios } from "./vistas/servicios.js?v=64";
 import { render as vistaServicioForm } from "./vistas/servicio-form.js?v=54";
 import { render as vistaProductos } from "./vistas/productos.js?v=70";
@@ -24,9 +25,9 @@ import { render as vistaEmpleadaForm } from "./vistas/empleada-form.js?v=52";
 import { render as vistaGanancias } from "./vistas/ganancias.js?v=69";
 import { render as vistaEstadisticas } from "./vistas/estadisticas.js?v=58";
 import { render as vistaUsuarios } from "./vistas/usuarios.js?v=53";
-import { render as vistaUsuarioForm } from "./vistas/usuario-form.js?v=53";
-import { render as vistaPanel } from "./vistas/panel.js?v=8";
-import { render as vistaNotificaciones } from "./vistas/notificaciones.js?v=59";
+import { render as vistaUsuarioForm } from "./vistas/usuario-form.js?v=54";
+import { render as vistaPanel } from "./vistas/panel.js?v=9";
+import { render as vistaNotificaciones } from "./vistas/notificaciones.js?v=60";
 
 const RUTAS = [
   { patron: /^\/login$/, vista: vistaLogin, publica: true, sinCabecera: true },
@@ -188,6 +189,9 @@ async function arrancar() {
 
   // Recupera el usuario (rol, nombre) para pintar el menú completo al recargar.
   await restaurarSesion();
+  // Con la sesión restaurada, la cuenta vuelve a anunciarse como en línea.
+  // Se espera la primera señal para que el panel no la pinte como desconectada.
+  await iniciarPresencia();
   navegar();
 }
 

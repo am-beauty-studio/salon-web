@@ -5,7 +5,7 @@ import {
   $, $$, aviso, confirmar, escapeHtml, aISO, sumarDias, etiqueta,
   esHoy, hora, usd, textoSubtipo, badgeCita, nombreCorto, esReprogramada,
 } from "../util.js?v=52";
-import { esAdmin } from "../auth.js?v=51";
+import { esAdmin } from "../auth.js?v=52";
 import { icono } from "../iconos.js?v=64";
 import { abrirCalendario } from "./componentes.js?v=49";
 
