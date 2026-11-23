@@ -7,7 +7,7 @@ import { del, get, patch } from "../api.js?v=49";
 import { animarCifras } from "../contador.js?v=1";
 import { icono } from "../iconos.js?v=64";
 import { confirmarPeligro } from "../modal-confirmar.js?v=1";
-import { $, aviso, escapeHtml, fechaCorta, hora, usd } from "../util.js?v=52";
+import { $, $$, aviso, escapeHtml, fechaCorta, hora, usd } from "../util.js?v=52";
 
 function kpi(titulo, valor, sub, ico, destacado = false) {
   return `
@@ -20,14 +20,56 @@ function kpi(titulo, valor, sub, ico, destacado = false) {
 }
 
 const CATEGORIAS = [
-  { id: "completadas", etiqueta: "Completadas", vacio: "completadas" },
-  { id: "canceladas", etiqueta: "Canceladas", vacio: "canceladas" },
-  { id: "archivadas", etiqueta: "Completadas archivadas", vacio: "completadas archivadas" },
-  { id: "reprogramadas", etiqueta: "Completadas reprogramadas", vacio: "completadas reprogramadas" },
+  {
+    id: "completadas", etiqueta: "Completadas", vacio: "completadas",
+    detalle: "Cobradas y cerradas", ico: "check",
+  },
+  {
+    id: "canceladas", etiqueta: "Canceladas", vacio: "canceladas",
+    detalle: "Fuera de la agenda", ico: "equis",
+  },
+  {
+    id: "archivadas", etiqueta: "Archivadas", vacio: "completadas archivadas",
+    detalle: "Completadas ocultas", ico: "archivo",
+  },
+  {
+    id: "reprogramadas", etiqueta: "Reprogramadas", vacio: "completadas reprogramadas",
+    detalle: "Movidas a otra fecha", ico: "repetir",
+  },
 ];
 
 function categoriaActual(id) {
   return CATEGORIAS.find((c) => c.id === id) || CATEGORIAS[0];
+}
+
+/** Selector visual de categoría: tarjetas de radio, no un desplegable. */
+function selectorCategorias(actual) {
+  return `
+    <div class="panel-cats" role="radiogroup" aria-label="Categoría de citas">
+      ${CATEGORIAS.map((c) => `
+        <label class="panel-cat">
+          <input type="radio" name="panel-categoria" value="${c.id}"
+            ${c.id === actual ? "checked" : ""} />
+          <span class="panel-cat-cuerpo">
+            <span class="panel-cat-ico">${icono[c.ico](16)}</span>
+            <span class="panel-cat-txt">
+              <b>${escapeHtml(c.etiqueta)}</b>
+              <small>${escapeHtml(c.detalle)}</small>
+            </span>
+            <span class="panel-cat-marca" aria-hidden="true">${icono.check(12)}</span>
+          </span>
+        </label>`).join("")}
+    </div>`;
+}
+
+/** Estado vacío con icono para el buscador de citas. */
+function estadoVacio(ico, titulo, detalle) {
+  return `
+    <div class="panel-vacio">
+      <span class="panel-vacio-ico">${ico}</span>
+      <b>${escapeHtml(titulo)}</b>
+      <span>${escapeHtml(detalle)}</span>
+    </div>`;
 }
 
 function filaAcceso(href, ico, titulo, detalle) {
@@ -79,34 +121,35 @@ export async function render(raiz) {
           <h2>Buscar citas</h2>
           <p>Filtra por categoría y busca la cita que quieras reabrir o eliminar.</p>
         </div>
-        <span class="contador" id="panel-contador"></span>
+        <span class="contador" id="panel-contador" aria-live="polite"></span>
       </div>
       <form class="panel-filtro" id="panel-filtro">
-        <label class="panel-filtro-selector" for="panel-categoria">
+        <div class="panel-cats-cab">
           <span class="panel-filtro-etq">Categoría</span>
-          <select class="input" id="panel-categoria">
-            ${CATEGORIAS.map((c) => `
-              <option value="${c.id}" ${c.id === categoria ? "selected" : ""}>
-                ${escapeHtml(c.etiqueta)}
-              </option>`).join("")}
-          </select>
-        </label>
-        <div class="campo-ico panel-filtro-campo">
-          ${icono.lupa()}
-          <input class="input" id="panel-buscar" autocomplete="off"
-            placeholder="Clienta, servicio o especialista" />
+          <span class="panel-filtro-ayuda">Elige qué citas quieres revisar</span>
         </div>
-        <div class="panel-filtro-botones">
-          <button class="btn btn-dorado" id="panel-buscar-btn" type="submit">
-            ${icono.lupa(16)} Buscar
-          </button>
-          <button class="btn btn-suave" id="panel-limpiar" type="button">Limpiar</button>
+        ${selectorCategorias(categoria)}
+        <div class="panel-busqueda">
+          <div class="campo-ico panel-filtro-campo">
+            ${icono.lupa()}
+            <input class="input" id="panel-buscar" autocomplete="off"
+              aria-label="Buscar citas por clienta, servicio o especialista"
+              placeholder="Clienta, servicio o especialista" />
+          </div>
+          <div class="panel-filtro-botones">
+            <button class="btn btn-dorado" id="panel-buscar-btn" type="submit">
+              ${icono.lupa(16)} Buscar
+            </button>
+            <button class="btn btn-suave" id="panel-limpiar" type="button">Limpiar</button>
+          </div>
         </div>
       </form>
-      <div id="panel-citas">
-        <div class="dash-vacio">
-          Elige una categoría, escribe una clienta, servicio o especialista y pulsa Buscar.
-        </div>
+      <div id="panel-citas" aria-live="polite">
+        ${estadoVacio(
+          icono[CATEGORIAS[0].ico](24),
+          "Citas completadas",
+          "Escribe una clienta, servicio o especialista y pulsa Buscar. También puedes buscar sin escribir nada."
+        )}
       </div>
     </div>
 
@@ -129,7 +172,7 @@ export async function render(raiz) {
   const $citas = $("#panel-citas");
   const $contador = $("#panel-contador");
   const $filtro = $("#panel-filtro");
-  const $categoriaSel = $("#panel-categoria");
+  const $categorias = $$('input[name="panel-categoria"]', $filtro);
   const $buscar = $("#panel-buscar");
   const $buscarBtn = $("#panel-buscar-btn");
   const $limpiar = $("#panel-limpiar");
@@ -164,10 +207,11 @@ export async function render(raiz) {
     const cat = categoriaActual(categoria);
     if (!buscado) {
       $contador.textContent = "";
-      $citas.innerHTML = `
-        <div class="dash-vacio">
-          Elige una categoría, escribe una clienta, servicio o especialista y pulsa Buscar.
-        </div>`;
+      $citas.innerHTML = estadoVacio(
+        icono[cat.ico](24),
+        `Citas ${cat.vacio}`,
+        "Escribe una clienta, servicio o especialista y pulsa Buscar. También puedes buscar sin escribir nada."
+      );
       return;
     }
 
@@ -176,11 +220,17 @@ export async function render(raiz) {
     } · ${cat.etiqueta}`;
 
     if (!completadas.citas.length) {
-      $citas.innerHTML = `<div class="dash-vacio">
-        ${filtro
-          ? `Sin citas ${cat.vacio} para “${escapeHtml(filtro)}”.`
-          : `No hay citas ${cat.vacio}.`}
-      </div>`;
+      $citas.innerHTML = filtro
+        ? estadoVacio(
+          icono.lupa(24),
+          "Sin coincidencias",
+          `No encontramos citas ${cat.vacio} para “${filtro}”.`
+        )
+        : estadoVacio(
+          icono.lupa(24),
+          `Sin citas ${cat.vacio}`,
+          "No hay resultados en este período. Prueba con otra categoría o cambia la búsqueda."
+        );
       return;
     }
 
@@ -246,16 +296,22 @@ export async function render(raiz) {
     const texto = filtro.trim();
     buscado = true;
     $buscarBtn.disabled = true;
-    $citas.innerHTML = `<div class="dash-vacio">Buscando citas…</div>`;
+    $citas.innerHTML = estadoVacio(
+      icono.lupa(24),
+      "Buscando citas…",
+      "Espera un momento mientras revisamos el historial."
+    );
     try {
       completadas = await get(
         `/panel/citas-completadas?categoria=${categoria}&limit=100&q=${encodeURIComponent(texto)}`
       );
     } catch (e) {
       completadas = { total: 0, citas: [] };
-      $citas.innerHTML = `<div class="dash-vacio">${escapeHtml(
-        e.message || "No se pudieron buscar las citas."
-      )}</div>`;
+      $citas.innerHTML = estadoVacio(
+        icono.equis(24),
+        "No se pudieron buscar las citas",
+        e.message || "Inténtalo de nuevo en unos segundos."
+      );
       return;
     } finally {
       $buscarBtn.disabled = false;
@@ -335,19 +391,24 @@ export async function render(raiz) {
     buscarCitas();
   });
 
-  $categoriaSel.onchange = () => {
-    categoria = $categoriaSel.value;
-    // Cambiar de categoría no ejecuta la búsqueda: solo se verá al pulsar Buscar.
-    completadas = { total: 0, citas: [] };
-    buscado = false;
-    pintarCitas();
-  };
+  $categorias.forEach((radio) => {
+    radio.onchange = () => {
+      if (!radio.checked) return;
+      categoria = radio.value;
+      // Cambiar de categoría no ejecuta la búsqueda: solo se verá al pulsar Buscar.
+      completadas = { total: 0, citas: [] };
+      buscado = false;
+      pintarCitas();
+    };
+  });
 
   $limpiar.onclick = () => {
     filtro = "";
     $buscar.value = "";
     categoria = "completadas";
-    $categoriaSel.value = categoria;
+    $categorias.forEach((radio) => {
+      radio.checked = radio.value === categoria;
+    });
     completadas = { total: 0, citas: [] };
     buscado = false;
     pintarCitas();

@@ -3519,15 +3519,16 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 /* Filtro y resultados del Panel de control */
 .panel-filtro {
   display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-.panel-filtro-selector {
-  flex: 0 0 220px;
-  min-width: 0;
-  display: flex;
   flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.panel-cats-cab {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 .panel-filtro-etq {
   color: var(--muted);
@@ -3535,11 +3536,142 @@ a.cita-cliente:hover { color: var(--gold-dark); }
   font-weight: 700;
   letter-spacing: .5px;
   text-transform: uppercase;
-  margin-bottom: 5px;
 }
-.panel-filtro-selector .input { padding: 10px 12px; }
+.panel-filtro-ayuda { color: var(--muted); font-size: 11.5px; }
+
+/* Selector de categoría: tarjetas de radio con icono y descripción. */
+.panel-cats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.panel-cat { position: relative; cursor: pointer; min-width: 0; }
+.panel-cat input {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.panel-cat-cuerpo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 100%;
+  min-height: 50px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 9px 10px;
+  transition: border-color .15s, background .15s, box-shadow .15s;
+}
+.panel-cat:hover .panel-cat-cuerpo { border-color: var(--border-fuerte); }
+.panel-cat input:checked + .panel-cat-cuerpo {
+  background: #FCF0F3;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(206, 124, 148, .12);
+}
+.panel-cat input:focus-visible + .panel-cat-cuerpo {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.panel-cat-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  flex-shrink: 0;
+  background: rgba(206, 124, 148, .12);
+  color: var(--gold-dark);
+  transition: background .15s, color .15s;
+}
+.panel-cat-ico .ico { vertical-align: 0; }
+.panel-cat input:checked + .panel-cat-cuerpo .panel-cat-ico {
+  background: var(--gold);
+  color: #fff;
+}
+.panel-cat-txt {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.panel-cat-txt b {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.panel-cat-txt small {
+  color: var(--muted);
+  font-size: 10.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.panel-cat input:checked + .panel-cat-cuerpo .panel-cat-txt b {
+  color: var(--gold-dark);
+}
+.panel-cat-marca {
+  display: inline-flex;
+  color: var(--gold);
+  opacity: 0;
+  transition: opacity .15s;
+}
+.panel-cat-marca .ico { vertical-align: 0; }
+.panel-cat input:checked + .panel-cat-cuerpo .panel-cat-marca { opacity: 1; }
+
+.panel-busqueda {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .panel-filtro-campo { flex: 1; min-width: 0; }
 .panel-filtro-botones { display: flex; gap: 10px; flex-shrink: 0; }
+
+/* Contador de resultados como píldora, solo cuando hay texto. */
+#panel-contador:not(:empty) {
+  background: rgba(206, 124, 148, .13);
+  color: var(--gold-dark);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Estado vacío del buscador de citas. */
+.panel-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--muted);
+}
+.panel-vacio-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(206, 124, 148, .10);
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+.panel-vacio-ico .ico { vertical-align: 0; }
+.panel-vacio b { color: var(--text); font-size: 14px; }
+.panel-vacio > span:last-child { font-size: 12.5px; max-width: 380px; }
+
 .panel-cita-fila { align-items: flex-start; cursor: default; }
 .panel-cita-info { min-width: 0; }
 .panel-cita-acciones {
@@ -3550,12 +3682,18 @@ a.cita-cliente:hover { color: var(--gold-dark); }
   flex-shrink: 0;
 }
 
+@media (max-width: 900px) {
+  .panel-cats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 @media (max-width: 640px) {
   /* En móvil el buscador ocupa su propia fila y los botones van debajo. */
-  .panel-filtro { flex-direction: column; align-items: stretch; }
-  .panel-filtro-selector { flex: none; width: 100%; }
+  .panel-busqueda { flex-direction: column; align-items: stretch; }
   .panel-filtro-botones { width: 100%; }
   .panel-filtro-botones .btn { flex: 1; }
+  /* Las tarjetas se quedan en icono + nombre para no truncar el texto. */
+  .panel-cat-txt small,
+  .panel-cat-marca { display: none; }
   /* La ficha de la cita y sus acciones no se apiñan en columnas estrechas. */
   .panel-cita-fila { flex-direction: column; align-items: stretch; }
   .panel-cita-acciones { width: 100%; }
