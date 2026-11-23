@@ -16,7 +16,7 @@ import { render as vistaCitaDetalle } from "./vistas/cita-detalle.js?v=64";
 import { render as vistaClientes } from "./vistas/clientes.js?v=52";
 import { render as vistaClienteFicha } from "./vistas/cliente-ficha.js?v=62";
 import { render as vistaServicios } from "./vistas/servicios.js?v=64";
-import { render as vistaServicioForm } from "./vistas/servicio-form.js?v=53";
+import { render as vistaServicioForm } from "./vistas/servicio-form.js?v=54";
 import { render as vistaProductos } from "./vistas/productos.js?v=70";
 import { render as vistaProductoForm } from "./vistas/producto-form.js?v=75";
 import { render as vistaEmpleadas } from "./vistas/empleadas.js?v=55";
@@ -85,6 +85,9 @@ function marcarChipActiva(ruta) {
 
 async function navegar() {
   cerrarCuenta();
+  // Cada pantalla empieza desde arriba: al abrir una ficha o un formulario no
+  // se arrastra el desplazamiento de la lista anterior.
+  window.scrollTo(0, 0);
   const hash = location.hash.replace(/^#/, "") || "/";
   const [ruta, query] = hash.split("?");
   const parametrosQuery = new URLSearchParams(query || "");
