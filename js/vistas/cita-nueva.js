@@ -80,9 +80,9 @@ export async function render(raiz, _params, query) {
     if (clienteId) {
       caja.innerHTML = `
         <div class="paso-titulo">1 · Clienta</div>
-        <div class="tarjeta" style="border-color:var(--gold)">
+        <div class="tarjeta" style="border-color:var(--gold);display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px">
           <div style="font-weight:600">${escapeHtml(clienteNombre || "Clienta")}</div>
-          <button class="btn btn-contorno btn-mini" id="cambiar-clienta" type="button" style="margin-top:8px">Cambiar</button>
+          <button class="btn btn-contorno btn-mini" id="cambiar-clienta" type="button" style="flex:none">Cambiar</button>
         </div>`;
       $("#cambiar-clienta").onclick = () => {
         clienteId = null; clienteNombre = null; pintarPaso1(); actualizar();

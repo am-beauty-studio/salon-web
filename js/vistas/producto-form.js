@@ -81,7 +81,7 @@ export async function render(raiz, params, query) {
     <div class="form-vista">
       <div class="vista-cab">
         <span class="vista-ico">${icono.caja(22)}</span>
-        <div>
+        <div class="vista-cab-texto">
           <h1 class="vista-titulo">${nuevo ? "Nuevo producto" : "Editar producto"}</h1>
           <p class="form-sub">${nuevo
             ? (categoriaInicial

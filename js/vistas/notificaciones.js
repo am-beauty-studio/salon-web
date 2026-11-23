@@ -5,7 +5,7 @@ import { get, patch, del } from "../api.js?v=49";
 import { esAdmin } from "../auth.js?v=51";
 import { icono } from "../iconos.js?v=64";
 import { confirmarPeligro } from "../modal-confirmar.js?v=1";
-import { refrescarBadgeNotificaciones } from "../menu-inferior.js?v=54";
+import { refrescarBadgeNotificaciones } from "../menu-inferior.js?v=56";
 import { $, aviso, escapeHtml } from "../util.js?v=52";
 
 const ICONO_TIPO = {
@@ -14,6 +14,7 @@ const ICONO_TIPO = {
   cita_cancelacion: icono.equis(18),
   cita_archivada: icono.archivo(18),
   cita_adicional: icono.mas(18),
+  cita_pendiente: icono.reloj(18),
 };
 
 // Tipos que cada usuaria puede activar o desactivar en su cuenta.
@@ -43,6 +44,12 @@ const AJUSTES = [
     clave: "cita_archivada",
     titulo: "Citas archivadas",
     detalle: "Cuando se registra una cita de un día pasado.",
+  },
+  {
+    clave: "cita_pendiente",
+    titulo: "Citas sin completar",
+    detalle: "Recordatorio de citas de días pasados que siguen programadas.",
+    soloAdmin: true,
   },
   {
     clave: "cita_adicional",

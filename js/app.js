@@ -6,19 +6,19 @@ import {
   haySesion, esAdmin, esSuperadmin, usuario, cerrarSesion, restaurarSesion,
 } from "./auth.js?v=51";
 import { icono } from "./iconos.js?v=64";
-import { cerrarCuenta, marcarMenuInferior, pintarMenuInferior } from "./menu-inferior.js?v=55";
+import { cerrarCuenta, marcarMenuInferior, pintarMenuInferior } from "./menu-inferior.js?v=56";
 import { iniciarDespertar, terminarDespertar } from "./espera.js?v=1";
 
 import { render as vistaLogin } from "./vistas/login.js?v=61";
 import { render as vistaAgenda } from "./vistas/agenda.js?v=61";
-import { render as vistaCitaNueva } from "./vistas/cita-nueva.js?v=51";
+import { render as vistaCitaNueva } from "./vistas/cita-nueva.js?v=53";
 import { render as vistaCitaDetalle } from "./vistas/cita-detalle.js?v=64";
 import { render as vistaClientes } from "./vistas/clientes.js?v=52";
 import { render as vistaClienteFicha } from "./vistas/cliente-ficha.js?v=61";
 import { render as vistaServicios } from "./vistas/servicios.js?v=64";
 import { render as vistaServicioForm } from "./vistas/servicio-form.js?v=53";
 import { render as vistaProductos } from "./vistas/productos.js?v=70";
-import { render as vistaProductoForm } from "./vistas/producto-form.js?v=71";
+import { render as vistaProductoForm } from "./vistas/producto-form.js?v=72";
 import { render as vistaEmpleadas } from "./vistas/empleadas.js?v=55";
 import { render as vistaEmpleadaForm } from "./vistas/empleada-form.js?v=52";
 import { render as vistaGanancias } from "./vistas/ganancias.js?v=69";
@@ -26,7 +26,7 @@ import { render as vistaEstadisticas } from "./vistas/estadisticas.js?v=56";
 import { render as vistaUsuarios } from "./vistas/usuarios.js?v=53";
 import { render as vistaUsuarioForm } from "./vistas/usuario-form.js?v=53";
 import { render as vistaPanel } from "./vistas/panel.js?v=7";
-import { render as vistaNotificaciones } from "./vistas/notificaciones.js?v=58";
+import { render as vistaNotificaciones } from "./vistas/notificaciones.js?v=59";
 
 const RUTAS = [
   { patron: /^\/login$/, vista: vistaLogin, publica: true, sinCabecera: true },

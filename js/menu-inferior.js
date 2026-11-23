@@ -148,6 +148,9 @@ export function abrirCuenta() {
   if (!zona) return;
 
   const boton = document.querySelector("#menu-inferior [data-mi='usuario']");
+  // Mientras la hoja está abierta, Usuario es la única opción señalada.
+  const activosPrevios = [...document.querySelectorAll("#menu-inferior [data-mi].activo")];
+  activosPrevios.forEach((b) => b.classList.remove("activo"));
   boton?.classList.add("activo");
 
   const inicial = (usuario?.nombre || "?").charAt(0).toUpperCase();
@@ -216,6 +219,7 @@ export function abrirCuenta() {
     document.body.style.overflow = overflowAnterior;
     zona.innerHTML = "";
     boton?.classList.remove("activo");
+    activosPrevios.forEach((b) => b.classList.add("activo"));
   }
   cerrarCuentaActual = cerrar;
   function alTeclear(e) {

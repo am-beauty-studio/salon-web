@@ -3699,7 +3699,13 @@ a.dash-persona:hover { border-color: var(--gold); text-decoration: none; }
 }
 .mi-item:hover .mi-icono,
 .mi-item.activo .mi-icono { color: var(--gold-dark); border-color: var(--gold-dark); }
-.mi-item.activo .mi-icono { background: rgba(206, 124, 148, .18); }
+/* La opción activa usa el rosa primario con el icono en blanco. */
+.mi-item.activo .mi-icono {
+  background: var(--gold);
+  color: #fff;
+  border-color: var(--gold-dark);
+  box-shadow: 0 4px 12px rgba(206, 124, 148, .35);
+}
 
 .mi-texto {
   overflow: hidden;
@@ -3717,6 +3723,17 @@ a.dash-persona:hover { border-color: var(--gold); text-decoration: none; }
   box-shadow: 0 4px 12px rgba(206, 124, 148, .35);
 }
 .mi-principal:hover .mi-icono { background: #B4637C; color: #fff; border-color: #96405C; }
+/* Si otra opción del menú está activa, la acción principal vuelve al tono claro. */
+.menu-inferior:has(.mi-item.activo:not(.mi-principal)) .mi-principal {
+  color: var(--muted);
+  font-weight: 600;
+}
+.menu-inferior:has(.mi-item.activo:not(.mi-principal)) .mi-principal .mi-icono {
+  background: var(--bg);
+  color: var(--muted);
+  border-color: var(--gold);
+  box-shadow: none;
+}
 
 .mi-item:focus-visible,
 .cuenta-salir:focus-visible,
