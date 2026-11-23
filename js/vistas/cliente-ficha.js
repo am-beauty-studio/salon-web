@@ -23,34 +23,62 @@ export async function render(raiz, params) {
 
   function formCliente(valor = {}) {
     return `
-      <div class="campo">
-        <label class="etiqueta">Nombre *</label>
-        <div class="campo-ico">
-          ${icono.usuario()}
-          <input class="input" id="cl-nombre" value="${escapeHtml(valor.nombre || "")}" />
+      <section class="form-seccion">
+        <div class="form-seccion-cab">
+          <span class="form-seccion-ico">${icono.usuario(17)}</span>
+          <div class="form-seccion-textos">
+            <p class="form-seccion-titulo">Datos personales</p>
+            <p class="form-seccion-sub">Cómo la reconoces y cómo puedes contactarla.</p>
+          </div>
         </div>
-      </div>
-      <div class="campo">
-        <label class="etiqueta">Teléfono</label>
-        <div class="campo-ico">
-          ${icono.telefono()}
-          <input class="input" id="cl-telefono" value="${escapeHtml(valor.telefono || "")}" placeholder="+53 5..." />
+        <div class="form-grid">
+          <div class="campo">
+            <label class="etiqueta" for="cl-nombre">Nombre y apellido *</label>
+            <div class="campo-ico">
+              ${icono.usuario()}
+              <input class="input" id="cl-nombre" autocomplete="name" maxlength="100"
+                     placeholder="Ej.: Ana Pérez" value="${escapeHtml(valor.nombre || "")}" />
+            </div>
+          </div>
+          <div class="campo">
+            <label class="etiqueta" for="cl-telefono">Teléfono</label>
+            <div class="campo-ico">
+              ${icono.telefono()}
+              <input class="input" id="cl-telefono" type="tel" inputmode="tel"
+                     autocomplete="tel" maxlength="30" placeholder="+53 5..."
+                     value="${escapeHtml(valor.telefono || "")}" />
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="campo">
-        <label class="etiqueta">Correo</label>
-        <div class="campo-ico">
-          ${icono.correo()}
-          <input class="input" id="cl-email" type="email" value="${escapeHtml(valor.email || "")}" />
+      </section>
+
+      <section class="form-seccion">
+        <div class="form-seccion-cab">
+          <span class="form-seccion-ico">${icono.correo(17)}</span>
+          <div class="form-seccion-textos">
+            <p class="form-seccion-titulo">Contacto y notas</p>
+            <p class="form-seccion-sub">Opcional: correo y detalles que conviene recordar.</p>
+          </div>
         </div>
-      </div>
-      <div class="campo">
-        <label class="etiqueta">Notas</label>
-        <div class="campo-ico campo-ico-arriba">
-          ${icono.notas()}
-          <textarea class="input" id="cl-notas" placeholder="Preferencias, alergias...">${escapeHtml(valor.notas || "")}</textarea>
+        <div class="campo">
+          <label class="etiqueta" for="cl-email">Correo</label>
+          <div class="campo-ico">
+            ${icono.correo()}
+            <input class="input" id="cl-email" type="email" inputmode="email"
+                   autocomplete="email" placeholder="correo@ejemplo.com"
+                   value="${escapeHtml(valor.email || "")}" />
+          </div>
         </div>
-      </div>
+        <div class="campo" style="margin-bottom:0">
+          <label class="etiqueta" for="cl-notas">Notas</label>
+          <div class="campo-ico campo-ico-arriba">
+            ${icono.notas()}
+            <textarea class="input" id="cl-notas"
+                      placeholder="Preferencias, alergias, colores favoritos...">${escapeHtml(valor.notas || "")}</textarea>
+          </div>
+        </div>
+      </section>
+
       <p class="error-txt oculto" id="cl-error"></p>`;
   }
 
@@ -86,12 +114,20 @@ export async function render(raiz, params) {
 
   if (nueva) {
     raiz.innerHTML = `
-      <div class="vista-cab"><h1 class="vista-titulo">Nueva clienta</h1></div>
-      <div class="tarjeta">
+      <div class="form-vista">
+        <div class="vista-cab">
+          <span class="vista-ico">${icono.personas(22)}</span>
+          <div class="vista-cab-texto">
+            <h1 class="vista-titulo">Nueva clienta</h1>
+            <p class="form-sub">Añádela a tu lista para agendar citas y llevar su historial.</p>
+          </div>
+        </div>
         ${formCliente()}
-        <div class="fila-btns">
+        <div class="form-acciones">
           <a class="btn btn-contorno" href="#/clientes">Volver</a>
-          <button class="btn btn-dorado" id="btn-guardar" type="button">Guardar clienta</button>
+          <button class="btn btn-dorado" id="btn-guardar" type="button">
+            ${icono.check(16)} Guardar clienta
+          </button>
         </div>
       </div>`;
     $("#btn-guardar").onclick = async () => {
@@ -205,12 +241,20 @@ export async function render(raiz, params) {
 
   function pintarEdicion() {
     raiz.innerHTML = `
-      <div class="vista-cab"><h1 class="vista-titulo">Editar clienta</h1></div>
-      <div class="tarjeta">
+      <div class="form-vista">
+        <div class="vista-cab">
+          <span class="vista-ico">${icono.usuario(22)}</span>
+          <div class="vista-cab-texto">
+            <h1 class="vista-titulo">Editar clienta</h1>
+            <p class="form-sub">Actualiza los datos de «${escapeHtml(cliente.nombre)}».</p>
+          </div>
+        </div>
         ${formCliente(cliente)}
-        <div class="fila-btns">
+        <div class="form-acciones">
           <button class="btn btn-contorno" id="btn-cancelar" type="button">Cancelar edición</button>
-          <button class="btn btn-dorado" id="btn-guardar" type="button">Guardar cambios</button>
+          <button class="btn btn-dorado" id="btn-guardar" type="button">
+            ${icono.check(16)} Guardar cambios
+          </button>
         </div>
       </div>`;
     $("#btn-cancelar").onclick = () => pintarVista();
