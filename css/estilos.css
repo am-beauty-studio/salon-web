@@ -592,6 +592,19 @@ textarea.input { resize: vertical; min-height: 70px; }
   font-size: 13px;
 }
 
+/* Chips del tipo o variante del servicio (formulario de producto) */
+.subtipo-chips { margin-top: 9px; gap: 8px; }
+.subtipo-chips:empty { display: none; }
+.chip-subtipo { padding: 8px 15px; font-size: 13.5px; }
+.form-vista .chip.chip-subtipo.activo {
+  background: var(--gold);
+  border-color: #B25572;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(150, 64, 92, .22);
+}
+.form-vista .chip.chip-subtipo.activo:hover { background: #C4718A; border-color: #96405C; }
+
 /* El campo activo resalta también su etiqueta para ubicarse mejor. */
 .campo:focus-within > .etiqueta { color: var(--gold-dark); }
 

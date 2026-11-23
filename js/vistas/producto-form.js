@@ -199,13 +199,10 @@ export async function render(raiz, params, query) {
         </div>
 
         <div class="campo" id="pf-bloque-subtipo" style="margin-bottom:0">
-          <label class="etiqueta" for="pf-subtipo">Tipo / variante del servicio (opcional)</label>
-          <div class="campo-ico">
-            ${icono.capas()}
-            <select class="input" id="pf-subtipo">
-              <option value="">— Sin tipo —</option>
-            </select>
-          </div>
+          <label class="etiqueta">Tipo / variante del servicio (opcional)</label>
+          <input type="hidden" id="pf-subtipo" value="" />
+          <div class="chips subtipo-chips oculto" id="pf-subtipo-chips" role="radiogroup"
+               aria-label="Tipo o variante del servicio"></div>
           <p class="nota" id="pf-subtipo-nota">Selecciona primero un servicio para elegir su tipo.</p>
         </div>
       </section>
@@ -488,7 +485,16 @@ export async function render(raiz, params, query) {
     pintarSubtipos();
   }
 
-  /** Menú desplegable con los tipos del servicio (sustituye a los chips). */
+  function marcarSubtipo() {
+    const valor = $("#pf-subtipo").value;
+    $$("#pf-subtipo-chips [data-subtipo]").forEach((chip) => {
+      const activo = chip.dataset.subtipo === valor;
+      chip.classList.toggle("activo", activo);
+      chip.setAttribute("aria-checked", activo ? "true" : "false");
+    });
+  }
+
+  /** Chips con los tipos del servicio (sustituye al desplegable nativo). */
   function pintarSubtipos() {
     const servicio = servicioDeSelect();
     const subtipos = (servicio?.subtipos || []).map((t) => String(t)).filter(Boolean);
@@ -498,9 +504,21 @@ export async function render(raiz, params, query) {
     const opciones = [...subtipos];
     if (actual && !opciones.includes(actual)) opciones.push(actual);
 
-    $("#pf-subtipo").innerHTML = `<option value="">— Sin tipo —</option>` + opciones
-      .map((t) => `<option value="${escapeHtml(t)}" ${t === actual ? "selected" : ""}>${escapeHtml(textoSubtipo(t))}</option>`)
-      .join("");
+    const valor = opciones.includes(actual) ? actual : "";
+    $("#pf-subtipo").value = valor;
+
+    const caja = $("#pf-subtipo-chips");
+    const hayOpciones = Boolean(servicio) && opciones.length > 0;
+    caja.classList.toggle("oculto", !hayOpciones);
+    caja.innerHTML = hayOpciones
+      ? [
+        `<button class="chip chip-subtipo" type="button" role="radio" data-subtipo="">Sin tipo</button>`,
+        ...opciones.map((t) => `
+          <button class="chip chip-subtipo" type="button" role="radio"
+                  data-subtipo="${escapeHtml(t)}">${escapeHtml(textoSubtipo(t))}</button>`),
+      ].join("")
+      : "";
+    marcarSubtipo();
     subtipoGuardado = "";
 
     const nota = $("#pf-subtipo-nota");
@@ -575,6 +593,12 @@ export async function render(raiz, params, query) {
     subtipoGuardado = "";
     pintarServicioElegido();
     pintarSubtipos();
+  });
+  $("#pf-subtipo-chips").addEventListener("click", (e) => {
+    const chip = e.target.closest("[data-subtipo]");
+    if (!chip) return;
+    $("#pf-subtipo").value = chip.dataset.subtipo;
+    marcarSubtipo();
   });
   $("#pf-servicio-buscar").addEventListener("input", () => {
     const texto = normalizarClave($("#pf-servicio-buscar").value);
