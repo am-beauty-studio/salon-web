@@ -3646,7 +3646,10 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 .acceso-estado small {
   color: var(--muted);
   font-size: 10.5px;
-  white-space: nowrap;
+  line-height: 1.3;
+  /* El detalle puede ser largo (p. ej. «Sin inicio de sesión registrado…»). */
+  white-space: normal;
+  max-width: 28ch;
 }
 .acceso-hoy {
   display: flex;

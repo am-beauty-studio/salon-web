@@ -26,7 +26,7 @@ import { render as vistaGanancias } from "./vistas/ganancias.js?v=69";
 import { render as vistaEstadisticas } from "./vistas/estadisticas.js?v=58";
 import { render as vistaUsuarios } from "./vistas/usuarios.js?v=53";
 import { render as vistaUsuarioForm } from "./vistas/usuario-form.js?v=54";
-import { render as vistaPanel } from "./vistas/panel.js?v=9";
+import { render as vistaPanel } from "./vistas/panel.js?v=10";
 import { render as vistaNotificaciones } from "./vistas/notificaciones.js?v=60";
 
 const RUTAS = [

@@ -121,11 +121,24 @@ function statAcceso(ico, valor, etiqueta, clase = "") {
     </div>`;
 }
 
+/**
+ * Texto del estado de una cuenta. Si nunca se registró un inicio de sesión,
+ * muestra la última actividad para no confundirla con una cuenta sin uso.
+ */
+function detalleAcceso(u, ahora) {
+  if (u.en_linea) return `Activo ${haceTiempo(u.ultima_actividad, ahora)}`;
+  if (u.ultimo_acceso) {
+    return `Último inicio de sesión: ${fechaHoraCorta(u.ultimo_acceso)}`;
+  }
+  if (u.ultima_actividad) {
+    return `Sin inicio de sesión registrado · última actividad ${haceTiempo(u.ultima_actividad, ahora)}`;
+  }
+  return "Sin inicio de sesión registrado";
+}
+
 function filaUsuarioAcceso(u, ahora) {
   const soyYo = usuarioActual?.id === u.id;
-  const detalle = u.en_linea
-    ? `Activo ${haceTiempo(u.ultima_actividad, ahora)}`
-    : `Último acceso: ${fechaHoraCorta(u.ultimo_acceso)}`;
+  const detalle = detalleAcceso(u, ahora);
   return `
     <div class="acceso-fila ${u.en_linea ? "en-linea" : ""} ${u.activo ? "" : "inactiva"}">
       <span class="acceso-avatar">
