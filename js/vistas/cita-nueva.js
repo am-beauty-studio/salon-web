@@ -282,7 +282,7 @@ export async function render(raiz, _params, query) {
     if (lista) {
       lista.innerHTML = deCategoria.map((s) => `
         <button type="button" class="sel-card ${servicio?.id === s.id ? "activo" : ""}" data-id="${s.id}">
-          <div class="sel-titulo">${escapeHtml(s.nombre)}</div>
+          <div class="sel-titulo">${servicio?.id === s.id ? "✓ " : ""}${escapeHtml(s.nombre)}</div>
           <div class="sel-meta">${usd(s.precio)} USD · ${duracionTxt(s.duracion_min)}</div>
         </button>`).join("");
 
