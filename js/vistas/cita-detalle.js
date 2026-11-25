@@ -134,23 +134,31 @@ export async function render(raiz, params, query) {
       </div>
 
       ${grupo && grupo.length > 1 ? `
-        <div class="paso-titulo detalle-paso">${cita.archivada ? "Reserva archivada" : "Reserva enlazada"} (${grupo.length} servicios)</div>
-        <div class="reserva-lista">
-          ${grupo.map((g) => `
-            <a class="reserva-item ${g.id === cita.id ? "propia" : ""}" href="#/cita/${g.id}${sufijoFecha}">
-              <span class="reserva-hora">${icono.reloj(14)}${hora(g.inicio)}</span>
-              <span class="reserva-datos">
-                <span class="reserva-servicio">${escapeHtml(g.servicio_nombre)}${textoSubtipo(g.subtipo) ? ` · ${escapeHtml(textoSubtipo(g.subtipo))}` : ""}</span>
-                <span class="reserva-sub">${escapeHtml(g.empleado_nombre)}</span>
-              </span>
-              ${g.id === cita.id ? `<span class="reserva-aqui">Esta</span>` : badgeCita(g)}
-            </a>`).join("")}
-        </div>
-        ${puedeEditar && grupo.some((g) => g.estado === "programada") ? `
-          <div class="fila-btns">
-            <button class="btn btn-suave-ok" id="btn-completar-reserva" type="button">${icono.check(15)}Completar reserva</button>
-            <button class="btn btn-suave-peligro" id="btn-cancelar-reserva" type="button">${icono.equis(15)}Cancelar reserva</button>
-          </div>` : ""}` : ""}
+        <section class="form-seccion reserva-grupo">
+          <div class="form-seccion-cab">
+            <span class="form-seccion-ico">${icono.lista(17)}</span>
+            <div class="form-seccion-textos">
+              <p class="form-seccion-titulo">${cita.archivada ? "Reserva archivada" : "Reserva enlazada"} (${grupo.length} servicios)</p>
+              <p class="form-seccion-sub">Los servicios se gestionan juntos.</p>
+            </div>
+          </div>
+          <div class="reserva-lista">
+            ${grupo.map((g) => `
+              <a class="reserva-item ${g.id === cita.id ? "propia" : ""}" href="#/cita/${g.id}${sufijoFecha}">
+                <span class="reserva-hora">${icono.reloj(14)}${hora(g.inicio)}</span>
+                <span class="reserva-datos">
+                  <span class="reserva-servicio">${escapeHtml(g.servicio_nombre)}${textoSubtipo(g.subtipo) ? ` · ${escapeHtml(textoSubtipo(g.subtipo))}` : ""}</span>
+                  <span class="reserva-sub">${escapeHtml(g.empleado_nombre)}</span>
+                </span>
+                ${g.id === cita.id ? `<span class="reserva-aqui">Esta</span>` : badgeCita(g)}
+              </a>`).join("")}
+          </div>
+          ${puedeEditar && grupo.some((g) => g.estado === "programada") ? `
+            <div class="fila-btns reserva-acciones">
+              <button class="btn btn-suave-ok" id="btn-completar-reserva" type="button">${icono.check(15)}Completar reserva</button>
+              <button class="btn btn-suave-peligro" id="btn-cancelar-reserva" type="button">${icono.equis(15)}Cancelar reserva</button>
+            </div>` : ""}
+        </section>` : ""}
 
       <div class="fila-btns detalle-ficha">
         <a class="btn btn-suave btn-bloque" href="#/clientes/${cita.cliente_id}">${icono.personas(15)}Ver ficha de la clienta</a>

@@ -2459,7 +2459,6 @@ body.en-login .app { padding-bottom: 16px; }
 a.cita-cliente { color: var(--text); text-decoration: none; }
 a.cita-cliente .ico { color: var(--gold-dark); }
 a.cita-cliente:hover { color: var(--gold-dark); }
-.detalle-paso { margin-top: 20px; }
 .detalle-ayuda { color: var(--muted); font-size: 13px; margin: -2px 0 2px; }
 .detalle-ficha { margin-top: 16px; }
 .detalle-acciones {
@@ -2608,7 +2607,9 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 }
 .btn-suave-peligro:hover:not(:disabled) { background: rgba(190, 74, 87, .14); }
 
-/* Servicios de la reserva enlazada */
+/* Servicios de la reserva enlazada, agrupados con sus acciones. */
+.reserva-grupo { margin-top: 16px; margin-bottom: 0; }
+.reserva-acciones { margin-top: 14px; }
 .reserva-lista { display: flex; flex-direction: column; gap: 8px; }
 .reserva-item {
   display: flex;
