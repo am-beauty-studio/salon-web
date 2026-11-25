@@ -1,7 +1,7 @@
 // Listado de clientas. Equivalente a src/app/clientes/index.tsx.
 
 import { get } from "../api.js?v=49";
-import { $, escapeHtml } from "../util.js?v=52";
+import { $, escapeHtml } from "../util.js?v=53";
 import { icono } from "../iconos.js?v=64";
 import { activarFabAlDesplazar } from "../fab-flotante.js?v=1";
 

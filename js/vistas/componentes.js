@@ -5,7 +5,7 @@ import { get } from "../api.js?v=49";
 import {
   $, $$, escapeHtml, aISO, sumarDias, sumarMeses, etiqueta, esHoy, hora,
   tituloMes,
-} from "../util.js?v=52";
+} from "../util.js?v=53";
 import { icono } from "../iconos.js?v=64";
 
 const SEMANA = ["lu", "ma", "mi", "ju", "vi", "sá", "do"];
@@ -212,7 +212,9 @@ export function crearSelectorDia(contenedor, fecha, alCambiar, opciones = {}) {
  * ya reservado: se usa en reservas enlazadas, donde el siguiente servicio debe
  * empezar cuando termina el anterior o más tarde, el mismo día.
  * `opciones.incluir` (ISO strings) permite arranques anteriores a `desde` para
- * combinados (Pestañas/Cejas + Pedicura a la misma hora).
+ * combinados (Pestañas + Pedicura a la misma hora).
+ * `opciones.excluir` (intervalos ISO) oculta arranques que se crucen con las
+ * demás citas de la reserva; los arranques de `incluir` se respetan.
  */
 export function crearHorarios(contenedor, textoAyuda) {
   contenedor.innerHTML = `
@@ -233,9 +235,15 @@ export function crearHorarios(contenedor, textoAyuda) {
     const incluidos = new Set(
       (opciones.incluir || []).map((x) => new Date(x).getTime())
     );
+    const excluidos = (opciones.excluir || []).map((iv) => ({
+      inicio: new Date(iv.inicio).getTime(),
+      fin: new Date(iv.fin).getTime(),
+    }));
     const slots = todos.filter((s) => {
       const ms = new Date(s.inicio).getTime();
       if (incluidos.has(ms)) return true;
+      const fin = new Date(s.fin).getTime();
+      if (excluidos.some((iv) => ms < iv.fin && iv.inicio < fin)) return false;
       if (desdeMs === null) return true;
       return String(s.inicio).slice(0, 10) === desdeDia && ms >= desdeMs;
     });

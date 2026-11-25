@@ -5,7 +5,7 @@ import { animarCifras } from "../contador.js?v=1";
 import {
   $, $$, aISO, escapeHtml, fechaCorta, sumarDias, sumarMeses, etiquetaSemana,
   tituloMes, tituloAnio, usd, mostrarCategoria,
-} from "../util.js?v=52";
+} from "../util.js?v=53";
 import { icoCategoria, icono } from "../iconos.js?v=64";
 
 const ROSAS = [

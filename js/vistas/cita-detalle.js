@@ -5,10 +5,11 @@ import { get, patch } from "../api.js?v=49";
 import {
   $, $$, aviso, confirmar, desdeISO, escapeHtml, etiqueta, hora, usd,
   badgeCita, textoSubtipo, marcarReprogramadas, nombreCorto, esReprogramada,
-} from "../util.js?v=52";
+  combinables,
+} from "../util.js?v=53";
 import { esAdmin } from "../auth.js?v=52";
 import { icono } from "../iconos.js?v=64";
-import { crearSelectorDia, crearHorarios, consultaDisponibilidad } from "./componentes.js?v=49";
+import { crearSelectorDia, crearHorarios, consultaDisponibilidad } from "./componentes.js?v=51";
 import { mostrarExitoReprogramar } from "../modal-exito.js?v=49";
 
 export async function render(raiz, params) {
@@ -21,10 +22,12 @@ export async function render(raiz, params) {
   }
   let servicio = null;
   let empleados = [];
+  let todosServicios = [];
   try {
-    [servicio, empleados] = await Promise.all([
+    [servicio, empleados, todosServicios] = await Promise.all([
       get(`/servicios/${cita.servicio_id}`),
       get("/empleados?solo_activos=true"),
+      get("/servicios"),
     ]);
   } catch { /* seguimos sin ellos */ }
 
@@ -391,13 +394,24 @@ export async function render(raiz, params) {
     }, { noRetroceder: true });
     const horarios = crearHorarios($("#sel-hora"), "");
     async function cargarSlots() {
+      const hermanas = (grupo || []).filter((g) => g.id !== cita.id && g.estado !== "cancelada");
+      const categoria = servicio?.categoria || "";
+      const excluir = hermanas.map((g) => ({ inicio: g.inicio, fin: g.fin }));
+      const incluir = hermanas
+        .filter((g) => {
+          const otra = todosServicios.find((s) => s.id === g.servicio_id);
+          return combinables(categoria, otra?.categoria || "");
+        })
+        .map((g) => g.inicio);
       await horarios.cargar(
         () => consultaDisponibilidad({
           empleadoId: empleadoNuevo, fecha, servicioId: cita.servicio_id,
           adicionalIds: cita.adicional_ids || [], excluirCitaId: cita.id,
+          continuaciones: incluir,
         }),
         slot?.inicio ?? null,
-        (elegido) => { slot = elegido; $("#btn-confirmar").disabled = !slot; }
+        (elegido) => { slot = elegido; $("#btn-confirmar").disabled = !slot; },
+        { excluir, incluir }
       );
     }
     cargarSlots();

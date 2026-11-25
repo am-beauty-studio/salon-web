@@ -2,7 +2,7 @@
 // Equivalente a EmpleadaForm + HorarioEditor de src/app/empleadas/*.
 
 import { get, post, patch, put, del } from "../api.js?v=49";
-import { $, $$, aviso, confirmar, escapeHtml, mostrarCategoria, errorTelefonoCuba, compararCategorias, colorCategoriaCabecera } from "../util.js?v=52";
+import { $, $$, aviso, confirmar, escapeHtml, mostrarCategoria, errorTelefonoCuba, compararCategorias, colorCategoriaCabecera } from "../util.js?v=53";
 import { icoCategoria } from "../iconos.js?v=64";
 import { icono } from "../iconos.js?v=64";
 

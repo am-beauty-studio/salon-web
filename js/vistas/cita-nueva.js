@@ -3,7 +3,7 @@
 // operación. Reglas de horario (igual que la API):
 // - Los servicios no se cruzan: cada uno empieza cuando termina el bloque
 //   anterior (hora seguida) o más tarde, si esa hora ya está ocupada.
-// - Única excepción: Pestañas o Cejas se COMBINAN con Pedicura a la misma hora
+// - Única excepción: Pestañas se COMBINAN con Pedicura a la misma hora
 //   (dos especialistas a la vez).
 // Equivalente a src/app/cita/nueva.tsx.
 
@@ -12,8 +12,8 @@ import {
   $, $$, aviso, escapeHtml, aISO, etiqueta, hora, usd, duracionTxt,
   compatible, combinables, textoSubtipo, mostrarCategoria, sumarDias, nombreCorto,
   compararCategorias,
-} from "../util.js?v=52";
-import { crearSelectorDia, crearHorarios, consultaDisponibilidad } from "./componentes.js?v=49";
+} from "../util.js?v=53";
+import { crearSelectorDia, crearHorarios, consultaDisponibilidad } from "./componentes.js?v=51";
 import { icono, icoCategoria } from "../iconos.js?v=64";
 import { mostrarExitoCita } from "../modal-exito.js?v=49";
 import { esAdmin } from "../auth.js?v=52";
@@ -393,7 +393,7 @@ export async function render(raiz, _params, query) {
     );
   }
 
-  // Arranques combinados: si el servicio en curso es Pestañas/Cejas y ya hay una
+  // Arranques combinados: si el servicio en curso es Pestañas y ya hay una
   // Pedicura en la reserva (o al revés), puede ir a la misma hora que ella.
   function iniciosCombinados() {
     if (!items.length || !servicio) return [];
@@ -415,7 +415,7 @@ export async function render(raiz, _params, query) {
     const fin = finBloque();
     if (!items.length || !servicio || !fin) { nota.classList.add("oculto"); return; }
     const mismoDia = aISO(fecha) === fin.slice(0, 10);
-    const combinable = ["Pestañas", "Cejas"].includes(servicio.categoria);
+    const combinable = servicio.categoria === "Pestañas";
     nota.textContent = mismoDia
       ? `La reserva puede continuar a las ${hora(fin)} o más tarde ese mismo día${combinable ? " (o a la hora de una Pedicura ya elegida, para combinarlas)" : ""}.`
       : "La reserva debe continuar el mismo día.";

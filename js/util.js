@@ -213,14 +213,13 @@ export function compatible(principal, adicional) {
 }
 
 /**
- * Únicos servicios que pueden ir A LA MISMA HORA dentro de una reserva
- * (en paralelo, cada uno con su especialista): Pestañas o Cejas + Pedicura.
- * Todo lo demás debe ir sin cruzarse: se prefiere la hora seguida, pero se
- * permite un hueco si esa hora ya está ocupada (igual que la API).
+ * Única combinación que puede ir A LA MISMA HORA dentro de una reserva
+ * (en paralelo, cada una con su especialista): Pestañas + Pedicura.
+ * Cejas + Pedicura y el resto deben ir sin cruzarse: se prefiere la hora
+ * seguida, pero se permite un hueco si esa hora ya está ocupada (igual que la API).
  */
 const COMBINADOS = [
   ["Pestañas", "Pedicura"],
-  ["Cejas", "Pedicura"],
 ];
 
 export function combinables(catA, catB) {

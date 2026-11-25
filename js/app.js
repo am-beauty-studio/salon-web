@@ -1,7 +1,7 @@
 // Enrutador principal (equivalente al Stack de Expo Router en salon_app).
 // Rutas por hash: #/agenda, #/cita/nueva, #/clientes/3, etc.
 
-import { $, esperar, soltar } from "./util.js?v=52";
+import { $, esperar, soltar } from "./util.js?v=53";
 import {
   haySesion, esAdmin, esSuperadmin, usuario, cerrarSesion, restaurarSesion,
   iniciarPresencia,
@@ -12,8 +12,8 @@ import { iniciarDespertar, terminarDespertar } from "./espera.js?v=1";
 
 import { render as vistaLogin } from "./vistas/login.js?v=62";
 import { render as vistaAgenda } from "./vistas/agenda.js?v=62";
-import { render as vistaCitaNueva } from "./vistas/cita-nueva.js?v=55";
-import { render as vistaCitaDetalle } from "./vistas/cita-detalle.js?v=65";
+import { render as vistaCitaNueva } from "./vistas/cita-nueva.js?v=57";
+import { render as vistaCitaDetalle } from "./vistas/cita-detalle.js?v=66";
 import { render as vistaClientes } from "./vistas/clientes.js?v=52";
 import { render as vistaClienteFicha } from "./vistas/cliente-ficha.js?v=63";
 import { render as vistaServicios } from "./vistas/servicios.js?v=64";
@@ -27,7 +27,7 @@ import { render as vistaEstadisticas } from "./vistas/estadisticas.js?v=58";
 import { render as vistaUsuarios } from "./vistas/usuarios.js?v=53";
 import { render as vistaUsuarioForm } from "./vistas/usuario-form.js?v=54";
 import { render as vistaPanel } from "./vistas/panel.js?v=10";
-import { render as vistaNotificaciones } from "./vistas/notificaciones.js?v=60";
+import { render as vistaNotificaciones } from "./vistas/notificaciones.js?v=61";
 
 const RUTAS = [
   { patron: /^\/login$/, vista: vistaLogin, publica: true, sinCabecera: true },

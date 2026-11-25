@@ -6,7 +6,7 @@ import { esAdmin } from "../auth.js?v=52";
 import { icono } from "../iconos.js?v=64";
 import { confirmarPeligro } from "../modal-confirmar.js?v=1";
 import { refrescarBadgeNotificaciones } from "../menu-inferior.js?v=57";
-import { $, aviso, escapeHtml } from "../util.js?v=52";
+import { $, aviso, escapeHtml } from "../util.js?v=53";
 
 const ICONO_TIPO = {
   cita_nueva: icono.calendario(18),
@@ -122,25 +122,24 @@ function filaCita(n, puedeBorrar) {
         ${n.actor_nombre ? `<span class="notif-actor">${icono.usuario(12)} Generado por ${escapeHtml(n.actor_nombre)}</span>` : ""}
       </span>`;
 
-  // Admin puede borrar cualquier aviso; no admin solo lo abre/marca leído.
-  if (!puedeBorrar) {
-    return `
-      <button class="notif-fila notif-cita ${n.leida ? "leida" : "sin-leer"}" type="button"
-              data-notif="${n.id}" data-cita="${n.cita_id ?? ""}">
-        ${cuerpo}
+  // Solo las pendientes ofrecen marcarlas como leídas; admin puede borrar.
+  const marcar = n.leida ? "" : `
+      <button class="notif-marcar" type="button" data-marcar="${n.id}"
+              title="Marcar como leída" aria-label="Marcar como leída">
+        ${icono.check(15)}
       </button>`;
-  }
+  const borrar = puedeBorrar ? `
+      <button class="notif-borrar" type="button" data-borrar="${n.id}"
+              title="Eliminar aviso" aria-label="Eliminar aviso">
+        ${icono.papelera(15)}
+      </button>` : "";
 
   return `
     <div class="notif-fila notif-cita ${n.leida ? "leida" : "sin-leer"} con-accion">
       <button class="notif-abrir" type="button"
               data-notif="${n.id}" data-cita="${n.cita_id ?? ""}">
         ${cuerpo}
-      </button>
-      <button class="notif-borrar" type="button" data-borrar="${n.id}"
-              title="Eliminar aviso" aria-label="Eliminar aviso">
-        ${icono.papelera(15)}
-      </button>
+      </button>${marcar}${borrar}
     </div>`;
 }
 
@@ -337,12 +336,28 @@ async function pintar(raiz) {
     };
   });
 
+  raiz.querySelectorAll("[data-marcar]").forEach((btn) => {
+    btn.onclick = async () => {
+      btn.disabled = true;
+      try {
+        await patch(`/notificaciones/${btn.dataset.marcar}/leer`, {});
+      } catch (e) {
+        btn.disabled = false;
+        aviso(e.message || "No se pudo marcar la notificación como leída.", "error");
+        return;
+      }
+      refrescarBadgeNotificaciones();
+      await pintar(raiz);
+    };
+  });
+
   raiz.querySelectorAll("[data-notif]").forEach((fila) => {
     fila.onclick = async () => {
       const id = fila.dataset.notif;
       const citaId = fila.dataset.cita;
+      const notif = notificaciones.find((n) => String(n.id) === id);
       fila.disabled = true;
-      if (fila.classList.contains("sin-leer")) {
+      if (notif && !notif.leida) {
         try {
           await patch(`/notificaciones/${id}/leer`, {});
         } catch { /* si falla, igual se abre la cita */ }

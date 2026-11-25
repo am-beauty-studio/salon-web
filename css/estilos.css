@@ -4525,7 +4525,7 @@ a.dash-persona:hover { border-color: var(--gold); text-decoration: none; }
 button.notif-fila { cursor: pointer; }
 button.notif-fila:hover { border-color: rgba(206, 124, 148, .55); }
 a.notif-fila:hover { border-color: rgba(206, 124, 148, .55); }
-/* Avisos leídos: se abren a un lado y se pueden borrar al otro. */
+/* Cada aviso abre a un lado y ofrece acciones al otro (marcar leída, borrar). */
 .notif-fila.con-accion {
   padding: 0;
   gap: 0;
@@ -4549,7 +4549,8 @@ a.notif-fila:hover { border-color: rgba(206, 124, 148, .55); }
   cursor: pointer;
 }
 .notif-abrir:hover .notif-cab strong { color: var(--gold-dark); }
-.notif-borrar {
+.notif-borrar,
+.notif-marcar {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4563,6 +4564,9 @@ a.notif-fila:hover { border-color: rgba(206, 124, 148, .55); }
 }
 .notif-borrar:hover { background: rgba(190, 74, 87, .08); color: var(--danger); }
 .notif-borrar:disabled { opacity: .5; cursor: default; }
+.notif-marcar { color: var(--gold-dark); }
+.notif-marcar:hover { background: rgba(206, 124, 148, .12); color: var(--gold-dark); }
+.notif-marcar:disabled { opacity: .5; cursor: default; }
 .notif-fila.sin-leer {
   background: linear-gradient(0deg, rgba(206, 124, 148, .07), rgba(206, 124, 148, .07)), var(--card);
   border-color: rgba(206, 124, 148, .4);

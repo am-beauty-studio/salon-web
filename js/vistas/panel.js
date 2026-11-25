@@ -8,7 +8,7 @@ import { usuario as usuarioActual } from "../auth.js?v=52";
 import { animarCifras } from "../contador.js?v=1";
 import { icono } from "../iconos.js?v=64";
 import { confirmarPeligro } from "../modal-confirmar.js?v=1";
-import { $, $$, aviso, escapeHtml, fechaCorta, hora, usd } from "../util.js?v=52";
+import { $, $$, aviso, escapeHtml, fechaCorta, hora, usd } from "../util.js?v=53";
 
 const ETIQUETA_ROL = {
   superadmin: "Superadmin",

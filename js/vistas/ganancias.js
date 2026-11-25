@@ -5,9 +5,9 @@ import {
   $, $$, escapeHtml, sumarDias, sumarMeses, etiqueta, etiquetaSemana, tituloMes,
   tituloTrimestre, tituloSemestre, tituloAnio, mesCorto,
   diaCorto, usd, mostrarCategoria, compararCategorias,
-} from "../util.js?v=52";
+} from "../util.js?v=53";
 import { icoCategoria, icono } from "../iconos.js?v=64";
-import { abrirCalendario } from "./componentes.js?v=49";
+import { abrirCalendario } from "./componentes.js?v=51";
 
 const ROSAS = [
   "#B25572", "#C06A86", "#CD7E97", "#D992A8",

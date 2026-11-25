@@ -3,7 +3,7 @@
 
 import { get, post, patch, del } from "../api.js?v=49";
 import { actualizarUsuario, usuario as usuarioActual } from "../auth.js?v=52";
-import { $, $$, aviso, confirmar, escapeHtml } from "../util.js?v=52";
+import { $, $$, aviso, confirmar, escapeHtml } from "../util.js?v=53";
 import { icono } from "../iconos.js?v=64";
 
 const ETIQUETA_ROL = {
