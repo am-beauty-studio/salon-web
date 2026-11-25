@@ -2436,26 +2436,90 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 .detalle-acciones .fila-btns { margin-top: 0; }
 .detalle-acciones .fila-btns .btn { flex: 1; }
 .detalle-reprogramar { margin-top: 16px; }
+#zona-reprogramar { scroll-margin-top: 66px; }
+/* Con la cabecera en dos filas, deja libre el inicio del formulario. */
+@media (max-width: 960px) {
+  #zona-reprogramar { scroll-margin-top: 106px; }
+}
 
-/* Servicios adicionales de una cita ya agendada */
-.adicional-accion { margin-top: 3px; }
-.btn-adicional {
+/* Formulario de edición: reutiliza las tarjetas de sección del proyecto. */
+.detalle-reprogramar.form-vista { padding-bottom: 0; }
+.detalle-reprogramar .form-seccion { margin-bottom: 10px; }
+.detalle-reprogramar .form-seccion .paso-titulo { margin: 14px 0 8px; }
+.detalle-reprogramar .radio-fila { margin-bottom: 0; }
+.reprog-cab {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 2px 2px 6px;
+}
+.reprog-cat-ico {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+.reprog-candado {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  border: 1px solid rgba(206, 124, 148, .35);
-  background: rgba(206, 124, 148, .10);
-  color: var(--gold-dark);
+  gap: 5px;
+  border: 1px solid rgba(150, 64, 92, .18);
   border-radius: 999px;
-  padding: 3px 9px 3px 7px;
-  font-family: inherit;
-  font-size: 12.5px;
+  background: #FBEDF2;
+  color: var(--gold-dark);
+  padding: 4px 9px;
+  font-size: 12px;
   font-weight: 700;
-  cursor: pointer;
+  white-space: nowrap;
 }
-.btn-adicional:hover { background: rgba(206, 124, 148, .18); }
-.btn-adicional .ico { color: var(--gold-dark); }
-.detalle-adicionales { margin-top: 16px; }
+.reprog-candado .ico { vertical-align: 0; }
+.servicios-lista { display: flex; flex-direction: column; gap: 8px; }
+.reprog-servicio { margin-bottom: 0; }
+.reprog-servicio-cab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.reprog-servicio-cab .sel-titulo { display: block; min-width: 0; }
+.reprog-marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: rgba(206, 124, 148, .14);
+  color: var(--gold-dark);
+  padding: 2px 7px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.reprog-marca .ico { vertical-align: 0; }
+.reprog-hora-actual {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.reprog-hora-actual .ico { color: var(--gold-dark); }
+.reprog-hora-actual b { color: var(--gold-dark); }
+.reprog-aviso {
+  margin: 8px 0 0;
+  padding: 9px 12px;
+  border: 1px solid rgba(150, 64, 92, .22);
+  border-radius: 11px;
+  background: #FDF1F4;
+  color: var(--gold-dark);
+  font-size: 12.8px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+.reprog-aviso.oculto { display: none; }
+.reprog-resumen { margin: 12px 0; }
+.reprog-resumen .linea { color: var(--text); }
+
+/* Servicios adicionales de una cita ya agendada */
 .adicionales-lista { display: flex; flex-direction: column; gap: 8px; }
 .adicional-op {
   display: flex;
@@ -2481,7 +2545,7 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 .adicional-nombre { font-size: 14px; font-weight: 600; color: var(--text); }
 .adicional-meta { font-size: 12.5px; color: var(--muted); }
 .adicional-no { font-size: 12px; color: var(--danger); white-space: nowrap; }
-.detalle-adicionales .fila-btns { margin-top: 12px; }
+
 
 /* Botones suaves, mismo lenguaje que las tarjetas de la agenda */
 .btn-suave {

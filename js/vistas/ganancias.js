@@ -7,7 +7,7 @@ import {
   diaCorto, usd, mostrarCategoria, compararCategorias,
 } from "../util.js?v=53";
 import { icoCategoria, icono } from "../iconos.js?v=64";
-import { abrirCalendario } from "./componentes.js?v=51";
+import { abrirCalendario } from "./componentes.js?v=52";
 
 const ROSAS = [
   "#B25572", "#C06A86", "#CD7E97", "#D992A8",

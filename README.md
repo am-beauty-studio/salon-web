@@ -11,7 +11,7 @@ funcionalidad de `salon_app` (app Android), conectada a `salon_api`.
 | `#/agenda` | Agenda diaria con filtro por especialista, resumen y acciones | Todos |
 | `#/notificaciones` | Alertas de stock mínimo y avisos de citas (nuevas, reprogramadas, canceladas y archivadas), con preferencias por usuaria | Todos |
 | `#/cita/nueva` | Nueva cita (clienta → servicio → adicionales → especialista → día/hora) | Todos |
-| `#/cita/{id}` | Detalle de cita: cambiar tipo, reprogramar, completar, cancelar | Todos |
+| `#/cita/{id}` | Detalle de cita: editar servicio/adicionales, reprogramar, completar, cancelar | Todos |
 | `#/clientes` | Listado y búsqueda de clientas | Todos |
 | `#/clientes/nueva` | Nueva clienta | Todos |
 | `#/clientes/{id}` | Ficha de clienta + historial de citas | Todos |
@@ -97,8 +97,9 @@ salon_web/
 - Nueva cita en 5 pasos con las mismas reglas: adicionales solo si comparten
   categoría con el servicio principal, especialistas aptas según sus servicios,
   slots de 15 min de `GET /empleados/{id}/disponibilidad`.
-- Detalle de cita: cambio de subtipo (Tipo C/D) al instante, reprogramación
-  excluyendo la propia cita.
+- Detalle de cita: cambio de servicio, subtipo y adicionales con recálculo de
+  precio/duración; mantiene la hora actual y permite reprogramar excluyendo la
+  propia cita.
 - Notificaciones: avisos compartidos de citas y alertas de stock; cada usuaria
   elige en Ajustes qué tipos quiere ver y la campana respeta su elección.
 - Clientas: búsqueda con debounce, ficha con historial.

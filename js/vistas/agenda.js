@@ -7,7 +7,7 @@ import {
 } from "../util.js?v=53";
 import { esAdmin } from "../auth.js?v=52";
 import { icono } from "../iconos.js?v=64";
-import { abrirCalendario } from "./componentes.js?v=51";
+import { abrirCalendario } from "./componentes.js?v=52";
 
 export async function render(raiz) {
   let fecha = new Date();

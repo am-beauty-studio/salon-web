@@ -1,15 +1,15 @@
-// Detalle de cita: ver, cambiar subtipo, reprogramar, completar o cancelar.
+// Detalle de cita: ver, editar servicio/horario, completar o cancelar.
 // Equivalente a src/app/cita/[id].tsx.
 
 import { get, patch } from "../api.js?v=49";
 import {
   $, $$, aviso, confirmar, desdeISO, escapeHtml, etiqueta, hora, usd,
   badgeCita, textoSubtipo, marcarReprogramadas, nombreCorto, esReprogramada,
-  combinables,
+  combinables, compatible, duracionTxt, mostrarCategoria, normalizarClave,
 } from "../util.js?v=53";
 import { esAdmin } from "../auth.js?v=52";
-import { icono } from "../iconos.js?v=64";
-import { crearSelectorDia, crearHorarios, consultaDisponibilidad } from "./componentes.js?v=51";
+import { icono, icoCategoria } from "../iconos.js?v=64";
+import { crearSelectorDia, crearHorarios, consultaDisponibilidad } from "./componentes.js?v=52";
 import { mostrarExitoReprogramar } from "../modal-exito.js?v=49";
 
 export async function render(raiz, params) {
@@ -24,41 +24,71 @@ export async function render(raiz, params) {
   let empleados = [];
   let todosServicios = [];
   try {
-    [servicio, empleados, todosServicios] = await Promise.all([
-      get(`/servicios/${cita.servicio_id}`),
+    // El catálogo completo incluye el servicio de la cita (aunque esté dado
+    // de baja), así que no hace falta pedirlo dos veces.
+    [empleados, todosServicios] = await Promise.all([
       get("/empleados?solo_activos=true"),
-      get("/servicios"),
+      get("/servicios?solo_activos=false"),
     ]);
+    servicio = todosServicios.find((s) => s.id === cita.servicio_id) || null;
   } catch { /* seguimos sin ellos */ }
 
   let reprogramando = false;
+  let guardandoEdicion = false;
+  let servicioNuevo = servicio;
+  let subtipoNuevo = cita.subtipo;
+  let adicionalesNuevos = new Set(cita.adicional_ids || []);
   let empleadoNuevo = cita.empleado_id;
-  let opcionesAdicionales = null;
-  let seleccionAdicional = new Set();
-  let tokenAdicionales = 0;
-  let mostrandoAdicionales = false;
-  let fecha = new Date(
-    Number(cita.inicio.slice(0, 4)),
-    Number(cita.inicio.slice(5, 7)) - 1,
-    Number(cita.inicio.slice(8, 10))
-  );
+  let fecha = desdeISO(cita.inicio);
   let slot = null;
+  // Aviso bajo el horario cuando el tiempo elegido deja de ser posible.
+  let notaHora = "";
+  // Se descarta la respuesta de una comprobación de horario ya reemplazada.
+  let solicitudHorarios = 0;
+  let verificandoHorario = false;
   // El rol `usuario` solo puede consultar la cita: sin reprogramar, completar,
-  // cancelar ni sumar servicios adicionales.
+  // cancelar ni modificar sus servicios adicionales.
   const puedeEditar = esAdmin();
 
-  function specialistsAptas() {
-    if (!servicio) return [];
-    const necesarios = new Set([servicio.id, ...(cita.adicional_ids || [])]);
+  // ---------- Catálogo permitido en la edición ----------
+  // La categoría de la cita queda fijada: solo se ofrecen servicios
+  // principales de esa misma categoría (y el actual, aunque esté inactivo).
+  function serviciosDeCategoria() {
+    const categoria = servicioNuevo?.categoria || servicio?.categoria || "";
+    return todosServicios
+      .filter((s) =>
+        !s.es_adicional &&
+        normalizarClave(s.categoria) === normalizarClave(categoria) &&
+        (s.activo || s.id === cita.servicio_id || s.id === servicioNuevo?.id)
+      )
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+  }
+
+  function adicionalesDisponibles(principal) {
+    if (!principal) return [];
+    return todosServicios
+      .filter((s) =>
+        s.es_adicional && compatible(principal, s) &&
+        (s.activo || adicionalesNuevos.has(s.id))
+      )
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+  }
+
+  function specialistsAptas(principal = servicio, extras = cita.adicional_ids || []) {
+    if (!principal) return [];
+    const necesarios = new Set([principal.id, ...extras]);
     return empleados.filter((emp) =>
       [...necesarios].every((id) => (emp.servicio_ids || []).includes(id))
     );
   }
 
+  function nombreEmpleado(id) {
+    return empleados.find((e) => e.id === id)?.nombre || "";
+  }
+
   function pintar() {
     const extras = (cita.adicionales || []).join(", ");
     const subtipoTxt = textoSubtipo(cita.subtipo);
-    const aptas = specialistsAptas();
     const reprogCita = cita.estado === "programada" && (cita.reprogramada || esReprogramada(cita.id));
 
     raiz.innerHTML = `
@@ -82,17 +112,11 @@ export async function render(raiz, params) {
           <span class="cita-precio">${usd(cita.precio_total)}<small>USD</small></span>
         </div>
         <div class="cita-info">
-          <span class="cita-linea">${icono.calendario(14)}<span>${escapeHtml(etiqueta(fecha))}</span></span>
+          <span class="cita-linea">${icono.calendario(14)}<span>${escapeHtml(etiqueta(desdeISO(cita.inicio)))}</span></span>
           <span class="cita-linea">${icono.etiqueta(14)}<span>${escapeHtml(cita.servicio_nombre)}</span></span>
           ${subtipoTxt ? `<span class="cita-linea cita-subtipo">${icono.capas(14)}<span>${escapeHtml(subtipoTxt)}</span></span>` : ""}
           ${extras ? `<span class="cita-linea cita-adicional">${icono.mas(14)}<span>${escapeHtml(extras)}</span></span>` : ""}
           <span class="cita-linea">${icono.usuario(14)}<span>Con ${escapeHtml(cita.empleado_nombre)}</span></span>
-          ${cita.estado === "programada" && puedeEditar ? `
-            <div class="adicional-accion">
-              <button class="btn-adicional" id="btn-adicionales" type="button" aria-label="Gestionar servicios adicionales" aria-expanded="${mostrandoAdicionales}" title="${mostrandoAdicionales ? "Ocultar adicionales" : "Agregar o quitar servicios adicionales"}">
-                ${mostrandoAdicionales ? icono.equis(13) : icono.seleccion(13)}<span>${mostrandoAdicionales ? "Cerrar" : "Adicional"}</span>
-              </button>
-            </div>` : ""}
         </div>
         ${cita.notas ? `<div class="cita-nota">“${escapeHtml(cita.notas)}”</div>` : ""}
       </div>
@@ -116,24 +140,16 @@ export async function render(raiz, params) {
             <button class="btn btn-suave-peligro" id="btn-cancelar-reserva" type="button">${icono.equis(15)}Cancelar reserva</button>
           </div>` : ""}` : ""}
 
-      ${cita.estado === "programada" && puedeEditar && servicio?.subtipos?.length ? `
-        <div class="paso-titulo detalle-paso">${servicio.categoria === "Pestañas" ? "Tipo de pestaña" : servicio.categoria === "Cejas" ? "Color de tinte" : "Tipo"}</div>
-        <div class="radio-fila">
-          ${servicio.subtipos.map((t) => `
-            <button type="button" class="radio-op ${cita.subtipo === t ? "activo" : ""}" data-subtipo="${escapeHtml(t)}">
-              ${escapeHtml(t.length === 1 ? `Tipo ${t}` : t)}
-            </button>`).join("")}
-        </div>` : ""}
-
-      <div id="zona-adicionales"></div>
-
       <div class="fila-btns detalle-ficha">
         <a class="btn btn-suave btn-bloque" href="#/clientes/${cita.cliente_id}">${icono.personas(15)}Ver ficha de la clienta</a>
       </div>
 
       ${cita.estado === "programada" && puedeEditar ? `
         <div class="detalle-acciones">
-          <button class="btn btn-suave-dorado btn-bloque" id="btn-reprogramar" type="button">${icono.repetir(15)}Reprogramar día u hora</button>
+          <button class="btn btn-suave-dorado btn-bloque" id="btn-reprogramar" type="button"
+                  aria-expanded="${reprogramando}">
+            ${icono.lapiz(15)}${reprogramando ? "Cerrar edición" : "Editar cita"}
+          </button>
           <div class="fila-btns">
             <button class="btn btn-suave-ok" id="btn-completar" type="button">${icono.check(15)}Completar cita</button>
             <button class="btn btn-suave-peligro" id="btn-cancelar" type="button">${icono.equis(15)}Cancelar cita</button>
@@ -141,21 +157,6 @@ export async function render(raiz, params) {
         </div>` : ""}
 
       <div id="zona-reprogramar"></div>`;
-
-    // Cambiar subtipo al instante
-    $$(".radio-op", raiz).forEach((boton) => {
-      boton.onclick = async () => {
-        const nuevo = boton.dataset.subtipo;
-        if (nuevo === cita.subtipo) return;
-        try {
-          cita = await patch(`/citas/${cita.id}`, { subtipo: nuevo });
-          aviso("Tipo actualizado", "ok");
-          pintar();
-        } catch (e) {
-          aviso(e.message || "No se pudo cambiar el tipo.", "error");
-        }
-      };
-    });
 
     // Acciones sobre TODA la reserva enlazada
     if (puedeEditar && grupo?.some((g) => g.estado === "programada")) {
@@ -184,19 +185,6 @@ export async function render(raiz, params) {
       };
     }
 
-    const btnAdicionales = $("#btn-adicionales");
-    if (btnAdicionales) {
-      btnAdicionales.onclick = () => {
-        mostrandoAdicionales = !mostrandoAdicionales;
-        reprogramando = false;
-        if (!mostrandoAdicionales) {
-          opcionesAdicionales = null;
-          seleccionAdicional = new Set();
-        }
-        pintar();
-      };
-    }
-
     if (puedeEditar && cita.estado === "programada") {
       $("#btn-completar").onclick = async () => {
         if (await confirmar("Completar cita",
@@ -220,229 +208,403 @@ export async function render(raiz, params) {
       };
       $("#btn-reprogramar").onclick = () => {
         reprogramando = !reprogramando;
-        mostrandoAdicionales = false;
-        opcionesAdicionales = null;
-        seleccionAdicional = new Set();
+        notaHora = "";
+        if (reprogramando) {
+          servicioNuevo = todosServicios.find((s) => s.id === cita.servicio_id) || servicio;
+          subtipoNuevo = cita.subtipo;
+          adicionalesNuevos = new Set(cita.adicional_ids || []);
+          empleadoNuevo = cita.empleado_id;
+          fecha = desdeISO(cita.inicio);
+          // Mantener la hora actual permite corregir solo el servicio sin
+          // tener que volver a elegir día y hora.
+          slot = new Date(cita.inicio).getTime() >= Date.now() - 15 * 60 * 1000
+            ? { inicio: cita.inicio, fin: cita.fin }
+            : null;
+        } else {
+          slot = null;
+        }
         pintar();
+        if (reprogramando) {
+          requestAnimationFrame(() => $("#zona-reprogramar")?.scrollIntoView({
+            behavior: "smooth", block: "start",
+          }));
+        }
       };
-      if (reprogramando) pintarReprogramar(aptas);
-    }
-
-    if (puedeEditar && mostrandoAdicionales && cita.estado === "programada") cargarAdicionales();
-    else {
-      const zona = $("#zona-adicionales");
-      if (zona) zona.innerHTML = "";
+      if (reprogramando) pintarReprogramar();
     }
   }
 
-  async function cargarAdicionales() {
-    const zona = $("#zona-adicionales");
-    if (!zona) return;
-    const token = ++tokenAdicionales;
-    try {
-      const datos = await get(`/citas/${cita.id}/adicionales`);
-      if (token !== tokenAdicionales) return;
-      opcionesAdicionales = datos;
-      seleccionAdicional = new Set(
-        datos.opciones.filter((o) => o.seleccionado).map((o) => o.servicio_id)
-      );
-      pintarAdicionales();
-    } catch (e) {
-      if (token === tokenAdicionales) {
-        zona.innerHTML = `<div class="vacio">${escapeHtml(e.message || "No se pudieron cargar los adicionales.")}</div>`;
-      }
-    }
+  function actualizarNotaHora() {
+    const nota = $("#nota-hora");
+    if (!nota) return;
+    nota.textContent = notaHora;
+    nota.classList.toggle("oculto", !notaHora);
   }
 
-  function cerrarAdicionales() {
-    mostrandoAdicionales = false;
-    opcionesAdicionales = null;
-    seleccionAdicional = new Set();
-    pintar();
-  }
+  function pintarReprogramar() {
+    const caja = $("#zona-reprogramar");
+    if (!caja) return;
+    // Al repintar, cualquier comprobación de horario anterior queda obsoleta.
+    solicitudHorarios += 1;
+    verificandoHorario = false;
 
-  function pintarAdicionales() {
-    const zona = $("#zona-adicionales");
-    if (!zona || !opcionesAdicionales) return;
-    const datos = opcionesAdicionales;
-
-    if (!datos.opciones.length) {
-      zona.innerHTML = `
-        <div class="tarjeta detalle-adicionales">
-          <div class="paso-titulo" style="margin-top:0">Agregar servicios adicionales</div>
-          <p class="detalle-ayuda">No hay servicios adicionales disponibles para esta cita.</p>
+    if (!servicioNuevo) {
+      caja.innerHTML = `
+        <div class="tarjeta detalle-reprogramar">
+          <div class="paso-titulo" style="margin-top:0">Editar cita</div>
+          <p class="error-txt">No se pudo cargar el servicio de esta cita. Actualiza la página e inténtalo de nuevo.</p>
           <div class="fila-btns">
-            <button class="btn btn-suave" id="btn-cerrar-adicionales" type="button">Cerrar</button>
+            <button class="btn btn-suave" id="btn-deshacer" type="button">Cerrar</button>
           </div>
         </div>`;
-      $("#btn-cerrar-adicionales").onclick = cerrarAdicionales;
+      $("#btn-deshacer").onclick = () => {
+        reprogramando = false;
+        slot = null;
+        pintar();
+      };
       return;
     }
 
-    const iniciales = new Set(
-      datos.opciones.filter((o) => o.seleccionado).map((o) => o.servicio_id)
-    );
-    const duracion = new Map(
-      datos.opciones.map((o) => [o.servicio_id, o.duracion_min])
-    );
-    let minutos = datos.duracion_actual_min;
-    for (const id of seleccionAdicional) {
-      if (!iniciales.has(id)) minutos += duracion.get(id) || 0;
+    const categoria = servicioNuevo.categoria || "";
+    const listaServicios = serviciosDeCategoria();
+    const extrasDisponibles = adicionalesDisponibles(servicioNuevo);
+    const aptas = specialistsAptas(servicioNuevo, [...adicionalesNuevos]);
+    if (!aptas.some((e) => e.id === empleadoNuevo)) {
+      empleadoNuevo = aptas.length === 1 ? aptas[0].id : null;
+      // Con una sola especialista se conserva la hora para comprobarla con ella;
+      // si hay varias, hay que elegir y el horario se vuelve a calcular.
+      if (!empleadoNuevo) slot = null;
     }
-    for (const id of iniciales) {
-      if (!seleccionAdicional.has(id)) minutos -= duracion.get(id) || 0;
-    }
-    const cambiado =
-      seleccionAdicional.size !== iniciales.size ||
-      [...seleccionAdicional].some((id) => !iniciales.has(id));
+    const extrasElegidos = extrasDisponibles.filter((s) => adicionalesNuevos.has(s.id));
+    const totalDuracion = (servicioNuevo.duracion_min || 0) +
+      extrasElegidos.reduce((n, s) => n + s.duracion_min, 0);
+    const totalPrecio = Number(servicioNuevo.precio || 0) +
+      extrasElegidos.reduce((n, s) => n + Number(s.precio), 0);
+    const subtipos = servicioNuevo.subtipos || [];
+    const etiquetaSubtipo = categoria === "Pestañas"
+      ? "Tipo de pestaña"
+      : categoria === "Cejas" ? "Color de tinte" : "Tipo";
+    const iconoCat = icoCategoria(categoria);
 
-    zona.innerHTML = `
-      <div class="tarjeta detalle-adicionales">
-        <div class="paso-titulo" style="margin-top:0">Agregar servicios adicionales</div>
-        <p class="detalle-ayuda">Marca los que quepan en el horario. Los que no caben aparecen bloqueados.</p>
-        <div class="adicionales-lista">
-          ${datos.opciones.map((o) => {
-            const activo = seleccionAdicional.has(o.servicio_id);
-            const cabe = activo || minutos + o.duracion_min <= datos.duracion_max_min;
-            return `
-              <label class="adicional-op ${activo ? "activo" : ""} ${cabe ? "" : "no-cabe"}" title="${cabe ? "" : "No hay tiempo suficiente antes de la próxima cita o del cierre"}">
-                <input type="checkbox" data-id="${o.servicio_id}" ${activo ? "checked" : ""} ${cabe ? "" : "disabled"}>
-                <span class="adicional-datos">
-                  <span class="adicional-nombre">${escapeHtml(o.nombre)}</span>
-                  <span class="adicional-meta">+${o.duracion_min} min · ${usd(o.precio)}</span>
-                </span>
-                ${cabe ? "" : `<span class="adicional-no">No hay tiempo</span>`}
-              </label>`;
-          }).join("")}
+    caja.innerHTML = `
+      <div class="form-vista detalle-reprogramar">
+        <div class="reprog-cab">
+          <span class="form-seccion-ico">${icono.lapiz(17)}</span>
+          <div class="form-seccion-textos">
+            <p class="form-seccion-titulo">Editar cita</p>
+            <p class="form-seccion-sub">Cambia el servicio, los adicionales, la especialista o el horario.</p>
+          </div>
         </div>
+
+        <section class="form-seccion">
+          <div class="form-seccion-cab">
+            <span class="form-seccion-ico">
+              ${iconoCat ? `<img class="reprog-cat-ico" src="${iconoCat}" alt="" />` : icono.etiqueta(17)}
+            </span>
+            <div class="form-seccion-textos">
+              <p class="form-seccion-titulo">Servicio</p>
+              <p class="form-seccion-sub">Solo puedes cambiar de servicio dentro de esta categoría.</p>
+            </div>
+            <span class="reprog-candado" title="La categoría no se puede cambiar">
+              ${icono.candado(12)}${escapeHtml(mostrarCategoria(categoria) || "Sin categoría")}
+            </span>
+          </div>
+
+          <div class="servicios-lista" role="radiogroup" aria-label="Servicio de la cita">
+            ${listaServicios.map((s) => {
+              const actual = servicioNuevo.id === s.id;
+              return `
+                <button type="button" class="sel-card reprog-servicio ${actual ? "activo" : ""}"
+                        data-servicio="${s.id}" role="radio" aria-checked="${actual}">
+                  <span class="reprog-servicio-cab">
+                    <span class="sel-titulo">${escapeHtml(s.nombre)}${s.activo ? "" : " (inactivo)"}</span>
+                    ${actual ? `<span class="reprog-marca">${icono.check(12)}Actual</span>` : ""}
+                  </span>
+                  <span class="sel-meta">${usd(s.precio)} USD · ${duracionTxt(s.duracion_min)}</span>
+                </button>`;
+            }).join("")}
+          </div>
+
+          ${subtipos.length ? `
+            <div class="paso-titulo">${etiquetaSubtipo}</div>
+            <div class="radio-fila">
+              ${subtipos.map((t) => `
+                <button type="button" class="radio-op ${subtipoNuevo === t ? "activo" : ""}" data-edit-subtipo="${escapeHtml(t)}">
+                  ${escapeHtml(t.length === 1 ? `Tipo ${t}` : t)}
+                </button>`).join("")}
+            </div>` : ""}
+        </section>
+
+        ${extrasDisponibles.length ? `
+          <section class="form-seccion">
+            <div class="form-seccion-cab">
+              <span class="form-seccion-ico">${icono.mas(17)}</span>
+              <div class="form-seccion-textos">
+                <p class="form-seccion-titulo">Adicionales</p>
+                <p class="form-seccion-sub">Opcional. Se suman al servicio y al total.</p>
+              </div>
+            </div>
+            <div class="adicionales-lista">
+              ${extrasDisponibles.map((s) => `
+                <label class="adicional-op ${adicionalesNuevos.has(s.id) ? "activo" : ""}">
+                  <input type="checkbox" data-edit-adicional="${s.id}" ${adicionalesNuevos.has(s.id) ? "checked" : ""}>
+                  <span class="adicional-datos">
+                    <span class="adicional-nombre">${escapeHtml(s.nombre)}${s.activo ? "" : " (inactivo)"}</span>
+                    <span class="adicional-meta">+${duracionTxt(s.duracion_min)} · ${usd(s.precio)}</span>
+                  </span>
+                </label>`).join("")}
+            </div>
+          </section>` : ""}
+
+        <section class="form-seccion">
+          <div class="form-seccion-cab">
+            <span class="form-seccion-ico">${icono.usuario(17)}</span>
+            <div class="form-seccion-textos">
+              <p class="form-seccion-titulo">Especialista</p>
+              <p class="form-seccion-sub">Solo aparecen quienes realizan esta combinación.</p>
+            </div>
+          </div>
+          ${aptas.length ? `
+            <div class="chips" id="chips-repro">
+              ${aptas.map((e) => `
+                <button type="button" class="chip ${empleadoNuevo === e.id ? "activo" : ""}" data-id="${e.id}">
+                  ${escapeHtml(nombreCorto(e.nombre))}
+                </button>`).join("")}
+            </div>` : `<div class="vacio">Ninguna especialista realiza esta combinación de servicios.</div>`}
+        </section>
+
+        <section class="form-seccion">
+          <div class="form-seccion-cab">
+            <span class="form-seccion-ico">${icono.reloj(17)}</span>
+            <div class="form-seccion-textos">
+              <p class="form-seccion-titulo">Día y hora</p>
+              <p class="form-seccion-sub">Se comprueba la disponibilidad al cambiar el servicio.</p>
+            </div>
+          </div>
+          <p class="reprog-hora-actual">${icono.reloj(13)} Hora actual de la cita: <b>${hora(cita.inicio)}</b></p>
+          ${empleadoNuevo
+            ? `<div id="sel-dia" style="margin-top:8px"></div>
+               <p class="reprog-aviso ${notaHora ? "" : "oculto"}" id="nota-hora" role="status">${escapeHtml(notaHora)}</p>
+               <div id="sel-hora" style="margin-top:8px"></div>`
+            : `<p class="nota">Elige una especialista para ver los horarios.</p>`}
+        </section>
+
+        <div class="resumen-caja reprog-resumen">
+          <div class="linea"><b>Total:</b> ${usd(totalPrecio)} USD · ${duracionTxt(totalDuracion)}</div>
+          <div class="linea"><b>Servicio:</b> ${escapeHtml(servicioNuevo.nombre)}${textoSubtipo(subtipoNuevo) ? ` · ${escapeHtml(textoSubtipo(subtipoNuevo))}` : ""}</div>
+          ${extrasElegidos.length ? `<div class="linea"><b>Adicionales:</b> ${escapeHtml(extrasElegidos.map((s) => s.nombre).join(", "))}</div>` : ""}
+          ${empleadoNuevo ? `<div class="linea"><b>Especialista:</b> ${escapeHtml(nombreEmpleado(empleadoNuevo))}</div>` : ""}
+        </div>
+
+        <p class="error-txt oculto" id="error-editar"></p>
         <div class="fila-btns">
-          <button class="btn btn-suave" id="btn-cerrar-adicionales" type="button">Cancelar</button>
-          <button class="btn btn-dorado" id="btn-guardar-adicionales" type="button" ${cambiado ? "" : "disabled"}>
-            Guardar
-          </button>
+          <button class="btn btn-suave" id="btn-deshacer" type="button">Cancelar</button>
+          <button class="btn btn-dorado" id="btn-confirmar" type="button" disabled>Guardar cambios</button>
         </div>
       </div>`;
 
-    $("#btn-cerrar-adicionales").onclick = cerrarAdicionales;
+    function actualizarConfirmar() {
+      const btn = $("#btn-confirmar");
+      if (!btn) return;
+      const faltaTipo = Boolean(servicioNuevo?.subtipos?.length && !subtipoNuevo);
+      btn.disabled = guardandoEdicion || verificandoHorario || !slot ||
+        !empleadoNuevo || faltaTipo;
+      btn.textContent = guardandoEdicion
+        ? "Guardando…"
+        : verificandoHorario ? "Comprobando horario…" : "Guardar cambios";
+    }
 
-    $$("#zona-adicionales input[data-id]").forEach((caja) => {
-      caja.onchange = () => {
-        const id = Number(caja.dataset.id);
-        if (caja.checked) seleccionAdicional.add(id);
-        else seleccionAdicional.delete(id);
-        pintarAdicionales();
+    // ---------- Cambiar de servicio (misma categoría) ----------
+    $$("[data-servicio]", caja).forEach((boton) => {
+      boton.onclick = () => {
+        const id = Number(boton.dataset.servicio);
+        if (id === servicioNuevo?.id) return;
+        servicioNuevo = todosServicios.find((s) => s.id === id) || null;
+        const permitidos = servicioNuevo?.subtipos || [];
+        subtipoNuevo = permitidos.length === 1
+          ? permitidos[0]
+          : permitidos.includes(subtipoNuevo) ? subtipoNuevo : null;
+        // No conservar adicionales que la API rechazaría con el nuevo servicio.
+        adicionalesNuevos = new Set(
+          [...adicionalesNuevos].filter((adicionalId) => {
+            const extra = todosServicios.find((s) => s.id === adicionalId);
+            return extra && servicioNuevo && compatible(servicioNuevo, extra);
+          })
+        );
+        // Se conserva la hora elegida: al pintar se comprueba si sigue siendo
+        // posible y, si no, se limpia y se muestran las horas alternativas.
+        notaHora = "";
+        pintar();
       };
     });
 
-    $("#btn-guardar-adicionales").onclick = async () => {
-      const ids = datos.opciones
-        .filter((o) => seleccionAdicional.has(o.servicio_id))
-        .map((o) => o.servicio_id);
-      try {
-        cita = await patch(`/citas/${cita.id}`, { adicional_ids: ids });
-        mostrandoAdicionales = false;
-        opcionesAdicionales = null;
-        seleccionAdicional = new Set();
-        aviso("Servicios adicionales actualizados", "ok");
-        pintar();
-      } catch (e) {
-        aviso(e.message || "No se pudieron guardar los adicionales.", "error");
-        cargarAdicionales();
-      }
-    };
-  }
+    $$("[data-edit-subtipo]", caja).forEach((boton) => {
+      boton.onclick = () => {
+        subtipoNuevo = boton.dataset.editSubtipo;
+        $$("[data-edit-subtipo]", caja).forEach((b) =>
+          b.classList.toggle("activo", b === boton)
+        );
+        actualizarConfirmar();
+      };
+    });
 
-  function pintarReprogramar(aptas) {
-    const caja = $("#zona-reprogramar");
-    if (!aptas.length) {
-      caja.innerHTML = `<div class="vacio">Ninguna especialista realiza esta combinación de servicios.</div>`;
-      return;
-    }
-    caja.innerHTML = `
-      <div class="tarjeta detalle-reprogramar">
-        <div class="paso-titulo" style="margin-top:0">Reprogramar cita</div>
-        <p class="detalle-ayuda">Elige especialista, día y hora disponible.</p>
-        <div class="paso-titulo">Especialista</div>
-        <div class="chips" id="chips-repro">
-          ${aptas.map((e) => `
-            <button type="button" class="chip ${empleadoNuevo === e.id ? "activo" : ""}" data-id="${e.id}">
-              ${escapeHtml(nombreCorto(e.nombre))}
-            </button>`).join("")}
-        </div>
-        <div class="paso-titulo">Nuevo día y hora</div>
-        <div id="sel-dia"></div>
-        <div id="sel-hora" style="margin-top:6px"></div>
-        <div class="fila-btns">
-          <button class="btn btn-suave" id="btn-deshacer" type="button">Cancelar</button>
-          <button class="btn btn-dorado" id="btn-confirmar" type="button" disabled>Confirmar horario</button>
-        </div>
-      </div>`;
+    $$("[data-edit-adicional]", caja).forEach((input) => {
+      input.onchange = () => {
+        const id = Number(input.dataset.editAdicional);
+        if (input.checked) adicionalesNuevos.add(id);
+        else adicionalesNuevos.delete(id);
+        // Cambia la duración total: se vuelve a comprobar la hora elegida.
+        pintar();
+      };
+    });
 
     $$("#chips-repro .chip").forEach((chip) => {
       chip.onclick = () => {
         empleadoNuevo = Number(chip.dataset.id);
-        slot = null;
+        // Se mantiene la hora elegida para comprobarla con la nueva especialista.
+        notaHora = "";
         pintar();
-        if (reprogramando) pintarReprogramar(aptas);
       };
     });
 
-    const selectorDia = crearSelectorDia($("#sel-dia"), fecha, (nueva) => {
-      fecha = nueva; slot = null;
-      selectorDia.actualizar(nueva);
-      cargarSlots();
-    }, { noRetroceder: true });
-    const horarios = crearHorarios($("#sel-hora"), "");
-    async function cargarSlots() {
-      const hermanas = (grupo || []).filter((g) => g.id !== cita.id && g.estado !== "cancelada");
-      const categoria = servicio?.categoria || "";
-      const excluir = hermanas.map((g) => ({ inicio: g.inicio, fin: g.fin }));
-      const incluir = hermanas
-        .filter((g) => {
-          const otra = todosServicios.find((s) => s.id === g.servicio_id);
-          return combinables(categoria, otra?.categoria || "");
-        })
-        .map((g) => g.inicio);
-      await horarios.cargar(
-        () => consultaDisponibilidad({
-          empleadoId: empleadoNuevo, fecha, servicioId: cita.servicio_id,
-          adicionalIds: cita.adicional_ids || [], excluirCitaId: cita.id,
-          continuaciones: incluir,
-        }),
-        slot?.inicio ?? null,
-        (elegido) => { slot = elegido; $("#btn-confirmar").disabled = !slot; },
-        { excluir, incluir }
-      );
+    // ---------- Horarios ----------
+    let recargarHorarios = async () => {};
+    if (empleadoNuevo && servicioNuevo) {
+      const selectorDia = crearSelectorDia($("#sel-dia"), fecha, (nueva) => {
+        fecha = nueva;
+        slot = null;
+        notaHora = "";
+        selectorDia.actualizar(nueva);
+        actualizarNotaHora();
+        recargarHorarios();
+        actualizarConfirmar();
+      }, { noRetroceder: true });
+      const horarios = crearHorarios($("#sel-hora"), "Elige una hora disponible.");
+      recargarHorarios = async () => {
+        const solicitud = ++solicitudHorarios;
+        const hermanas = (grupo || []).filter((g) => g.id !== cita.id && g.estado !== "cancelada");
+        const excluir = hermanas.map((g) => ({ inicio: g.inicio, fin: g.fin }));
+        const incluir = hermanas
+          .filter((g) => {
+            const otra = todosServicios.find((s) => s.id === g.servicio_id);
+            return combinables(servicioNuevo.categoria, otra?.categoria || "");
+          })
+          .map((g) => g.inicio);
+        // Si se intenta conservar una hora, se pide a la API como inicio exacto
+        // (puede no caer en la rejilla de 15 min) para comprobar que cabe.
+        const horaElegida = slot?.inicio ?? null;
+        const continuaciones = [...new Set([
+          ...incluir,
+          ...(horaElegida ? [horaElegida] : []),
+        ])];
+        verificandoHorario = true;
+        actualizarConfirmar();
+        const resultado = await horarios.cargar(
+          () => consultaDisponibilidad({
+            empleadoId: empleadoNuevo,
+            fecha,
+            servicioId: servicioNuevo.id,
+            adicionalIds: [...adicionalesNuevos],
+            excluirCitaId: cita.id,
+            continuaciones,
+          }),
+          horaElegida,
+          (elegido) => {
+            slot = elegido;
+            notaHora = "";
+            actualizarNotaHora();
+            actualizarConfirmar();
+          },
+          { excluir, incluir }
+        );
+        if (solicitud !== solicitudHorarios) return; // ya hay otra comprobación
+        verificandoHorario = false;
+        if (resultado && horaElegida &&
+            !resultado.slots.some((s) => s.inicio === horaElegida)) {
+          slot = null;
+          notaHora = cita.inicio === horaElegida && cita.empleado_id === empleadoNuevo
+            ? `El servicio nuevo no cabe a las ${hora(horaElegida)} con esta especialista. Te mostramos las horas libres de ese día.`
+            : `Las ${hora(horaElegida)} ya no están disponibles con estos cambios. Elige otra hora de las que aparecen abajo.`;
+          actualizarNotaHora();
+          requestAnimationFrame(() => $("#nota-hora")?.scrollIntoView({
+            behavior: "smooth", block: "nearest",
+          }));
+        }
+        actualizarConfirmar();
+      };
+      recargarHorarios();
     }
-    cargarSlots();
 
-    $("#btn-deshacer").onclick = () => { reprogramando = false; pintar(); };
+    $("#btn-deshacer").onclick = () => {
+      reprogramando = false;
+      guardandoEdicion = false;
+      slot = null;
+      notaHora = "";
+      pintar();
+    };
+
     $("#btn-confirmar").onclick = async () => {
-      const antes = { inicio: cita.inicio, empleada: cita.empleado_nombre };
+      if (guardandoEdicion || !slot || !empleadoNuevo || !servicioNuevo) return;
+      const antes = {
+        inicio: cita.inicio,
+        empleadoId: cita.empleado_id,
+        empleada: cita.empleado_nombre,
+      };
+      const servicioGuardado = servicioNuevo;
+      guardandoEdicion = true;
+      actualizarConfirmar();
       try {
-        cita = await patch(`/citas/${cita.id}`, { inicio: slot.inicio, empleado_id: empleadoNuevo });
-        marcarReprogramadas([cita.id]);
-        reprogramando = false; slot = null;
-        pintar();
-        await mostrarExitoReprogramar({
-          cliente: cita.cliente_nombre,
-          servicio: [cita.servicio_nombre, ...(cita.adicionales || [])].join(" · "),
-          antes: {
-            fecha: etiqueta(desdeISO(antes.inicio)),
-            hora: hora(antes.inicio),
-            empleada: antes.empleada,
-          },
-          ahora: {
-            fecha: etiqueta(desdeISO(cita.inicio)),
-            hora: hora(cita.inicio),
-            empleada: cita.empleado_nombre,
-          },
+        cita = await patch(`/citas/${cita.id}`, {
+          servicio_id: servicioGuardado.id,
+          adicional_ids: [...adicionalesNuevos],
+          subtipo: subtipoNuevo || null,
+          inicio: slot.inicio,
+          empleado_id: empleadoNuevo,
         });
+        const movida = antes.inicio !== cita.inicio || antes.empleadoId !== cita.empleado_id;
+        servicio = todosServicios.find((s) => s.id === cita.servicio_id) || servicioGuardado;
+        servicioNuevo = servicio;
+        subtipoNuevo = cita.subtipo;
+        adicionalesNuevos = new Set(cita.adicional_ids || []);
+        empleadoNuevo = cita.empleado_id;
+        fecha = desdeISO(cita.inicio);
+        if (grupo) grupo = grupo.map((g) => g.id === cita.id ? cita : g);
+        if (movida) marcarReprogramadas([cita.id]);
+        reprogramando = false;
+        guardandoEdicion = false;
+        slot = null;
+        notaHora = "";
+        pintar();
+        if (movida) {
+          await mostrarExitoReprogramar({
+            cliente: cita.cliente_nombre,
+            servicio: [cita.servicio_nombre, ...(cita.adicionales || [])].join(" · "),
+            antes: {
+              fecha: etiqueta(desdeISO(antes.inicio)),
+              hora: hora(antes.inicio),
+              empleada: antes.empleada,
+            },
+            ahora: {
+              fecha: etiqueta(desdeISO(cita.inicio)),
+              hora: hora(cita.inicio),
+              empleada: cita.empleado_nombre,
+            },
+          });
+        } else {
+          aviso("Cita actualizada", "ok");
+        }
       } catch (e) {
-        aviso(e.message || "No se pudo reprogramar.", "error");
-        cargarSlots();
+        guardandoEdicion = false;
+        const error = $("#error-editar");
+        if (error) {
+          error.textContent = e.message || "No se pudo actualizar la cita.";
+          error.classList.remove("oculto");
+        }
+        actualizarConfirmar();
+        recargarHorarios();
       }
     };
+    actualizarConfirmar();
   }
 
   pintar();

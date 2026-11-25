@@ -227,7 +227,7 @@ export function crearHorarios(contenedor, textoAyuda) {
       disp = await consulta();
     } catch (e) {
       contenedor.innerHTML = `<p class="error-txt">${escapeHtml(e.message)}</p>`;
-      return;
+      return null;
     }
     const todos = disp?.slots || [];
     const desdeMs = opciones.desde ? new Date(opciones.desde).getTime() : null;
@@ -249,7 +249,7 @@ export function crearHorarios(contenedor, textoAyuda) {
     });
     if (!todos.length) {
       contenedor.innerHTML = `<p class="nota">Sin horarios libres este día. Prueba con otra fecha.</p>`;
-      return;
+      return { todos, slots: [] };
     }
     if (!slots.length) {
       contenedor.innerHTML = desdeMs !== null
@@ -258,7 +258,7 @@ export function crearHorarios(contenedor, textoAyuda) {
         esta especialista. Prueba con otra especialista u otro día. (La reserva
         sigue el mismo día y los servicios no se cruzan.)</p>`
         : `<p class="nota">Sin horarios libres este día. Prueba con otra fecha.</p>`;
-      return;
+      return { todos, slots: [] };
     }
     contenedor.innerHTML = `
       <div class="slot-chips">
@@ -274,6 +274,7 @@ export function crearHorarios(contenedor, textoAyuda) {
         alElegir(slot);
       };
     });
+    return { todos, slots };
   }
 
   function limpiar(texto) {

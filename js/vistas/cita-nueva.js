@@ -13,7 +13,7 @@ import {
   compatible, combinables, textoSubtipo, mostrarCategoria, sumarDias, nombreCorto,
   compararCategorias,
 } from "../util.js?v=53";
-import { crearSelectorDia, crearHorarios, consultaDisponibilidad } from "./componentes.js?v=51";
+import { crearSelectorDia, crearHorarios, consultaDisponibilidad } from "./componentes.js?v=52";
 import { icono, icoCategoria } from "../iconos.js?v=64";
 import { mostrarExitoCita } from "../modal-exito.js?v=49";
 import { esAdmin } from "../auth.js?v=52";
