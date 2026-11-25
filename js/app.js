@@ -27,7 +27,7 @@ import { render as vistaEstadisticas } from "./vistas/estadisticas.js?v=58";
 import { render as vistaUsuarios } from "./vistas/usuarios.js?v=53";
 import { render as vistaUsuarioForm } from "./vistas/usuario-form.js?v=54";
 import { render as vistaPanel } from "./vistas/panel.js?v=10";
-import { render as vistaNotificaciones } from "./vistas/notificaciones.js?v=61";
+import { render as vistaNotificaciones } from "./vistas/notificaciones.js?v=62";
 
 const RUTAS = [
   { patron: /^\/login$/, vista: vistaLogin, publica: true, sinCabecera: true },

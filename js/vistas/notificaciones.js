@@ -122,24 +122,30 @@ function filaCita(n, puedeBorrar) {
         ${n.actor_nombre ? `<span class="notif-actor">${icono.usuario(12)} Generado por ${escapeHtml(n.actor_nombre)}</span>` : ""}
       </span>`;
 
-  // Solo las pendientes ofrecen marcarlas como leídas; admin puede borrar.
-  const marcar = n.leida ? "" : `
+  // Una sola columna de acciones a la derecha: arriba marcar como leída y
+  // debajo borrar (solo administradoras). Las usuarias solo ven la primera.
+  const acciones = [];
+  if (!n.leida) {
+    acciones.push(`
       <button class="notif-marcar" type="button" data-marcar="${n.id}"
               title="Marcar como leída" aria-label="Marcar como leída">
         ${icono.check(15)}
-      </button>`;
-  const borrar = puedeBorrar ? `
+      </button>`);
+  }
+  if (puedeBorrar) {
+    acciones.push(`
       <button class="notif-borrar" type="button" data-borrar="${n.id}"
               title="Eliminar aviso" aria-label="Eliminar aviso">
         ${icono.papelera(15)}
-      </button>` : "";
+      </button>`);
+  }
 
   return `
     <div class="notif-fila notif-cita ${n.leida ? "leida" : "sin-leer"} con-accion">
       <button class="notif-abrir" type="button"
               data-notif="${n.id}" data-cita="${n.cita_id ?? ""}">
         ${cuerpo}
-      </button>${marcar}${borrar}
+      </button>${acciones.length ? `<div class="notif-acciones">${acciones.join("")}</div>` : ""}
     </div>`;
 }
 
