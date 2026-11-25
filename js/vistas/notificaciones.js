@@ -6,7 +6,7 @@ import { esAdmin } from "../auth.js?v=52";
 import { icono } from "../iconos.js?v=64";
 import { confirmarPeligro } from "../modal-confirmar.js?v=1";
 import { refrescarBadgeNotificaciones } from "../menu-inferior.js?v=57";
-import { $, aviso, escapeHtml } from "../util.js?v=53";
+import { $, aviso, escapeHtml } from "../util.js?v=54";
 
 const ICONO_TIPO = {
   cita_nueva: icono.calendario(18),

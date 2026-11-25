@@ -7,13 +7,15 @@
 // El Promise se resuelve cuando la persona pulsa OK, la X, fuera de la tarjeta
 // o la tecla Esc.
 
-import { $, escapeHtml } from "./util.js?v=53";
+import { $, escapeHtml, importe, etiquetaMoneda } from "./util.js?v=54";
 import { icono } from "./iconos.js?v=64";
 
 export function mostrarExitoCita(datos) {
   return new Promise((resolver) => {
     const zona = $("#modal-zona");
     const archivada = Boolean(datos.archivada);
+    const moneda = datos.moneda || "USD";
+    const total = datos.totalMoneda ?? datos.total;
 
     const filas = datos.items
       .map(
@@ -63,7 +65,7 @@ export function mostrarExitoCita(datos) {
               ${icono.reloj(16)}
               <span>${escapeHtml(datos.duracion)}</span>
             </span>
-            <strong>$${Number(datos.total).toFixed(2)}</strong>
+            <strong>${importe(total, moneda)} ${etiquetaMoneda(moneda)}</strong>
           </div>
 
           <button class="btn btn-dorado btn-bloque" type="button" data-ok>OK</button>

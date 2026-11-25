@@ -5,7 +5,7 @@ import { get } from "../api.js?v=49";
 import {
   $, compararCategorias, escapeHtml, mostrarCategoria, textoSubtipo,
   colorCategoria, colorCategoriaCabecera,
-} from "../util.js?v=53";
+} from "../util.js?v=54";
 import { icono, icoCategoria } from "../iconos.js?v=64";
 import { activarFabAlDesplazar } from "../fab-flotante.js?v=1";
 

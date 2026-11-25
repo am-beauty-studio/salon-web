@@ -3,8 +3,9 @@
 import { get, patch } from "../api.js?v=49";
 import {
   $, $$, aviso, confirmar, escapeHtml, aISO, sumarDias, etiqueta,
-  esHoy, hora, usd, textoSubtipo, badgeCita, nombreCorto, esReprogramada,
-} from "../util.js?v=53";
+  esHoy, hora, usd, importe, etiquetaMoneda, normalizarMoneda, textoSubtipo,
+  badgeCita, nombreCorto, esReprogramada,
+} from "../util.js?v=54";
 import { esAdmin } from "../auth.js?v=52";
 import { icono } from "../iconos.js?v=64";
 import { abrirCalendario } from "./componentes.js?v=52";
@@ -108,7 +109,12 @@ export async function render(raiz, params, query) {
   function pintarCitas() {
     const visibles = empleadoId == null ? citas : citas.filter((c) => c.empleado_id === empleadoId);
     const activas = visibles.filter((c) => c.estado !== "cancelada");
-    const total = activas.reduce((s, c) => s + Number(c.precio_total), 0);
+    const totalUsd = activas
+      .filter((c) => normalizarMoneda(c.moneda) === "USD")
+      .reduce((s, c) => s + Number(c.precio_total), 0);
+    const totalCup = activas
+      .filter((c) => normalizarMoneda(c.moneda) === "CUP")
+      .reduce((s, c) => s + Number(c.precio_total_moneda ?? c.precio_total), 0);
     $("#resumen").innerHTML = `
       <div class="resumen-tarjeta">
         <span class="resumen-ico">${icono.calendario(18)}</span>
@@ -121,7 +127,8 @@ export async function render(raiz, params, query) {
         <span class="resumen-ico">${icono.dolar(18)}</span>
         <span class="resumen-datos">
           <span class="resumen-etiqueta">Total del día</span>
-          <span class="resumen-valor">${usd(total)}<small>USD</small></span>
+          <span class="resumen-valor">${usd(totalUsd)}<small>USD</small></span>
+          ${totalCup ? `<span class="resumen-valor" style="font-size:15px">${importe(totalCup, "CUP")}<small>CUP</small></span>` : ""}
         </span>
       </div>`;
 
@@ -184,7 +191,7 @@ export function tarjetaCita(c) {
       </div>
       <div class="cita-principal">
         <span class="cita-cliente">${icono.personas(16)}${escapeHtml(c.cliente_nombre)}</span>
-        <span class="cita-precio">${usd(c.precio_total)}<small>USD</small></span>
+        <span class="cita-precio">${importe(c.precio_total_moneda ?? c.precio_total, c.moneda)}<small>${etiquetaMoneda(c.moneda)}</small></span>
       </div>
       <div class="cita-info">
         <span class="cita-linea">${icono.etiqueta(14)}<span>${escapeHtml(servicioTxt)}</span></span>

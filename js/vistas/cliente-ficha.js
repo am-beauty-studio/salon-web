@@ -3,9 +3,9 @@
 
 import { get, post, patch, del } from "../api.js?v=49";
 import {
-  $, $$, aviso, confirmar, escapeHtml, hora, usd, badgeCita, textoSubtipo,
-  errorTelefonoCuba, esReprogramada,
-} from "../util.js?v=53";
+  $, $$, aviso, confirmar, escapeHtml, hora, importe, etiquetaMoneda, badgeCita,
+  textoSubtipo, errorTelefonoCuba, esReprogramada,
+} from "../util.js?v=54";
 import { icono } from "../iconos.js?v=64";
 import { esAdmin } from "../auth.js?v=52";
 
@@ -229,7 +229,7 @@ export async function render(raiz, params) {
               </span>
             </span>
             <span class="hist-der">
-              <span class="hist-precio">${usd(c.precio_total)}<small>USD</small></span>
+              <span class="hist-precio">${importe(c.precio_total_moneda ?? c.precio_total, c.moneda)}<small>${etiquetaMoneda(c.moneda)}</small></span>
               ${reprogramada
                 ? `<span class="badge badge-reprogramada">Reprogramada</span>`
                 : badgeCita(c)}

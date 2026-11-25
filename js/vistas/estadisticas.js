@@ -1,17 +1,21 @@
 // Estadísticas (solo admin). Dashboard distinto al de barras de Ganancias.
 
 import { get } from "../api.js?v=49";
-import { animarCifras } from "../contador.js?v=1";
+import { animarCifras } from "../contador.js?v=2";
 import {
   $, $$, aISO, escapeHtml, fechaCorta, sumarDias, sumarMeses, etiquetaSemana,
-  tituloMes, tituloAnio, usd, mostrarCategoria,
-} from "../util.js?v=53";
+  tituloMes, tituloAnio, importe, mostrarCategoria,
+} from "../util.js?v=54";
 import { icoCategoria, icono } from "../iconos.js?v=64";
 
 const ROSAS = [
   "#B25572", "#C06A86", "#CD7E97", "#D992A8",
   "#E3A6B9", "#EBBAC9", "#F2CCD8", "#F8DEE6",
 ];
+
+// Moneda del filtro. El API devuelve importes ya convertidos.
+let monedaActual = "USD";
+const monto = (valor) => importe(valor, monedaActual);
 
 /** Rosa según el peso del valor: el mayor recibe el tono más oscuro y el menor el más claro. */
 function colorRosa(valor, maximo, minimo = 0) {
@@ -27,6 +31,7 @@ function colorRosa(valor, maximo, minimo = 0) {
 export async function render(raiz) {
   let periodo = "mes";
   let fecha = new Date();
+  let moneda = "USD";
   let observadorDonut = null;
 
   raiz.innerHTML = `
@@ -41,6 +46,11 @@ export async function render(raiz) {
         <button class="segmento activo" data-p="mes" type="button" role="tab">Mes</button>
         <button class="segmento" data-p="anio" type="button" role="tab">Año</button>
       </div>
+      <div class="filtro-etiqueta">Moneda</div>
+      <div class="segmentado" role="tablist" aria-label="Moneda de las estadísticas">
+        <button class="segmento activo" data-m="USD" type="button" role="tab" aria-selected="true">USD</button>
+        <button class="segmento" data-m="CUP" type="button" role="tab" aria-selected="false">CUP</button>
+      </div>
       <div class="nav-fecha">
         <button class="nav-flecha" id="e-prev" type="button" aria-label="Período anterior">‹</button>
         <button class="nav-fecha-titulo" id="e-titulo" type="button"></button>
@@ -49,8 +59,8 @@ export async function render(raiz) {
     </div>
     <div id="dash"></div>
     <p class="nota" style="text-align:center;margin-top:14px">
-      Los importes se calculan con las citas completadas. AM Luxury incluye
-      reinversión más ganancia libre.
+      Los importes se calculan con las citas completadas y se separan por moneda.
+      AM Luxury incluye reinversión más ganancia libre.
     </p>`;
 
   $$(".segmentado [data-p]").forEach((chip) => {
@@ -58,6 +68,18 @@ export async function render(raiz) {
       periodo = chip.dataset.p;
       $$(".segmentado [data-p]").forEach((c) => {
         const activo = c.dataset.p === periodo;
+        c.classList.toggle("activo", activo);
+        c.setAttribute("aria-selected", activo ? "true" : "false");
+      });
+      cargar();
+    };
+  });
+
+  $$(".segmentado [data-m]").forEach((chip) => {
+    chip.onclick = () => {
+      moneda = chip.dataset.m;
+      $$(".segmentado [data-m]").forEach((c) => {
+        const activo = c.dataset.m === moneda;
         c.classList.toggle("activo", activo);
         c.setAttribute("aria-selected", activo ? "true" : "false");
       });
@@ -93,7 +115,7 @@ export async function render(raiz) {
     $("#dash").innerHTML = `<div class="cargando">Cargando…</div>`;
     try {
       const r = await get(
-        `/finanzas/estadisticas?periodo=${periodo}&fecha=${aISO(fecha)}`
+        `/finanzas/estadisticas?periodo=${periodo}&fecha=${aISO(fecha)}&moneda=${moneda}`
       );
       const $dash = $("#dash");
       $dash.innerHTML = dashboard(r);
@@ -147,6 +169,7 @@ function observarDonut(dash) {
 
 function dashboard(r) {
   const t = r.totales;
+  monedaActual = r.moneda || "USD";
   // De mayor a menor ingreso: el tono más oscuro siempre es el que más recauda.
   const categorias = [...(r.por_categoria || [])].sort(
     (a, b) => Number(b.ingresos) - Number(a.ingresos)
@@ -161,17 +184,17 @@ function dashboard(r) {
   const mejor = [...(r.serie || [])].sort(
     (a, b) => Number(b.estudio) - Number(a.estudio)
   )[0];
-  const mejorValor = mejor && Number(mejor.estudio) > 0 ? usd(mejor.estudio) : "—";
+  const mejorValor = mejor && Number(mejor.estudio) > 0 ? monto(mejor.estudio) : "—";
   const mejorSub = mejor && Number(mejor.estudio) > 0
     ? (r.periodo === "anio" ? mejor.etiqueta : `día ${mejor.etiqueta}`)
     : "sin movimiento";
 
   return `
     <div class="dash-kpis">
-      ${kpi("dolar", "AM Luxury", usd(t.estudio), `de ${usd(t.ingresos)} recaudados`, true)}
+      ${kpi("dolar", "AM Luxury", monto(t.estudio), `de ${monto(t.ingresos)} ${monedaActual} recaudados`, true)}
       ${kpi("calendario", "Citas completadas", String(t.citas),
         `${t.citas === 1 ? "1 cita" : `${t.citas} citas`} en el período`)}
-      ${kpi("porcentaje", "Ticket promedio", usd(t.ticket_promedio), "por cita completada")}
+      ${kpi("porcentaje", "Ticket promedio", monto(t.ticket_promedio), "por cita completada")}
       ${kpi("grafico", r.periodo === "anio" ? "Mejor mes" : "Mejor día", mejorValor, mejorSub)}
     </div>
 
@@ -182,7 +205,7 @@ function dashboard(r) {
           <p>Recaudado por AM Luxury y cantidad de citas</p>
         </div>
         <div class="dash-leyenda">
-          <span><i style="background:var(--gold)"></i>AM Luxury ${usd(t.estudio)}</span>
+          <span><i style="background:var(--gold)"></i>AM Luxury ${monto(t.estudio)} ${monedaActual}</span>
           <span><i style="background:var(--violeta)"></i>${t.citas} citas</span>
         </div>
       </div>
@@ -249,7 +272,7 @@ function donutHtml(categorias, total) {
       <div class="dash-donut" style="background:conic-gradient(${paradas})">
         <div class="dash-donut-centro">
           <span>Total recaudado</span>
-          <strong data-contar-diferido="${usd(total)}">${usd(total)}</strong>
+          <strong data-contar-diferido="${monto(total)}">${monto(total)}</strong>
         </div>
       </div>
       <ul class="dash-donut-leyenda">
@@ -275,10 +298,10 @@ function filaCategoria(c, total, max, min, i = 0) {
         </span>
         <span class="dash-cat-nombre">
           ${escapeHtml(mostrarCategoria(c.categoria))}
-          <small>${c.citas} ${c.citas === 1 ? "cita" : "citas"} · AM Luxury ${usd(c.estudio)}</small>
+          <small>${c.citas} ${c.citas === 1 ? "cita" : "citas"} · AM Luxury ${monto(c.estudio)}</small>
         </span>
         <span class="dash-cat-monto">
-          ${usd(c.ingresos)}
+          ${monto(c.ingresos)}
           <small>${share.toFixed(0)}%</small>
         </span>
       </div>
@@ -309,10 +332,10 @@ function listaServiciosHtml(titulo, sub, servicios, total) {
                     ${escapeHtml(x.nombre)}
                     ${x.es_adicional ? `<span class="dash-tag">Adicional</span>` : ""}
                   </span>
-                  <span class="dash-serv-monto">${usd(x.ingresos)}</span>
+                  <span class="dash-serv-monto">${monto(x.ingresos)}</span>
                 </div>
                 <div class="dash-serv-sub">
-                  ${x.citas} ${x.citas === 1 ? "cita" : "citas"} · AM Luxury ${usd(x.estudio)}
+                  ${x.citas} ${x.citas === 1 ? "cita" : "citas"} · AM Luxury ${monto(x.estudio)}
                   <span>${share.toFixed(0)}%</span>
                 </div>
                 <div class="dash-barra"><span style="width:${ancho}%;background:${colorRosa(x.ingresos, max, min)}"></span></div>
@@ -346,7 +369,7 @@ function topClientasHtml(clientes) {
               </span>
             </span>
             <span class="dash-persona-valores">
-              <strong>${usd(c.ingresos)}</strong>
+              <strong>${monto(c.ingresos)}</strong>
               <small>recaudado</small>
             </span>
             <span class="dash-persona-flecha" aria-hidden="true">›</span>
@@ -376,11 +399,11 @@ function empleadasHtml(empleadas) {
               </span>
               <span class="dash-persona-sub">
                 ${e.citas} ${e.citas === 1 ? "cita" : "citas"} ·
-                ${usd(e.ingresos)} recaudado · AM ${usd(e.estudio)}
+                ${monto(e.ingresos)} recaudado · AM ${monto(e.estudio)}
               </span>
             </span>
             <span class="dash-persona-valores">
-              <strong>${usd(e.trabajadora)}</strong>
+              <strong>${monto(e.trabajadora)}</strong>
               <small>para ella</small>
             </span>
           </div>`).join("")}</div>`}

@@ -3,14 +3,15 @@
 
 import { get, patch } from "../api.js?v=49";
 import {
-  $, $$, aviso, confirmar, desdeISO, escapeHtml, etiqueta, hora, usd,
+  $, $$, aviso, confirmar, desdeISO, escapeHtml, etiqueta, hora, usd, importe,
+  etiquetaMoneda, normalizarMoneda, convertirMoneda,
   badgeCita, textoSubtipo, marcarReprogramadas, nombreCorto, esReprogramada,
   combinables, compatible, duracionTxt, mostrarCategoria, normalizarClave,
-} from "../util.js?v=53";
+} from "../util.js?v=54";
 import { esAdmin } from "../auth.js?v=52";
 import { icono, icoCategoria } from "../iconos.js?v=64";
 import { crearSelectorDia, crearHorarios, consultaDisponibilidad } from "./componentes.js?v=52";
-import { mostrarExitoReprogramar } from "../modal-exito.js?v=49";
+import { mostrarExitoReprogramar } from "../modal-exito.js?v=50";
 
 export async function render(raiz, params, query) {
   // Día desde el que se abrió la cita. Se propaga en los enlaces internos para
@@ -121,7 +122,7 @@ export async function render(raiz, params, query) {
         </div>
         <div class="cita-principal">
           <a class="cita-cliente" href="#/clientes/${cita.cliente_id}">${icono.personas(16)}${escapeHtml(cita.cliente_nombre)}</a>
-          <span class="cita-precio">${usd(cita.precio_total)}<small>USD</small></span>
+          <span class="cita-precio">${importe(cita.precio_total_moneda ?? cita.precio_total, cita.moneda)}<small>${etiquetaMoneda(cita.moneda)}</small></span>
         </div>
         <div class="cita-info">
           <span class="cita-linea">${icono.calendario(14)}<span>${escapeHtml(etiqueta(desdeISO(cita.inicio)))}</span></span>
@@ -129,6 +130,11 @@ export async function render(raiz, params, query) {
           ${subtipoTxt ? `<span class="cita-linea cita-subtipo">${icono.capas(14)}<span>${escapeHtml(subtipoTxt)}</span></span>` : ""}
           ${extras ? `<span class="cita-linea cita-adicional">${icono.mas(14)}<span>${escapeHtml(extras)}</span></span>` : ""}
           <span class="cita-linea">${icono.usuario(14)}<span>Con ${escapeHtml(cita.empleado_nombre)}</span></span>
+          ${normalizarMoneda(cita.moneda) === "CUP" ? `
+            <span class="cita-linea">${icono.dolar(14)}<span>
+              Tasa 1 USD = ${Number(cita.tasa_cambio).toLocaleString("en-US", { maximumFractionDigits: 4 })} CUP
+              · equivale a ${usd(cita.precio_total)} USD
+            </span></span>` : ""}
         </div>
         ${cita.notas ? `<div class="cita-nota">“${escapeHtml(cita.notas)}”</div>` : ""}
       </div>
@@ -174,7 +180,33 @@ export async function render(raiz, params, query) {
             <button class="btn btn-suave-ok" id="btn-completar" type="button">${icono.check(15)}Completar cita</button>
             <button class="btn btn-suave-peligro" id="btn-cancelar" type="button">${icono.equis(15)}Cancelar cita</button>
           </div>
-        </div>` : ""}
+        </div>
+
+        <section class="form-seccion">
+          <div class="form-seccion-cab">
+            <span class="form-seccion-ico">${icono.dolar(17)}</span>
+            <div class="form-seccion-textos">
+              <p class="form-seccion-titulo">Moneda de cobro</p>
+              <p class="form-seccion-sub">La clienta puede pagar en USD o en CUP. El catálogo sigue en USD.</p>
+            </div>
+          </div>
+          <div class="segmentado" role="tablist" aria-label="Moneda de cobro">
+            <button class="segmento ${normalizarMoneda(cita.moneda) === "USD" ? "activo" : ""}"
+              data-cambiar-moneda="USD" type="button" role="tab">USD</button>
+            <button class="segmento ${normalizarMoneda(cita.moneda) === "CUP" ? "activo" : ""}"
+              data-cambiar-moneda="CUP" type="button" role="tab">CUP</button>
+          </div>
+          <p class="nota" style="margin:8px 0 0">
+            Se cobrará <b>${importe(cita.precio_total_moneda ?? cita.precio_total, cita.moneda)} ${etiquetaMoneda(cita.moneda)}</b>
+            (${usd(cita.precio_total)} USD)
+            ${normalizarMoneda(cita.moneda) === "CUP"
+              ? ` · tasa 1 USD = ${Number(cita.tasa_cambio).toLocaleString("en-US", { maximumFractionDigits: 4 })} CUP`
+              : ""}.
+            ${grupo && grupo.length > 1
+              ? " El cambio se aplica a las citas programadas de esta reserva."
+              : ""}
+          </p>
+        </section>` : ""}
 
       <div id="zona-reprogramar"></div>`;
 
@@ -250,7 +282,31 @@ export async function render(raiz, params, query) {
           }));
         }
       };
+      $$("[data-cambiar-moneda]").forEach((boton) => {
+        boton.onclick = () => cambiarMoneda(boton.dataset.cambiarMoneda);
+      });
       if (reprogramando) pintarReprogramar();
+    }
+  }
+
+  async function cambiarMoneda(nueva) {
+    const moneda = normalizarMoneda(nueva);
+    if (moneda === normalizarMoneda(cita.moneda)) return;
+    const aplicarGrupo = Boolean(cita.grupo_id);
+    try {
+      cita = await patch(`/citas/${cita.id}/moneda`, {
+        moneda,
+        aplicar_grupo: aplicarGrupo,
+      });
+      if (aplicarGrupo) {
+        try {
+          grupo = await get(`/citas?grupo_id=${encodeURIComponent(cita.grupo_id)}`);
+        } catch { /* se mantiene la reserva ya cargada */ }
+      }
+      aviso(`Cita en ${moneda}`, "ok");
+      pintar();
+    } catch (e) {
+      aviso(e.message || "No se pudo cambiar la moneda.", "error");
     }
   }
 
@@ -410,7 +466,10 @@ export async function render(raiz, params, query) {
         </section>
 
         <div class="resumen-caja reprog-resumen">
-          <div class="linea"><b>Total:</b> ${usd(totalPrecio)} USD · ${duracionTxt(totalDuracion)}</div>
+          <div class="linea"><b>Total:</b> ${importe(convertirMoneda(totalPrecio, cita.moneda, cita.tasa_cambio), cita.moneda)} ${etiquetaMoneda(cita.moneda)} · ${duracionTxt(totalDuracion)}</div>
+          ${normalizarMoneda(cita.moneda) === "CUP"
+            ? `<div class="linea"><b>Equivalente:</b> ${usd(totalPrecio)} USD · tasa 1 USD = ${Number(cita.tasa_cambio).toLocaleString("en-US", { maximumFractionDigits: 4 })} CUP</div>`
+            : ""}
           <div class="linea"><b>Servicio:</b> ${escapeHtml(servicioNuevo.nombre)}${textoSubtipo(subtipoNuevo) ? ` · ${escapeHtml(textoSubtipo(subtipoNuevo))}` : ""}</div>
           ${extrasElegidos.length ? `<div class="linea"><b>Adicionales:</b> ${escapeHtml(extrasElegidos.map((s) => s.nombre).join(", "))}</div>` : ""}
           ${empleadoNuevo ? `<div class="linea"><b>Especialista:</b> ${escapeHtml(nombreEmpleado(empleadoNuevo))}</div>` : ""}

@@ -96,10 +96,12 @@ salon_web/
   completar/cancelar con confirmación.
 - Nueva cita en 5 pasos con las mismas reglas: adicionales solo si comparten
   categoría con el servicio principal, especialistas aptas según sus servicios,
-  slots de 15 min de `GET /empleados/{id}/disponibilidad`.
+  slots de 15 min de `GET /empleados/{id}/disponibilidad`. Incluye selector de
+  moneda de cobro (USD/CUP) con la tasa configurada en el Panel.
 - Detalle de cita: cambio de servicio, subtipo y adicionales con recálculo de
   precio/duración; mantiene la hora actual y permite reprogramar excluyendo la
-  propia cita.
+  propia cita. También permite cambiar la moneda de cobro (y la de toda la
+  reserva enlazada) mientras la cita esté programada.
 - Notificaciones: avisos compartidos de citas y alertas de stock; cada usuaria
   elige en Ajustes qué tipos quiere ver y la campana respeta su elección.
 - Clientas: búsqueda con debounce, ficha con historial.
@@ -107,7 +109,10 @@ salon_web/
   validaciones (formato 24 h, fin > inicio, sin cruces), zonas de peligro con
   "desactivar" cuando la API responde 409.
 - Ganancias: reparto trabajadoras / reinversión / libre, pendientes y
-  desgloses por trabajadora, categoría y día.
+  desgloses por trabajadora, categoría y día. Filtro USD/CUP igual que en
+  Estadísticas.
+- Panel de control (superadmin): tasa de cambio USD → CUP, facturado separado
+  por moneda, control de accesos y mantenimiento de citas.
 - Rol `recepcion`: ve Agenda y Clientas; Servicios, Empleadas y Ganancias
   quedan bloqueadas.
 - Sesión: token en localStorage; si la API responde 401 se cierra sesión y

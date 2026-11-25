@@ -4,8 +4,8 @@ import { get } from "../api.js?v=49";
 import {
   $, $$, escapeHtml, sumarDias, sumarMeses, etiqueta, etiquetaSemana, tituloMes,
   tituloTrimestre, tituloSemestre, tituloAnio, mesCorto,
-  diaCorto, usd, mostrarCategoria, compararCategorias,
-} from "../util.js?v=53";
+  diaCorto, importe, mostrarCategoria, compararCategorias,
+} from "../util.js?v=54";
 import { icoCategoria, icono } from "../iconos.js?v=64";
 import { abrirCalendario } from "./componentes.js?v=52";
 
@@ -13,6 +13,11 @@ const ROSAS = [
   "#B25572", "#C06A86", "#CD7E97", "#D992A8",
   "#E3A6B9", "#EBBAC9", "#F2CCD8", "#F8DEE6",
 ];
+
+// Moneda seleccionada en el filtro. Los importes que llegan del API ya están
+// convertidos, así que solo hay que darles formato con su símbolo.
+let monedaActual = "USD";
+const monto = (valor) => importe(valor, monedaActual);
 
 /**
  * Colores por puesto para las gráficas de barra: el porcentaje mayor toma el
@@ -34,6 +39,7 @@ function coloresPorPuesto(valores) {
 export async function render(raiz) {
   let periodo = "dia";
   let fecha = new Date();
+  let moneda = "USD";
 
   raiz.innerHTML = `
     <div class="vista-cab">
@@ -50,6 +56,11 @@ export async function render(raiz) {
         <button class="segmento" data-p="semestre" type="button" role="tab">Semestre</button>
         <button class="segmento" data-p="anio" type="button" role="tab">Año</button>
       </div>
+      <div class="filtro-etiqueta">Moneda</div>
+      <div class="segmentado" role="tablist" aria-label="Moneda de las ganancias">
+        <button class="segmento activo" data-m="USD" type="button" role="tab" aria-selected="true">USD</button>
+        <button class="segmento" data-m="CUP" type="button" role="tab" aria-selected="false">CUP</button>
+      </div>
       <div class="nav-fecha">
         <button class="nav-flecha" id="g-prev" type="button" aria-label="Período anterior">‹</button>
         <button class="nav-fecha-titulo" id="g-hoy" type="button"></button>
@@ -59,12 +70,24 @@ export async function render(raiz) {
     <div id="contenido"></div>
     <p class="nota" style="text-align:center;margin-top:14px">
       La ganancia se cuenta cuando la cita se marca como completada, en el día del servicio.
+      El filtro de moneda separa lo cobrado en USD de lo cobrado en CUP.
     </p>`;
 
   $$(".segmentado [data-p]").forEach((chip) => {
     chip.onclick = () => {
       periodo = chip.dataset.p;
       pintarChips();
+      cargar();
+    };
+  });
+  $$(".segmentado [data-m]").forEach((chip) => {
+    chip.onclick = () => {
+      moneda = chip.dataset.m;
+      $$(".segmentado [data-m]").forEach((c) => {
+        const activo = c.dataset.m === moneda;
+        c.classList.toggle("activo", activo);
+        c.setAttribute("aria-selected", activo ? "true" : "false");
+      });
       cargar();
     };
   });
@@ -119,7 +142,7 @@ export async function render(raiz) {
     let resumen;
     try {
       const iso = aISOFecha(fecha);
-      resumen = await get(`/finanzas/resumen?periodo=${periodo}&fecha=${iso}`);
+      resumen = await get(`/finanzas/resumen?periodo=${periodo}&fecha=${iso}&moneda=${moneda}`);
     } catch (e) {
       caja.innerHTML = `<p class="error-txt">${escapeHtml(e.message)}</p>`;
       return;
@@ -130,6 +153,7 @@ export async function render(raiz) {
   function pintar(r) {
     const t = r.totales;
     const caja = $("#contenido");
+    monedaActual = r.moneda || moneda;
 
     if (!t.citas) {
       caja.innerHTML = `<div class="vacio">Sin ganancias registradas en este período.</div>
@@ -155,7 +179,7 @@ export async function render(raiz) {
     caja.innerHTML = `
       <div class="tarjeta">
         <div class="nota">Ingresos · ${t.citas} ${t.citas === 1 ? "cita" : "citas"} completada(s)</div>
-        <div class="gan-num">${usd(t.ingresos)} USD</div>
+        <div class="gan-num">${monto(t.ingresos)} <small>${monedaActual}</small></div>
         <div class="barra-reparto">
           ${tramos.map((f) => `
             <div style="background:${f.color};width:${pct(f.monto)}%"></div>`).join("")}
@@ -165,12 +189,12 @@ export async function render(raiz) {
             <span class="reparto-punto" style="background:${f.color}"></span>
             <span class="reparto-nombre">${f.nombre}</span>
             <span class="lista-secundario">${pct(f.monto).toFixed(1)}%</span>
-            <span class="reparto-monto">${usd(f.monto)} USD</span>
+            <span class="reparto-monto">${monto(f.monto)} ${monedaActual}</span>
           </div>`).join("")}
         <hr style="border:none;border-top:1px solid var(--border);margin:10px 0" />
         <div class="reparto-fila">
           <span class="reparto-nombre" style="font-weight:700">AM Luxury en total</span>
-          <span class="reparto-monto" style="font-size:16px">${usd(t.estudio_total)} USD</span>
+          <span class="reparto-monto" style="font-size:16px">${monto(t.estudio_total)} ${monedaActual}</span>
         </div>
         <p class="nota">Reinversión + parte libre. La parte de cada trabajadora sale directo del servicio.</p>
       </div>
@@ -179,8 +203,8 @@ export async function render(raiz) {
 
       ${seccionLista("Por trabajadora", r.por_trabajadora.map((x) => ({
         titulo: x.empleado_nombre,
-        detalle: `${x.citas} ${x.citas === 1 ? "cita" : "citas"} · ${usd(x.ingresos)} USD generados`,
-        derecho: `le corresponde ${usd(x.trabajadoras)} USD`,
+        detalle: `${x.citas} ${x.citas === 1 ? "cita" : "citas"} · ${monto(x.ingresos)} ${monedaActual} generados`,
+        derecho: `le corresponde ${monto(x.trabajadoras)} ${monedaActual}`,
       })), !r.por_trabajadora.length)}
 
       ${seccionServicios(r.por_servicio)}
@@ -192,7 +216,7 @@ export async function render(raiz) {
   function pendienteHtml(r) {
     return `
       <div class="caja-amarilla">
-        <b>Pendiente: ${r.pendiente.citas} ${r.pendiente.citas === 1 ? "cita" : "citas"} programada(s) · ${usd(r.pendiente.monto)}</b>
+        <b>Pendiente: ${r.pendiente.citas} ${r.pendiente.citas === 1 ? "cita" : "citas"} programada(s) · ${monto(r.pendiente.monto)} ${monedaActual}</b>
         <div class="nota">Aún no cuentan como ganancia: se suman al marcarlas como completadas.</div>
       </div>`;
   }
@@ -286,7 +310,7 @@ export async function render(raiz) {
             ${escapeHtml(p.servicio_nombre)}${p.es_adicional ? `<span class="etiqueta-adicional" style="${ETIQUETA}">Adicional</span>` : ""}
             <span style="${SUB}">${p.citas} ${p.citas === 1 ? "cita" : "citas"}</span>
           </span>
-          <span class="acordeon-monto" style="${MONTO}">${usd(p.ingresos)}</span>
+          <span class="acordeon-monto" style="${MONTO}">${monto(p.ingresos)}</span>
         </summary>
         <div class="acordeon-cuerpo" style="${CUERPO}">
           ${Number(p.ingresos) > 0 ? `
@@ -298,12 +322,12 @@ export async function render(raiz) {
               <span class="reparto-punto" style="width:10px;height:10px;border-radius:50%;flex-shrink:0;background:${f.color}"></span>
               <span class="reparto-nombre" style="flex:1">${f.nombre}</span>
               <span class="lista-secundario" style="color:var(--muted,#8A7680);font-size:13px">${pctTxt(f.pct)}</span>
-              <span class="reparto-monto" style="color:var(--gold-dark,#96405C);font-weight:700;white-space:nowrap">${usd(f.monto)}</span>
+              <span class="reparto-monto" style="color:var(--gold-dark,#96405C);font-weight:700;white-space:nowrap">${monto(f.monto)}</span>
             </div>`).join("")}
           <hr style="border:none;border-top:1px solid var(--border,#E3BCCC);margin:8px 0" />
           <div class="reparto-fila" style="${FILA}">
             <span style="flex:1;font-weight:700">AM Luxury en total</span>
-            <span style="color:var(--gold-dark,#96405C);font-weight:700;white-space:nowrap">${usd(p.estudio_total)}</span>
+            <span style="color:var(--gold-dark,#96405C);font-weight:700;white-space:nowrap">${monto(p.estudio_total)}</span>
           </div>
           <p style="${NOTA}">Porcentajes del servicio: reinversión ${pctTxt(pctR)} · empleada ${pctTxt(pctT)}. La reinversión también es de AM Luxury.</p>
           ` : `<p style="${NOTA};margin:8px 0 0">Sin ingresos en este período.</p>`}
@@ -312,7 +336,7 @@ export async function render(raiz) {
     };
 
     return `
-      <div class="paso-titulo" style="margin-top:18px">Por categoría</div>
+      <div class="paso-titulo" style="margin-top:18px">Por categoría · ${monedaActual}</div>
       ${grupos.map((g) => {
         const ico = icoCategoria(g.categoria);
         const t = sumarCategoria(g.items);
@@ -322,7 +346,7 @@ export async function render(raiz) {
         const metrica = (etiqueta, valor, pct, destacada = false) => `
           <div class="cat-metrica${destacada ? " destacada" : ""}">
             <span>${etiqueta}</span>
-            <strong>${usd(valor)}</strong>
+            <strong>${monto(valor)}</strong>
             ${t.ingresos > 0 ? `<small>${pctTxt(pct)} del total</small>` : ""}
           </div>`;
         return `
@@ -335,7 +359,7 @@ export async function render(raiz) {
             </div>
             <div class="cat-cab-total">
               <span>Recaudado</span>
-              <strong>${usd(t.ingresos)}</strong>
+              <strong>${monto(t.ingresos)}</strong>
             </div>
           </div>
           <div class="cat-cuerpo">
@@ -384,7 +408,7 @@ export async function render(raiz) {
           <span class="nombre">${escapeHtml(f.etiqueta)}</span>
           <span class="pista"><span class="relleno"
             style="display:block;height:100%;background:linear-gradient(to right,#F8DEE6,${colorDe(f.monto)});border-radius:5px;width:${(f.monto / max) * 100}%"></span></span>
-          <span class="monto">${usd(f.monto)}</span>
+          <span class="monto">${monto(f.monto)}</span>
         </div>`).join("")}`;
   }
 

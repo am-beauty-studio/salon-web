@@ -5,10 +5,10 @@
 
 import { del, get, patch } from "../api.js?v=49";
 import { usuario as usuarioActual } from "../auth.js?v=52";
-import { animarCifras } from "../contador.js?v=1";
+import { animarCifras } from "../contador.js?v=2";
 import { icono } from "../iconos.js?v=64";
 import { confirmarPeligro } from "../modal-confirmar.js?v=1";
-import { $, $$, aviso, escapeHtml, fechaCorta, hora, usd } from "../util.js?v=53";
+import { $, $$, aviso, escapeHtml, fechaCorta, hora, importe, etiquetaMoneda } from "../util.js?v=54";
 
 const ETIQUETA_ROL = {
   superadmin: "Superadmin",
@@ -169,6 +169,7 @@ function filaUsuarioAcceso(u, ahora) {
 export async function render(raiz) {
   let resumen = null;
   let accesos = null;
+  let configMoneda = null;
   let completadas = { total: 0, citas: [] };
   let filtro = "";
   let categoria = "completadas";
@@ -186,6 +187,29 @@ export async function render(raiz) {
 
     <div class="dash-kpis" id="panel-kpis">
       <div class="dash-vacio">Cargando resumen…</div>
+    </div>
+
+    <div class="dash-card">
+      <div class="dash-cab">
+        <div>
+          <h2>Tasa de cambio USD → CUP</h2>
+          <p>Con esta tasa se calcula lo que paga la clienta cuando elige CUP. Cada cita guarda la tasa del momento en que se agendó o cambió de moneda.</p>
+        </div>
+        <span class="badge badge-dorado" id="panel-tasa-actual">Cargando…</span>
+      </div>
+      <form id="panel-tasa-form" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div class="campo" style="flex:1;min-width:190px;margin:0">
+          <label class="etiqueta" for="panel-tasa">CUP por 1 USD</label>
+          <input class="input" id="panel-tasa" type="number" inputmode="decimal"
+            min="0.0001" step="0.0001" required />
+        </div>
+        <button class="btn btn-dorado" id="panel-tasa-guardar" type="submit">
+          ${icono.dolar(15)} Guardar tasa
+        </button>
+      </form>
+      <p class="nota" id="panel-tasa-info" style="margin:8px 0 0">
+        Ejemplo: si la tasa es 500, una cita de $10.00 USD se cobra en $5,000.00 CUP.
+      </p>
     </div>
 
     <div class="dash-card panel-accesos-card">
@@ -271,13 +295,27 @@ export async function render(raiz) {
   const $buscarBtn = $("#panel-buscar-btn");
   const $limpiar = $("#panel-limpiar");
   const $borrarTodo = $("#panel-borrar-todo");
+  const $tasaForm = $("#panel-tasa-form");
+  const $tasaInput = $("#panel-tasa");
+  const $tasaActual = $("#panel-tasa-actual");
+  const $tasaInfo = $("#panel-tasa-info");
+  const $tasaGuardar = $("#panel-tasa-guardar");
 
   function pintarResumen() {
     const r = resumen;
+    const cup = Number(r.ingresos_completados_cup || 0);
     $kpis.innerHTML = [
       kpi("Usuarios", r.usuarios, `${r.usuarios_activos} activos`, icono.personas(17), true),
       kpi("Clientas", r.clientes, "en la base de datos", icono.personas(17)),
-      kpi("Citas completadas", r.citas_completadas, `${usd(r.ingresos_completados)} facturados`, icono.check(17), true),
+      kpi(
+        "Citas completadas",
+        r.citas_completadas,
+        cup
+          ? `${importe(r.ingresos_completados, "USD")} USD + ${importe(cup, "CUP")} CUP`
+          : `${importe(r.ingresos_completados, "USD")} USD facturados`,
+        icono.check(17),
+        true
+      ),
       kpi("Próximas citas", r.citas_programadas, `${r.citas_canceladas} canceladas`, icono.calendario(17)),
       kpi("Servicios", r.servicios_activos, "activos en el catálogo", icono.etiqueta(17)),
       kpi("Productos", r.productos_activos, `${r.productos_bajo_stock} con stock bajo`, icono.caja(17)),
@@ -286,6 +324,34 @@ export async function render(raiz) {
     ].join("");
 
     animarCifras($kpis);
+  }
+
+  function pintarMoneda() {
+    if (!configMoneda) return;
+    const tasa = Number(configMoneda.tasa_cambio_cup || 0);
+    $tasaInput.value = String(tasa);
+    $tasaActual.textContent = `${tasa.toLocaleString("en-US", {
+      maximumFractionDigits: 4,
+    })} CUP / USD`;
+    const cuando = configMoneda.actualizado_en
+      ? ` Última actualización: ${fechaHoraCorta(configMoneda.actualizado_en)}${
+          configMoneda.actualizado_por_nombre
+            ? ` por ${configMoneda.actualizado_por_nombre}`
+            : ""
+        }.`
+      : "";
+    $tasaInfo.textContent =
+      `Ejemplo: una cita de $10.00 USD se cobra en ${importe(10 * tasa, "CUP")} CUP.${cuando}`;
+  }
+
+  async function cargarMoneda() {
+    try {
+      configMoneda = await get("/panel/configuracion");
+      pintarMoneda();
+    } catch (e) {
+      $tasaActual.textContent = "No disponible";
+      $tasaInfo.textContent = e.message || "No se pudo cargar la tasa de cambio.";
+    }
   }
 
   function pintarAccesos() {
@@ -386,7 +452,7 @@ export async function render(raiz) {
           </span>
           <span class="lista-secundario" style="display:block">
             Con ${escapeHtml(c.empleado_nombre)} ·
-            <b style="color:var(--gold-dark)">${usd(c.precio_total)}</b>
+            <b style="color:var(--gold-dark)">${importe(c.precio_total_moneda ?? c.precio_total, c.moneda)} ${etiquetaMoneda(c.moneda)}</b>
           </span>
           <span class="lista-secundario" style="display:block">
             Etiqueta generada por <b>${escapeHtml(usuarioEtiqueta(c))}</b>
@@ -446,6 +512,7 @@ export async function render(raiz) {
   async function cargar() {
     await Promise.all([
       cargarResumen(),
+      cargarMoneda(),
       cargarAccesos(),
       buscado ? buscarCitas() : null,
     ]);
@@ -457,7 +524,7 @@ export async function render(raiz) {
       { icono: icono.calendario(15), texto: `${fechaCorta(c.inicio)} · ${hora(c.inicio)}–${hora(c.fin)}` },
       { icono: icono.etiqueta(15), texto: c.servicio_nombre },
       { icono: icono.usuario(15), texto: `Con ${c.empleado_nombre}` },
-      { icono: icono.dolar(15), texto: `${usd(c.precio_total)} USD` },
+      { icono: icono.dolar(15), texto: `${importe(c.precio_total_moneda ?? c.precio_total, c.moneda)} ${etiquetaMoneda(c.moneda)}` },
       { icono: icono.etiqueta(15), texto: `Etiqueta generada por ${usuarioEtiqueta(c)}` },
     ];
   }
@@ -513,6 +580,27 @@ export async function render(raiz) {
     }
   }
 
+  $tasaForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const valor = Number($tasaInput.value);
+    if (!Number.isFinite(valor) || valor <= 0) {
+      aviso("Escribe una tasa mayor que cero.", "error");
+      return;
+    }
+    $tasaGuardar.disabled = true;
+    try {
+      configMoneda = await patch("/panel/configuracion", {
+        tasa_cambio_cup: valor,
+      });
+      pintarMoneda();
+      aviso("Tasa de cambio actualizada", "ok");
+    } catch (e) {
+      aviso(e.message || "No se pudo guardar la tasa.", "error");
+    } finally {
+      $tasaGuardar.disabled = false;
+    }
+  });
+
   $filtro.addEventListener("submit", (e) => {
     e.preventDefault();
     filtro = $buscar.value;
@@ -549,7 +637,7 @@ export async function render(raiz) {
       mensaje: "Se eliminarán TODAS las citas del salón y sus datos derivados.",
       filas: [
         { icono: icono.calendario(15), texto: `${resumen?.citas ?? 0} citas en total` },
-        { icono: icono.check(15), texto: `${resumen?.citas_completadas ?? 0} completadas · ${usd(resumen?.ingresos_completados ?? 0)}` },
+        { icono: icono.check(15), texto: `${resumen?.citas_completadas ?? 0} completadas · ${importe(resumen?.ingresos_completados ?? 0, "USD")} USD${Number(resumen?.ingresos_completados_cup || 0) ? ` + ${importe(resumen?.ingresos_completados_cup, "CUP")} CUP` : ""}` },
         { icono: icono.reloj(15), texto: `${resumen?.citas_programadas ?? 0} programadas · ${resumen?.citas_canceladas ?? 0} canceladas` },
         { icono: icono.caja(15), texto: "El inventario consumido se devuelve al stock" },
         { icono: icono.personas(15), texto: "Se conservan clientas, servicios, productos y usuarios" },

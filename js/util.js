@@ -111,6 +111,35 @@ export function diaCorto(iso) {
 
 export const usd = (valor) => `$${Number(valor).toFixed(2)}`;
 
+/** "USD" o "CUP"; cualquier otro valor se trata como USD. */
+export function normalizarMoneda(moneda) {
+  return String(moneda || "USD").toUpperCase() === "CUP" ? "CUP" : "USD";
+}
+
+/** Etiqueta visible de la moneda ("USD" o "CUP"). */
+export function etiquetaMoneda(moneda) {
+  return normalizarMoneda(moneda);
+}
+
+/**
+ * Importe con símbolo $ y separador de miles, sin el código de moneda.
+ * La etiqueta (USD/CUP) se muestra aparte para que se lea sin ambigüedad.
+ */
+export function importe(valor, moneda = "USD") {
+  const numero = Number(valor || 0);
+  const texto = numero.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return `$${texto}`;
+}
+
+/** Convierte un importe en USD a la moneda y tasa indicadas. */
+export function convertirMoneda(montoUsd, moneda, tasaCambio = 1) {
+  const monto = Number(montoUsd || 0);
+  return normalizarMoneda(moneda) === "CUP" ? monto * Number(tasaCambio || 1) : monto;
+}
+
 // ---------- Reglas de negocio (igual que src/reglas.ts) ----------
 /** Categoría principal + categorías extra de un servicio. */
 export function categoriasDe(servicio) {

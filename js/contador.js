@@ -13,19 +13,28 @@ export function animarCifras(raiz, duracion = 750) {
 
   raiz.querySelectorAll("[data-contar]").forEach((elemento) => {
     const texto = elemento.dataset.contar || "";
-    const coincidencia = texto.match(/-?\d+(?:\.\d+)?/);
+    const coincidencia = texto.match(/-?\d[\d,]*(?:\.\d+)?/);
     if (!coincidencia) return;
 
-    const destino = Number(coincidencia[0]);
+    const destino = Number(coincidencia[0].replace(/,/g, ""));
     if (!Number.isFinite(destino)) return;
 
     const prefijo = texto.slice(0, coincidencia.index);
     const sufijo = texto.slice(coincidencia.index + coincidencia[0].length);
     const decimales = (coincidencia[0].split(".")[1] || "").length;
+    // Los importes en CUP pueden llevar separador de miles ($7,500.00).
+    const conMiles = coincidencia[0].includes(",");
     const formatear = (valor) => {
       const numero = decimales
-        ? valor.toFixed(decimales)
-        : String(Math.round(valor));
+        ? conMiles
+          ? valor.toLocaleString("en-US", {
+              minimumFractionDigits: decimales,
+              maximumFractionDigits: decimales,
+            })
+          : valor.toFixed(decimales)
+        : conMiles
+          ? Math.round(valor).toLocaleString("en-US")
+          : String(Math.round(valor));
       return `${prefijo}${numero}${sufijo}`;
     };
 

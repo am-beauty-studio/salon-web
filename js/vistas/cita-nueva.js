@@ -9,13 +9,14 @@
 
 import { get, post } from "../api.js?v=49";
 import {
-  $, $$, aviso, escapeHtml, aISO, etiqueta, hora, usd, duracionTxt,
+  $, $$, aviso, escapeHtml, aISO, etiqueta, hora, usd, importe, etiquetaMoneda,
+  normalizarMoneda, convertirMoneda, duracionTxt,
   compatible, combinables, textoSubtipo, mostrarCategoria, sumarDias, nombreCorto,
   compararCategorias,
-} from "../util.js?v=53";
+} from "../util.js?v=54";
 import { crearSelectorDia, crearHorarios, consultaDisponibilidad } from "./componentes.js?v=52";
 import { icono, icoCategoria } from "../iconos.js?v=64";
-import { mostrarExitoCita } from "../modal-exito.js?v=49";
+import { mostrarExitoCita } from "../modal-exito.js?v=50";
 import { esAdmin } from "../auth.js?v=52";
 
 const MAX_SERVICIOS = 3;
@@ -30,12 +31,15 @@ export async function render(raiz, _params, query) {
     return;
   }
   const ayer = sumarDias(new Date(), -1);
-  const [clientes, servicios, empleados] = await Promise.all([
+  const [clientes, servicios, empleados, configMoneda] = await Promise.all([
     get("/clientes?limit=200"),
     get("/servicios?solo_activos=true"),
     // Al archivar también se ofrecen empleadas inactivas que sí realizaron el servicio.
     get(`/empleados?solo_activos=${archivar ? "false" : "true"}`),
+    // Tasa USD → CUP. Si falla, se agenda solo en USD.
+    get("/configuracion/monedas").catch(() => null),
   ]);
+  const tasaCup = Number(configMoneda?.tasa_cambio_cup || 0);
 
   let clienteId = query.get("cliente") ? Number(query.get("cliente")) : null;
   let clienteNombre = query.get("nombre") || (clienteId ? clientes.find((c) => c.id === clienteId)?.nombre : null);
@@ -53,6 +57,9 @@ export async function render(raiz, _params, query) {
   let categoriaActiva = null;
   let buscarTemporizador = null;
   let agendando = false;
+  // La clienta decide al final si paga en USD o en CUP. El catálogo sigue en
+  // USD y la API guarda la tasa del día para calcular el importe en CUP.
+  let moneda = "USD";
 
   raiz.innerHTML = `
     <div class="vista-cab"><h1 class="vista-titulo">${archivar ? "Archivar cita" : "Nueva cita"}</h1></div>
@@ -68,6 +75,7 @@ export async function render(raiz, _params, query) {
     <div id="paso4"></div>
     <div id="paso5"></div>
     <div id="paso-agregar"></div>
+    <div id="paso-moneda"></div>
     <div id="paso-notas"></div>
     <div id="resumen-final"></div>
     <p class="error-txt oculto" id="error-cita"></p>
@@ -500,6 +508,40 @@ export async function render(raiz, _params, query) {
       : [];
   }
 
+  // ---------- Moneda de cobro ----------
+  function pintarMoneda() {
+    const caja = $("#paso-moneda");
+    if (!caja) return;
+    if (tasaCup <= 0 && moneda === "CUP") moneda = "USD";
+    const { precio } = totales();
+    const totalCobro = convertirMoneda(precio, moneda, tasaCup);
+    caja.innerHTML = `
+      <div class="paso-titulo">Moneda de cobro</div>
+      <div class="segmentado" role="tablist" aria-label="Moneda de cobro">
+        <button class="segmento ${moneda === "USD" ? "activo" : ""}" data-moneda="USD"
+          type="button" role="tab">USD</button>
+        <button class="segmento ${moneda === "CUP" ? "activo" : ""}" data-moneda="CUP"
+          type="button" role="tab" ${tasaCup <= 0 ? "disabled" : ""}>CUP</button>
+      </div>
+      <p class="nota" style="margin:8px 0 0">
+        ${moneda === "CUP"
+          ? `Se cobrará en CUP con la tasa 1 USD = ${tasaCup.toLocaleString("en-US", {
+              maximumFractionDigits: 4,
+            })} CUP: <b>${importe(totalCobro, "CUP")} CUP</b> (${usd(precio)} USD).`
+          : `Se cobrará en USD: <b>${importe(totalCobro, "USD")} USD</b>.`}
+        ${tasaCup <= 0
+          ? `<br/>El superadministrador aún no configuró la tasa del CUP.`
+          : `<br/>La tasa la configura el superadministrador en el Panel de control.`}
+      </p>`;
+    $$("[data-moneda]", caja).forEach((boton) => {
+      boton.onclick = () => {
+        moneda = normalizarMoneda(boton.dataset.moneda);
+        pintarMoneda();
+        actualizar();
+      };
+    });
+  }
+
   function actualizar() {
     const { todos, duracion, precio } = totales();
 
@@ -515,11 +557,14 @@ export async function render(raiz, _params, query) {
       return `<div class="linea">${hora(it.slot.inicio)} · ${escapeHtml(it.servicio.nombre)}${textoSubtipo(it.subtipo) ? ` (${escapeHtml(textoSubtipo(it.subtipo))})` : ""}${ex.length ? ` + ${escapeHtml(ex.join(", "))}` : ""} — ${escapeHtml(nombreEmpleado(it.empleadoId))}</div>`;
     });
     if (todos.length) {
-      partes.push(`<div class="linea"><b>Total:</b> ${duracionTxt(duracion)} · ${usd(precio)} USD</div>`);
+      const totalCobro = convertirMoneda(precio, moneda, tasaCup);
+      partes.push(`<div class="linea"><b>Total:</b> ${duracionTxt(duracion)} · ${importe(totalCobro, moneda)} ${etiquetaMoneda(moneda)}</div>`);
       partes.push(`<div class="linea"><b>Fecha:</b> ${escapeHtml(etiqueta(fecha))}</div>`);
     }
     $("#resumen-final").innerHTML = partes.length
       ? `<div class="resumen-caja">${partes.join("")}</div>` : "";
+
+    pintarMoneda();
 
     $("#btn-agendar").disabled = agendando || !(clienteId && todos.length > 0);
     $("#btn-agendar").textContent = agendando
@@ -549,6 +594,7 @@ export async function render(raiz, _params, query) {
             adicional_ids: it.extras,
             subtipo: it.subtipo || null,
             inicio: it.slot.inicio,
+            moneda,
           })),
         });
       } else if (todos.length === 1) {
@@ -560,6 +606,7 @@ export async function render(raiz, _params, query) {
           adicional_ids: it.extras,
           subtipo: it.subtipo || null,
           inicio: it.slot.inicio,
+          moneda,
           notas,
         });
       } else {
@@ -572,6 +619,7 @@ export async function render(raiz, _params, query) {
             adicional_ids: it.extras,
             subtipo: it.subtipo || null,
             inicio: it.slot.inicio,
+            moneda,
           })),
         });
       }
@@ -598,6 +646,8 @@ export async function render(raiz, _params, query) {
         }),
         duracion: duracionTxt(duracion),
         total: precio,
+        totalMoneda: convertirMoneda(precio, moneda, tasaCup),
+        moneda,
         archivada: archivar,
       });
       location.hash = "#/agenda";
@@ -614,4 +664,5 @@ export async function render(raiz, _params, query) {
   pintarReserva();
   pintarPasosServicio();
   pintarNotaContinua();
+  actualizar();
 }
