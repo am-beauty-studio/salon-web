@@ -831,6 +831,103 @@ textarea.input { resize: vertical; min-height: 70px; }
   color: #fff;
   box-shadow: 0 1px 3px rgba(206, 124, 148, .35);
 }
+
+/* ===== Interruptor USD/CUP =====
+   Dos opciones con una píldora que se desliza. Se usa tanto en los filtros de
+   los informes como al elegir la moneda de cobro de una cita. */
+.selector-moneda {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: min(100%, 290px);
+  padding: 4px;
+  border: 1px solid var(--border-fuerte);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #FFF, var(--bg));
+  box-shadow: inset 0 1px 3px rgba(150, 64, 92, .08), 0 1px 2px rgba(58, 43, 49, .04);
+}
+.selector-moneda-deslizador {
+  position: absolute;
+  z-index: -1;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  box-shadow: 0 3px 9px rgba(150, 64, 92, .28);
+  transition: transform .22s cubic-bezier(.2, .8, .2, 1);
+}
+.selector-moneda[data-valor="CUP"] .selector-moneda-deslizador {
+  transform: translateX(100%);
+}
+.selector-moneda-opcion {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .8px;
+  cursor: pointer;
+  transition: color .18s, transform .18s;
+}
+.selector-moneda-opcion:hover:not(:disabled):not(.activa) {
+  color: var(--gold-dark);
+}
+.selector-moneda-opcion.activa { color: #FFF; }
+.selector-moneda-opcion:active:not(:disabled) { transform: scale(.97); }
+.selector-moneda-opcion:focus-visible {
+  outline: 2px solid var(--gold-dark);
+  outline-offset: 2px;
+}
+.selector-moneda-opcion:disabled { opacity: .35; cursor: not-allowed; }
+.selector-moneda-simbolo {
+  display: inline-grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: rgba(206, 124, 148, .13);
+  color: var(--gold-dark);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  transition: background .18s, color .18s;
+}
+.selector-moneda-opcion.activa .selector-moneda-simbolo {
+  background: rgba(255, 255, 255, .22);
+  color: #FFF;
+}
+.filtro-moneda {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.filtro-moneda .filtro-etiqueta { margin: 0; flex-shrink: 0; }
+.filtro-moneda .selector-moneda { width: min(100%, 250px); }
+@media (max-width: 420px) {
+  .filtro-moneda { gap: 8px; }
+  .filtro-moneda .selector-moneda { width: 220px; }
+  .selector-moneda-opcion { padding-inline: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .selector-moneda-deslizador,
+  .selector-moneda-opcion { transition: none; }
+}
+
 .filtro-ganancias .nav-fecha {
   margin: 12px 0 0;
   padding-top: 10px;
@@ -3599,6 +3696,36 @@ a.cita-cliente:hover { color: var(--gold-dark); }
   font-variant-numeric: tabular-nums;
 }
 .dash-kpi-sub { color: var(--muted); font-size: 11.5px; }
+.dash-kpi-moneda {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+}
+.dash-kpi-moneda small {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .5px;
+}
+.dash-kpi-moneda.secundaria .dash-kpi-valor {
+  color: var(--text);
+  font-size: 17px;
+}
+.dash-monto-dual {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  white-space: nowrap;
+}
+.dash-monto-dual > span { display: inline-flex; align-items: baseline; gap: 4px; }
+.dash-monto-dual small {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .4px;
+}
 
 .dash-card {
   background: var(--card);
@@ -3614,6 +3741,60 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 }
 .dash-cab h2 { color: var(--text); font-size: 15.5px; font-weight: 700; }
 .dash-cab p { color: var(--muted); font-size: 12.5px; }
+.dash-cab-moneda { flex-shrink: 0; margin-left: auto; }
+.dash-cab-moneda .selector-moneda { width: 220px; }
+.dash-cab-moneda .selector-moneda-opcion {
+  min-height: 32px;
+  padding: 5px 9px;
+  font-size: 11.5px;
+}
+.dash-cab-moneda .selector-moneda-simbolo { width: 17px; height: 17px; font-size: 11px; }
+.dash-tendencias {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.dash-donuts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.dash-donuts .dash-donut-wrap { gap: 16px; }
+.dash-donuts .dash-donut-leyenda { min-width: 160px; }
+.dash-tendencia { min-width: 0; }
+.dash-tendencia-titulo {
+  display: inline-flex;
+  margin: 4px 0 2px 44px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(206, 124, 148, .11);
+  color: var(--gold-dark);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .7px;
+}
+.dash-serv-barras { display: flex; flex-direction: column; gap: 3px; }
+.dash-serv-barra {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 32px;
+  align-items: center;
+  gap: 6px;
+}
+.dash-serv-barra > small {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .3px;
+}
+.dash-serv-barra > small:last-child { text-align: right; }
+@media (max-width: 800px) {
+  .dash-tendencias,
+  .dash-donuts { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .dash-cab-moneda { width: 100%; margin-left: 0; }
+  .dash-cab-moneda .selector-moneda { width: min(100%, 260px); }
+}
 .dash-vacio { color: var(--muted); font-size: 13px; text-align: center; padding: 12px 0; }
 
 /* ===== Panel: control de acceso ===== */
@@ -4164,6 +4345,11 @@ a.dash-persona:hover { border-color: var(--gold); text-decoration: none; }
   flex-shrink: 0;
 }
 .dash-persona-valores strong { color: var(--gold-dark); font-size: 13.5px; }
+.dash-persona-valores .dash-monto-dual > span {
+  color: var(--gold-dark);
+  font-size: 13px;
+  font-weight: 700;
+}
 .dash-persona-valores small { color: var(--muted); font-size: 9.5px; }
 .dash-persona-flecha { color: var(--muted); font-size: 20px; line-height: 1; }
 

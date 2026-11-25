@@ -109,8 +109,10 @@ salon_web/
   validaciones (formato 24 h, fin > inicio, sin cruces), zonas de peligro con
   "desactivar" cuando la API responde 409.
 - Ganancias: reparto trabajadoras / reinversión / libre, pendientes y
-  desgloses por trabajadora, categoría y día. Filtro USD/CUP igual que en
-  Estadísticas.
+  desgloses por trabajadora, categoría y día. Filtro USD/CUP.
+- Estadísticas: muestra los importes en USD y CUP a la vez y las citas
+  combinadas; tendencia con recaudado dual y barras de citas, y dos donuts
+  por moneda en "Recaudado por categoría".
 - Panel de control (superadmin): tasa de cambio USD → CUP, facturado separado
   por moneda, control de accesos y mantenimiento de citas.
 - Rol `recepcion`: ve Agenda y Clientas; Servicios, Empleadas y Ganancias

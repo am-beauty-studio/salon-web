@@ -1,6 +1,7 @@
 // Efecto count-up para las cifras de las tarjetas.
 // Los elementos con [data-contar] guardan el texto final; al pintarlos se
 // anima solo la parte numérica y se conservan prefijo, sufijo y decimales.
+// Funciona igual para USD y para CUP, incluso con separador de miles.
 
 const MENOS_MOVIMIENTO = () =>
   typeof window !== "undefined" &&

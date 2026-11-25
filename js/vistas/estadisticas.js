@@ -1,7 +1,10 @@
 // Estadísticas (solo admin). Dashboard distinto al de barras de Ganancias.
+// Carga USD y CUP a la vez: las cantidades de citas se muestran juntas y los
+// importes siempre separados por moneda. El selector USD/CUP solo pertenece a
+// la tarjeta "Recaudado por categoría".
 
 import { get } from "../api.js?v=49";
-import { animarCifras } from "../contador.js?v=2";
+import { animarCifras } from "../contador.js?v=3";
 import {
   $, $$, aISO, escapeHtml, fechaCorta, sumarDias, sumarMeses, etiquetaSemana,
   tituloMes, tituloAnio, importe, mostrarCategoria,
@@ -12,27 +15,35 @@ const ROSAS = [
   "#B25572", "#C06A86", "#CD7E97", "#D992A8",
   "#E3A6B9", "#EBBAC9", "#F2CCD8", "#F8DEE6",
 ];
+const VIOLETAS = [
+  "#65548F", "#74619D", "#8571AB", "#9682B9",
+  "#A793C7", "#B8A5D5", "#C9B7E2", "#E1D7F0",
+];
 
-// Moneda del filtro. El API devuelve importes ya convertidos.
-let monedaActual = "USD";
-const monto = (valor) => importe(valor, monedaActual);
+const monto = (valor, moneda = "USD") => importe(valor, moneda);
+const numero = (valor) => Number(valor || 0);
 
-/** Rosa según el peso del valor: el mayor recibe el tono más oscuro y el menor el más claro. */
-function colorRosa(valor, maximo, minimo = 0) {
-  const max = Number(maximo) || 0;
-  const min = Number(minimo) || 0;
-  if (max <= 0) return ROSAS[ROSAS.length - 1];
-  const rango = max - min;
-  const peso = rango > 0 ? (Number(valor) - min) / rango : 1;
-  const paso = Math.round((1 - Math.min(Math.max(peso, 0), 1)) * (ROSAS.length - 1));
-  return ROSAS[paso];
+/** Color distinto por categoría dentro de la paleta de cada moneda. */
+function colorCategoria(moneda, indice) {
+  const colores = moneda === "CUP" ? VIOLETAS : ROSAS;
+  return colores[indice % colores.length];
+}
+
+function coloresPorCategoria(categorias, moneda) {
+  const ordenadas = [...(categorias || [])].sort(
+    (a, b) => numero(b.ingresos) - numero(a.ingresos)
+  );
+  return new Map(
+    ordenadas.map((c, i) => [c.categoria, colorCategoria(moneda, i)])
+  );
 }
 
 export async function render(raiz) {
   let periodo = "mes";
   let fecha = new Date();
-  let moneda = "USD";
+  let datos = null;
   let observadorDonut = null;
+  let solicitud = 0;
 
   raiz.innerHTML = `
     <div class="vista-cab">
@@ -46,11 +57,6 @@ export async function render(raiz) {
         <button class="segmento activo" data-p="mes" type="button" role="tab">Mes</button>
         <button class="segmento" data-p="anio" type="button" role="tab">Año</button>
       </div>
-      <div class="filtro-etiqueta">Moneda</div>
-      <div class="segmentado" role="tablist" aria-label="Moneda de las estadísticas">
-        <button class="segmento activo" data-m="USD" type="button" role="tab" aria-selected="true">USD</button>
-        <button class="segmento" data-m="CUP" type="button" role="tab" aria-selected="false">CUP</button>
-      </div>
       <div class="nav-fecha">
         <button class="nav-flecha" id="e-prev" type="button" aria-label="Período anterior">‹</button>
         <button class="nav-fecha-titulo" id="e-titulo" type="button"></button>
@@ -59,8 +65,8 @@ export async function render(raiz) {
     </div>
     <div id="dash"></div>
     <p class="nota" style="text-align:center;margin-top:14px">
-      Los importes se calculan con las citas completadas y se separan por moneda.
-      AM Luxury incluye reinversión más ganancia libre.
+      Los importes se muestran por separado en USD y CUP. Las citas se cuentan
+      una sola vez, sin distinguir la moneda en que se cobraron.
     </p>`;
 
   $$(".segmentado [data-p]").forEach((chip) => {
@@ -68,18 +74,6 @@ export async function render(raiz) {
       periodo = chip.dataset.p;
       $$(".segmentado [data-p]").forEach((c) => {
         const activo = c.dataset.p === periodo;
-        c.classList.toggle("activo", activo);
-        c.setAttribute("aria-selected", activo ? "true" : "false");
-      });
-      cargar();
-    };
-  });
-
-  $$(".segmentado [data-m]").forEach((chip) => {
-    chip.onclick = () => {
-      moneda = chip.dataset.m;
-      $$(".segmentado [data-m]").forEach((c) => {
-        const activo = c.dataset.m === moneda;
         c.classList.toggle("activo", activo);
         c.setAttribute("aria-selected", activo ? "true" : "false");
       });
@@ -113,15 +107,19 @@ export async function render(raiz) {
     pintarTitulo();
     if (observadorDonut) observadorDonut.disconnect();
     $("#dash").innerHTML = `<div class="cargando">Cargando…</div>`;
+    const actual = ++solicitud;
     try {
-      const r = await get(
-        `/finanzas/estadisticas?periodo=${periodo}&fecha=${aISO(fecha)}&moneda=${moneda}`
-      );
+      const [usd, cup] = await Promise.all(["USD", "CUP"].map((moneda) =>
+        get(`/finanzas/estadisticas?periodo=${periodo}&fecha=${aISO(fecha)}&moneda=${moneda}`)
+      ));
+      if (actual !== solicitud) return;
+      datos = { USD: usd, CUP: cup };
       const $dash = $("#dash");
-      $dash.innerHTML = dashboard(r);
+      $dash.innerHTML = dashboard(datos);
       animarCifras($dash);
       observadorDonut = observarDonut($dash);
     } catch (e) {
+      if (actual !== solicitud) return;
       $("#dash").innerHTML = `
         <div class="tarjeta">
           <p class="error-txt">${escapeHtml(e.message || "No se pudieron cargar las estadísticas.")}</p>
@@ -138,10 +136,10 @@ export async function render(raiz) {
  * total empieza a contar.
  */
 function observarDonut(dash) {
-  const wrap = dash.querySelector(".dash-donut-wrap");
-  if (!wrap) return null;
+  const wraps = [...dash.querySelectorAll(".dash-donut-wrap")];
+  if (!wraps.length) return null;
 
-  const activar = () => {
+  const activar = (wrap) => {
     wrap.classList.remove("pendiente");
     const cifra = wrap.querySelector("[data-contar-diferido]");
     if (cifra) {
@@ -152,88 +150,92 @@ function observarDonut(dash) {
   };
 
   if (!("IntersectionObserver" in window)) {
-    activar();
+    wraps.forEach(activar);
     return null;
   }
 
-  wrap.classList.add("pendiente");
+  wraps.forEach((wrap) => wrap.classList.add("pendiente"));
   const observador = new IntersectionObserver((entradas) => {
-    if (entradas.some((e) => e.isIntersecting)) {
-      observador.disconnect();
-      activar();
-    }
+    entradas.forEach((entrada) => {
+      if (!entrada.isIntersecting) return;
+      activar(entrada.target);
+      observador.unobserve(entrada.target);
+    });
   }, { threshold: 0.3 });
-  observador.observe(wrap);
+  wraps.forEach((wrap) => observador.observe(wrap));
   return observador;
 }
 
-function dashboard(r) {
-  const t = r.totales;
-  monedaActual = r.moneda || "USD";
-  // De mayor a menor ingreso: el tono más oscuro siempre es el que más recauda.
-  const categorias = [...(r.por_categoria || [])].sort(
-    (a, b) => Number(b.ingresos) - Number(a.ingresos)
-  );
-  const maxCategoria = categorias.length ? Math.max(...categorias.map((c) => Number(c.ingresos))) : 0;
-  const minCategoria = categorias.length ? Math.min(...categorias.map((c) => Number(c.ingresos))) : 0;
-  const servicios = r.por_servicio || [];
-  const mejoresClientes = r.mejores_clientes || [];
-  const empleadas = r.por_empleada || [];
+function dashboard(datos) {
+  const usd = datos.USD;
+  const cup = datos.CUP;
+  const totalCitas = usd.totales.citas + cup.totales.citas;
+  const servicios = combinarServicios(usd.por_servicio, cup.por_servicio);
   const principales = servicios.filter((x) => !x.es_adicional);
   const adicionales = servicios.filter((x) => x.es_adicional);
-  const mejor = [...(r.serie || [])].sort(
-    (a, b) => Number(b.estudio) - Number(a.estudio)
-  )[0];
-  const mejorValor = mejor && Number(mejor.estudio) > 0 ? monto(mejor.estudio) : "—";
-  const mejorSub = mejor && Number(mejor.estudio) > 0
-    ? (r.periodo === "anio" ? mejor.etiqueta : `día ${mejor.etiqueta}`)
-    : "sin movimiento";
+  const clientes = combinarClientes(usd.mejores_clientes, cup.mejores_clientes).slice(0, 5);
+  const empleadas = combinarEmpleadas(usd.por_empleada, cup.por_empleada);
 
   return `
     <div class="dash-kpis">
-      ${kpi("dolar", "AM Luxury", monto(t.estudio), `de ${monto(t.ingresos)} ${monedaActual} recaudados`, true)}
-      ${kpi("calendario", "Citas completadas", String(t.citas),
-        `${t.citas === 1 ? "1 cita" : `${t.citas} citas`} en el período`)}
-      ${kpi("porcentaje", "Ticket promedio", monto(t.ticket_promedio), "por cita completada")}
-      ${kpi("grafico", r.periodo === "anio" ? "Mejor mes" : "Mejor día", mejorValor, mejorSub)}
+      ${kpiMonedas(
+        "dolar", "AM Luxury",
+        monto(usd.totales.estudio, "USD"), monto(cup.totales.estudio, "CUP"),
+        `Recaudado: ${monto(usd.totales.ingresos, "USD")} USD · ${monto(cup.totales.ingresos, "CUP")} CUP`,
+        true
+      )}
+      ${kpi("calendario", "Citas completadas", String(totalCitas),
+        `${totalCitas === 1 ? "1 cita" : `${totalCitas} citas`} en el período`)}
+      ${kpiMonedas("porcentaje", "Ticket promedio",
+        monto(usd.totales.ticket_promedio, "USD"),
+        monto(cup.totales.ticket_promedio, "CUP"),
+        "por cita completada en cada moneda")}
+      ${kpiMonedas("grafico", usd.periodo === "anio" ? "Mejor mes" : "Mejor día",
+        mejorValor(usd, "USD"), mejorValor(cup, "CUP"),
+        `${mejorEtiqueta(usd, "USD")} · ${mejorEtiqueta(cup, "CUP")}`)}
     </div>
 
     <div class="dash-card">
       <div class="dash-cab">
         <div>
           <h2>Tendencia del período</h2>
-          <p>Recaudado por AM Luxury y cantidad de citas</p>
+          <p>Recaudado por AM Luxury en las dos monedas y cantidad total de citas</p>
         </div>
         <div class="dash-leyenda">
-          <span><i style="background:var(--gold)"></i>AM Luxury ${monto(t.estudio)} ${monedaActual}</span>
-          <span><i style="background:var(--violeta)"></i>${t.citas} citas</span>
+          <span><i style="background:var(--gold)"></i>USD ${monto(usd.totales.estudio, "USD")}</span>
+          <span><i style="background:var(--violeta)"></i>CUP ${monto(cup.totales.estudio, "CUP")}</span>
+          <span><i style="background:var(--verde)"></i>${totalCitas} citas</span>
         </div>
       </div>
-      ${svgTendencia(r.serie || [], r.periodo)}
+      <div class="dash-tendencias">
+        <div class="dash-tendencia">
+          <div class="dash-tendencia-titulo">Recaudado · USD y CUP</div>
+          ${svgRecaudado(usd.serie || [], cup.serie || [], usd.periodo)}
+        </div>
+        <div class="dash-tendencia">
+          <div class="dash-tendencia-titulo">Citas completadas</div>
+          ${svgBarrasCitas(usd.serie || [], cup.serie || [], usd.periodo)}
+        </div>
+      </div>
     </div>
 
-    <div class="dash-card">
+    <div class="dash-card" id="dash-categoria-card">
       <div class="dash-cab">
         <div>
           <h2>Recaudado por categoría</h2>
-          <p>${categorias.length} ${categorias.length === 1 ? "categoría" : "categorías"} con movimiento</p>
+          <p>Reparto por categoría en USD y CUP</p>
         </div>
       </div>
-      ${categorias.length === 0
-        ? `<p class="dash-vacio">Sin categorías con movimiento en este período.</p>`
-        : `${donutHtml(categorias, Number(t.ingresos))}
-           <div class="dash-cats">
-             ${categorias.map((c, i) => filaCategoria(c, Number(t.ingresos), maxCategoria, minCategoria, i)).join("")}
-           </div>`}
+      ${categoriasHtml(datos)}
     </div>
 
     ${listaServiciosHtml("Recaudado por servicio",
-      "Ordenados por lo cobrado en el período", principales, Number(t.ingresos))}
+      "Importes de cada servicio en las dos monedas", principales, datos)}
     ${adicionales.length
       ? listaServiciosHtml("Servicios adicionales",
-        "Complementos sumados a una cita", adicionales, Number(t.ingresos))
+        "Complementos sumados a una cita", adicionales, datos)
       : ""}
-    ${topClientasHtml(mejoresClientes)}
+    ${topClientasHtml(clientes)}
     ${empleadasHtml(empleadas)}`;
 }
 
@@ -247,6 +249,47 @@ function kpi(ico, titulo, valor, sub, destacado = false) {
     </div>`;
 }
 
+/** KPI con dos importes: uno en USD y otro en CUP. */
+function kpiMonedas(ico, titulo, usd, cup, sub, destacado = false) {
+  const linea = (valor, moneda, secundaria = false) => `
+    <span class="dash-kpi-moneda${secundaria ? " secundaria" : ""}">
+      <strong class="dash-kpi-valor" data-contar="${escapeHtml(String(valor))}">${escapeHtml(String(valor))}</strong>
+      <small>${moneda}</small>
+    </span>`;
+  return `
+    <div class="dash-kpi${destacado ? " destacado" : ""}">
+      <span class="dash-kpi-ico">${icono[ico](16)}</span>
+      <span class="dash-kpi-titulo">${escapeHtml(titulo)}</span>
+      ${linea(usd, "USD")}
+      ${linea(cup, "CUP", true)}
+      <span class="dash-kpi-sub">${escapeHtml(sub)}</span>
+    </div>`;
+}
+
+function mejorPunto(r) {
+  return [...(r.serie || [])].sort((a, b) => numero(b.estudio) - numero(a.estudio))[0];
+}
+
+function mejorValor(r, moneda) {
+  const mejor = mejorPunto(r);
+  return mejor && numero(mejor.estudio) > 0 ? monto(mejor.estudio, moneda) : "—";
+}
+
+function mejorEtiqueta(r, moneda) {
+  const mejor = mejorPunto(r);
+  if (!mejor || numero(mejor.estudio) <= 0) return `${moneda}: sin movimiento`;
+  return `${moneda}: ${r.periodo === "anio" ? mejor.etiqueta : `día ${mejor.etiqueta}`}`;
+}
+
+/** Dos importes apilados para las filas de servicios, clientas y empleadas. */
+function montoDual(usd, cup) {
+  return `
+    <span class="dash-monto-dual">
+      <span>${monto(usd, "USD")} <small>USD</small></span>
+      <span>${monto(cup, "CUP")} <small>CUP</small></span>
+    </span>`;
+}
+
 function chipsHtml(subtipos = []) {
   if (!subtipos.length) return "";
   return `<div class="dash-chips">${subtipos.map((st) => `
@@ -255,16 +298,145 @@ function chipsHtml(subtipos = []) {
     </span>`).join("")}</div>`;
 }
 
-function donutHtml(categorias, total) {
-  if (total <= 0) return "";
-  const max = Math.max(...categorias.map((c) => Number(c.ingresos)), 0);
-  const min = Math.min(...categorias.map((c) => Number(c.ingresos)), 0);
+function combinarSubtipos(usd = [], cup = []) {
+  const mapa = new Map();
+  for (const st of [...(usd || []), ...(cup || [])]) {
+    const actual = mapa.get(st.subtipo) || { subtipo: st.subtipo, citas: 0 };
+    actual.citas += Number(st.citas || 0);
+    mapa.set(st.subtipo, actual);
+  }
+  return [...mapa.values()];
+}
+
+function combinarServicios(usd = [], cup = []) {
+  const porUsd = new Map((usd || []).map((x) => [x.servicio_id, x]));
+  const porCup = new Map((cup || []).map((x) => [x.servicio_id, x]));
+  const ids = new Set([...porUsd.keys(), ...porCup.keys()]);
+  return [...ids].map((id) => {
+    const u = porUsd.get(id) || null;
+    const c = porCup.get(id) || null;
+    return {
+      ...(u || c),
+      USD: u,
+      CUP: c,
+      citas: Number(u?.citas || 0) + Number(c?.citas || 0),
+      subtipos: combinarSubtipos(u?.subtipos, c?.subtipos),
+    };
+  }).sort((a, b) =>
+    numero(b.USD?.ingresos) - numero(a.USD?.ingresos)
+    || numero(b.CUP?.ingresos) - numero(a.CUP?.ingresos)
+    || String(a.nombre).localeCompare(String(b.nombre), "es")
+  );
+}
+
+function combinarClientes(usd = [], cup = []) {
+  const porUsd = new Map((usd || []).map((x) => [x.cliente_id, x]));
+  const porCup = new Map((cup || []).map((x) => [x.cliente_id, x]));
+  const ids = new Set([...porUsd.keys(), ...porCup.keys()]);
+  return [...ids].map((id) => {
+    const u = porUsd.get(id) || null;
+    const c = porCup.get(id) || null;
+    const ultima = [u?.ultima_cita, c?.ultima_cita].filter(Boolean).sort().slice(-1)[0] || null;
+    return {
+      ...(u || c),
+      USD: u,
+      CUP: c,
+      citas: Number(u?.citas || 0) + Number(c?.citas || 0),
+      ultima_cita: ultima,
+    };
+  }).sort((a, b) =>
+    b.citas - a.citas
+    || numero(b.USD?.ingresos) - numero(a.USD?.ingresos)
+    || numero(b.CUP?.ingresos) - numero(a.CUP?.ingresos)
+    || String(a.nombre).localeCompare(String(b.nombre), "es")
+  );
+}
+
+function combinarEmpleadas(usd = [], cup = []) {
+  const porUsd = new Map((usd || []).map((x) => [x.empleado_id, x]));
+  const porCup = new Map((cup || []).map((x) => [x.empleado_id, x]));
+  const ids = new Set([...porUsd.keys(), ...porCup.keys()]);
+  return [...ids].map((id) => {
+    const u = porUsd.get(id) || null;
+    const c = porCup.get(id) || null;
+    return {
+      ...(u || c),
+      USD: u,
+      CUP: c,
+      citas: Number(u?.citas || 0) + Number(c?.citas || 0),
+    };
+  }).sort((a, b) =>
+    b.citas - a.citas
+    || numero(b.USD?.ingresos) - numero(a.USD?.ingresos)
+    || String(a.nombre).localeCompare(String(b.nombre), "es")
+  );
+}
+
+function combinarCategorias(usd = [], cup = []) {
+  const porUsd = new Map((usd || []).map((x) => [x.categoria, x]));
+  const porCup = new Map((cup || []).map((x) => [x.categoria, x]));
+  const nombres = new Set([...porUsd.keys(), ...porCup.keys()]);
+  return [...nombres].map((categoria) => {
+    const u = porUsd.get(categoria) || null;
+    const c = porCup.get(categoria) || null;
+    return {
+      categoria,
+      USD: u,
+      CUP: c,
+      citas: Number(u?.citas || 0) + Number(c?.citas || 0),
+      subtipos: combinarSubtipos(u?.subtipos, c?.subtipos),
+    };
+  }).sort((a, b) =>
+    numero(b.USD?.ingresos) - numero(a.USD?.ingresos)
+    || numero(b.CUP?.ingresos) - numero(a.CUP?.ingresos)
+    || String(a.categoria).localeCompare(String(b.categoria), "es")
+  );
+}
+
+function categoriasHtml(datos) {
+  const categorias = combinarCategorias(
+    datos.USD.por_categoria,
+    datos.CUP.por_categoria
+  );
+  if (!categorias.length) {
+    return `<p class="dash-vacio">Sin categorías con movimiento en este período.</p>`;
+  }
+  const coloresUsd = coloresPorCategoria(datos.USD.por_categoria, "USD");
+  const coloresCup = coloresPorCategoria(datos.CUP.por_categoria, "CUP");
+  return `
+    <div class="dash-donuts">
+      ${donutHtml(datos.USD.por_categoria || [], numero(datos.USD.totales.ingresos), "USD")}
+      ${donutHtml(datos.CUP.por_categoria || [], numero(datos.CUP.totales.ingresos), "CUP")}
+    </div>
+    <div class="dash-cats">
+      ${categorias.map((c, i) => filaCategoria(
+        c, datos, i, coloresUsd, coloresCup
+      )).join("")}
+    </div>`;
+}
+
+function donutHtml(categorias, total, moneda) {
+  if (total <= 0) {
+    return `
+      <div class="dash-donut-wrap">
+        <div class="dash-donut" style="background:var(--border)">
+          <div class="dash-donut-centro">
+            <span>Sin movimiento</span>
+            <strong>${monto(0, moneda)}</strong>
+            <small>${moneda}</small>
+          </div>
+        </div>
+      </div>`;
+  }
+  const ordenadas = [...categorias].sort(
+    (a, b) => numero(b.ingresos) - numero(a.ingresos)
+  );
   let acumulado = 0;
-  const paradas = categorias.map((c) => {
+  const paradas = ordenadas.map((c, i) => {
     const inicio = (acumulado / total) * 100;
-    acumulado += Number(c.ingresos);
+    acumulado += numero(c.ingresos);
     const fin = (acumulado / total) * 100;
-    return `${colorRosa(c.ingresos, max, min)} ${inicio}% ${fin}%`;
+    return `${colorCategoria(moneda, i)} ${inicio}% ${fin}%`;
   }).join(", ");
 
   return `
@@ -272,47 +444,84 @@ function donutHtml(categorias, total) {
       <div class="dash-donut" style="background:conic-gradient(${paradas})">
         <div class="dash-donut-centro">
           <span>Total recaudado</span>
-          <strong data-contar-diferido="${monto(total)}">${monto(total)}</strong>
+          <strong data-contar-diferido="${monto(total, moneda)}">${monto(total, moneda)}</strong>
+          <small>${moneda}</small>
         </div>
       </div>
       <ul class="dash-donut-leyenda">
-        ${categorias.map((c, i) => `
+        ${ordenadas.map((c, i) => `
           <li style="--i:${i}">
-            <i style="background:${colorRosa(c.ingresos, max, min)}"></i>
+            <i style="background:${colorCategoria(moneda, i)}"></i>
             <span>${escapeHtml(mostrarCategoria(c.categoria))}</span>
-            <strong>${total > 0 ? ((Number(c.ingresos) / total) * 100).toFixed(0) : 0}%</strong>
+            <strong>${((numero(c.ingresos) / total) * 100).toFixed(0)}%</strong>
           </li>`).join("")}
       </ul>
     </div>`;
 }
 
-function filaCategoria(c, total, max, min, i = 0) {
-  const color = colorRosa(c.ingresos, max, min);
+function filaCategoria(c, datos, i = 0, coloresUsd = new Map(), coloresCup = new Map()) {
   const ico = icoCategoria(c.categoria);
-  const share = total > 0 ? (Number(c.ingresos) / total) * 100 : 0;
+  const ingresosUsd = numero(c.USD?.ingresos);
+  const ingresosCup = numero(c.CUP?.ingresos);
+  const totalUsd = numero(datos.USD.totales.ingresos);
+  const totalCup = numero(datos.CUP.totales.ingresos);
+  const shareUsd = totalUsd > 0 ? (ingresosUsd / totalUsd) * 100 : 0;
+  const shareCup = totalCup > 0 ? (ingresosCup / totalCup) * 100 : 0;
+  const colorUsd = coloresUsd.get(c.categoria) || colorCategoria("USD", i);
+  const colorCup = coloresCup.get(c.categoria) || colorCategoria("CUP", i);
   return `
     <div class="dash-cat" style="--i:${i}">
       <div class="dash-cat-cab">
         <span class="dash-cat-ico">
-          ${ico ? `<img class="cat-ico" src="${ico}" alt="" />` : `<i class="dash-dot" style="background:${color}"></i>`}
+          ${ico ? `<img class="cat-ico" src="${ico}" alt="" />` : `<i class="dash-dot" style="background:${ingresosUsd > 0 ? colorUsd : colorCup}"></i>`}
         </span>
         <span class="dash-cat-nombre">
           ${escapeHtml(mostrarCategoria(c.categoria))}
-          <small>${c.citas} ${c.citas === 1 ? "cita" : "citas"} · AM Luxury ${monto(c.estudio)}</small>
+          <small>
+            ${c.citas} ${c.citas === 1 ? "cita" : "citas"} · AM Luxury
+            ${monto(c.USD?.estudio, "USD")} USD · ${monto(c.CUP?.estudio, "CUP")} CUP
+          </small>
         </span>
         <span class="dash-cat-monto">
-          ${monto(c.ingresos)}
-          <small>${share.toFixed(0)}%</small>
+          ${montoDual(ingresosUsd, ingresosCup)}
+          <small>${shareUsd.toFixed(0)}% USD · ${shareCup.toFixed(0)}% CUP</small>
         </span>
       </div>
-      <div class="dash-barra"><span style="width:${Math.max(share, 0)}%;background:${color}"></span></div>
+      <div class="dash-serv-barras">
+        <div class="dash-serv-barra">
+          <small>USD</small>
+          <div class="dash-barra"><span style="width:${Math.max(shareUsd, 0)}%;background:${colorUsd}"></span></div>
+          <small>${shareUsd.toFixed(0)}%</small>
+        </div>
+        <div class="dash-serv-barra">
+          <small>CUP</small>
+          <div class="dash-barra"><span style="width:${Math.max(shareCup, 0)}%;background:${colorCup}"></span></div>
+          <small>${shareCup.toFixed(0)}%</small>
+        </div>
+      </div>
       ${chipsHtml(c.subtipos)}
     </div>`;
 }
 
-function listaServiciosHtml(titulo, sub, servicios, total) {
-  const max = Math.max(...servicios.map((x) => Number(x.ingresos)), 1);
-  const min = servicios.length ? Math.min(...servicios.map((x) => Number(x.ingresos))) : 0;
+function listaServiciosHtml(titulo, sub, servicios, datos) {
+  const maxUsd = Math.max(...servicios.map((x) => numero(x.USD?.ingresos)), 1);
+  const maxCup = Math.max(...servicios.map((x) => numero(x.CUP?.ingresos)), 1);
+  const totalUsd = numero(datos.USD.totales.ingresos);
+  const totalCup = numero(datos.CUP.totales.ingresos);
+
+  const barra = (moneda, ingresos, total, max) => {
+    const ancho = Math.max((ingresos / max) * 100, 0);
+    const share = total > 0 ? (ingresos / total) * 100 : 0;
+    // Color sólido por moneda: la paleta por valor dejaba barras casi blancas.
+    const color = moneda === "CUP" ? "#8E6BB8" : "#CE7C94";
+    return `
+      <div class="dash-serv-barra">
+        <small>${moneda}</small>
+        <div class="dash-barra"><span style="width:${ancho}%;background:${color}"></span></div>
+        <small>${share.toFixed(0)}%</small>
+      </div>`;
+  };
+
   return `
     <div class="dash-card">
       <div class="dash-cab">
@@ -320,10 +529,7 @@ function listaServiciosHtml(titulo, sub, servicios, total) {
       </div>
       ${servicios.length === 0
         ? `<p class="dash-vacio">Sin servicios con movimiento en este período.</p>`
-        : `<div class="dash-servs">${servicios.map((x, i) => {
-          const share = total > 0 ? (Number(x.ingresos) / total) * 100 : 0;
-          const ancho = Math.max((Number(x.ingresos) / max) * 100, 0);
-          return `
+        : `<div class="dash-servs">${servicios.map((x, i) => `
             <div class="dash-serv">
               <span class="dash-rank">${i + 1}</span>
               <div class="dash-serv-cuerpo">
@@ -332,17 +538,19 @@ function listaServiciosHtml(titulo, sub, servicios, total) {
                     ${escapeHtml(x.nombre)}
                     ${x.es_adicional ? `<span class="dash-tag">Adicional</span>` : ""}
                   </span>
-                  <span class="dash-serv-monto">${monto(x.ingresos)}</span>
+                  <span class="dash-serv-monto">${montoDual(x.USD?.ingresos, x.CUP?.ingresos)}</span>
                 </div>
                 <div class="dash-serv-sub">
-                  ${x.citas} ${x.citas === 1 ? "cita" : "citas"} · AM Luxury ${monto(x.estudio)}
-                  <span>${share.toFixed(0)}%</span>
+                  ${x.citas} ${x.citas === 1 ? "cita" : "citas"} · AM Luxury
+                  ${monto(x.USD?.estudio, "USD")} USD · ${monto(x.CUP?.estudio, "CUP")} CUP
                 </div>
-                <div class="dash-barra"><span style="width:${ancho}%;background:${colorRosa(x.ingresos, max, min)}"></span></div>
+                <div class="dash-serv-barras">
+                  ${barra("USD", numero(x.USD?.ingresos), totalUsd, maxUsd)}
+                  ${barra("CUP", numero(x.CUP?.ingresos), totalCup, maxCup)}
+                </div>
                 ${chipsHtml(x.subtipos)}
               </div>
-            </div>`;
-        }).join("")}</div>`}
+            </div>`).join("")}</div>`}
     </div>`;
 }
 
@@ -369,7 +577,7 @@ function topClientasHtml(clientes) {
               </span>
             </span>
             <span class="dash-persona-valores">
-              <strong>${monto(c.ingresos)}</strong>
+              ${montoDual(c.USD?.ingresos, c.CUP?.ingresos)}
               <small>recaudado</small>
             </span>
             <span class="dash-persona-flecha" aria-hidden="true">›</span>
@@ -398,37 +606,38 @@ function empleadasHtml(empleadas) {
                 ${e.activo ? "" : `<span class="dash-tag">Inactiva</span>`}
               </span>
               <span class="dash-persona-sub">
-                ${e.citas} ${e.citas === 1 ? "cita" : "citas"} ·
-                ${monto(e.ingresos)} recaudado · AM ${monto(e.estudio)}
+                ${e.citas} ${e.citas === 1 ? "cita" : "citas"}<br>
+                Recaudado: ${monto(e.USD?.ingresos, "USD")} USD · ${monto(e.CUP?.ingresos, "CUP")} CUP
               </span>
             </span>
             <span class="dash-persona-valores">
-              <strong>${monto(e.trabajadora)}</strong>
+              ${montoDual(e.USD?.trabajadora, e.CUP?.trabajadora)}
               <small>para ella</small>
             </span>
           </div>`).join("")}</div>`}
     </div>`;
 }
 
-/** Gráfico de líneas con dos series y escalas independientes (SVG). */
-function svgTendencia(serie, periodo) {
+/** Primera gráfica: recaudado de AM Luxury en USD y CUP con dos ejes Y. */
+function svgRecaudado(serieUsd, serieCup, periodo) {
+  const serie = serieUsd.length ? serieUsd : serieCup;
   if (!serie.length) return "";
   const W = 720;
   const H = 264;
-  const L = 48;
-  const R = 46;
-  const T = 26;
+  const L = 58;
+  const R = 62;
+  const T = 28;
   const B = 42;
   const w = W - L - R;
   const h = H - T - B;
-  const maxE = Math.max(...serie.map((x) => Number(x.estudio)), 1);
-  const maxC = Math.max(...serie.map((x) => x.citas), 1);
+  const maxUsd = Math.max(...serieUsd.map((x) => numero(x.estudio)), 1);
+  const maxCup = Math.max(...serieCup.map((x) => numero(x.estudio)), 1);
   const x = (i) => L + (serie.length > 1 ? (i * w) / (serie.length - 1) : w / 2);
-  const yE = (v) => T + h - (v / maxE) * h;
-  const yC = (v) => T + h - (v / maxC) * h;
-  const pe = serie.map((p, i) => [x(i), yE(Number(p.estudio))]);
-  const pc = serie.map((p, i) => [x(i), yC(p.citas)]);
-  const hayDatos = serie.some((p) => Number(p.estudio) > 0 || p.citas > 0);
+  const yUsd = (v) => T + h - (v / maxUsd) * h;
+  const yCup = (v) => T + h - (v / maxCup) * h;
+  const puntosUsd = serie.map((_, i) => [x(i), yUsd(numero(serieUsd[i]?.estudio))]);
+  const puntosCup = serie.map((_, i) => [x(i), yCup(numero(serieCup[i]?.estudio))]);
+  const hayDatos = [...serieUsd, ...serieCup].some((p) => numero(p.estudio) > 0);
 
   const linea = (pts, color) => `
     <polyline fill="none" stroke="${color}" stroke-width="2.5"
@@ -437,20 +646,26 @@ function svgTendencia(serie, periodo) {
   const puntos = (pts, color) => pts.map((p) => `
     <circle cx="${p[0]}" cy="${p[1]}" r="3.1" fill="#fff"
       stroke="${color}" stroke-width="2"/>`).join("");
-  const area = pe.length
-    ? `<path d="M ${pe[0][0]} ${T + h} L ${pe.map((p) => p.join(" ")).join(" L ")} L ${pe[pe.length - 1][0]} ${T + h} Z"
-        fill="url(#degradadoEstudio)"/>`
+  const area = (pts, gradiente) => pts.length
+    ? `<path d="M ${pts[0][0]} ${T + h} L ${pts.map((p) => p.join(" ")).join(" L ")} L ${pts[pts.length - 1][0]} ${T + h} Z"
+        fill="url(#${gradiente})"/>`
     : "";
   const guias = [0, 1, 2, 3].map((i) => `
     <line x1="${L}" x2="${W - R}" y1="${T + (h / 3) * i}" y2="${T + (h / 3) * i}"
       stroke="#F1DDE4" stroke-width="1"/>`).join("");
-  const yEtiquetas = [0, 1, 2, 3].map((i) => {
-    const valor = (maxE * (3 - i)) / 3;
+  const dinero = (valor) => `$${valor >= 100
+    ? Math.round(valor).toLocaleString("en-US")
+    : valor.toFixed(0)}`;
+  const etiquetasUsd = [0, 1, 2, 3].map((i) => {
+    const valor = (maxUsd * (3 - i)) / 3;
     return `<text x="${L - 8}" y="${T + (h / 3) * i + 4}" text-anchor="end"
-      font-size="10" fill="#8A7680">$${valor >= 100 ? Math.round(valor) : valor.toFixed(0)}</text>`;
+      font-size="9" fill="#B25572">${dinero(valor)}</text>`;
   }).join("");
-  // Con "Mes" se muestran todos los días en el eje X (y también con "Semana",
-  // que son solo 7 puntos). En "Año" basta con algunos meses.
+  const etiquetasCup = [0, 1, 2, 3].map((i) => {
+    const valor = (maxCup * (3 - i)) / 3;
+    return `<text x="${W - R + 8}" y="${T + (h / 3) * i + 4}" text-anchor="start"
+      font-size="9" fill="#74619D">${dinero(valor)}</text>`;
+  }).join("");
   const indices = periodo === "anio"
     ? [0, 2, 4, 6, 8, 10, 11]
     : serie.map((_, i) => i);
@@ -464,24 +679,102 @@ function svgTendencia(serie, periodo) {
   return `
     <div class="dash-chart">
       <svg viewBox="0 0 ${W} ${H}" role="img"
-        aria-label="Tendencia de lo recaudado por AM Luxury y las citas">
+        aria-label="Recaudado por AM Luxury en USD y CUP">
         <defs>
-          <linearGradient id="degradadoEstudio" x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id="degradadoUsd" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="#CE7C94" stop-opacity=".22"/>
             <stop offset="100%" stop-color="#CE7C94" stop-opacity="0"/>
           </linearGradient>
+          <linearGradient id="degradadoCup" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#8E6BB8" stop-opacity=".16"/>
+            <stop offset="100%" stop-color="#8E6BB8" stop-opacity="0"/>
+          </linearGradient>
         </defs>
         ${guias}
-        ${yEtiquetas}
-        <text x="${W - R + 8}" y="${T + 4}" font-size="10" fill="#8A7680">${maxC}</text>
-        ${area}
-        ${linea(pc, "#8E6BB8")}
-        ${linea(pe, "#CE7C94")}
-        ${puntos(pc, "#8E6BB8")}
-        ${puntos(pe, "#CE7C94")}
+        ${etiquetasUsd}
+        ${etiquetasCup}
+        <text x="${L - 8}" y="${T - 10}" text-anchor="end" font-size="9" font-weight="700" fill="#B25572">USD</text>
+        <text x="${W - R + 8}" y="${T - 10}" text-anchor="start" font-size="9" font-weight="700" fill="#74619D">CUP</text>
+        ${area(puntosUsd, "degradadoUsd")}
+        ${area(puntosCup, "degradadoCup")}
+        ${linea(puntosUsd, "#CE7C94")}
+        ${linea(puntosCup, "#8E6BB8")}
+        ${puntos(puntosUsd, "#CE7C94")}
+        ${puntos(puntosCup, "#8E6BB8")}
         ${xEtiquetas}
         ${hayDatos ? "" : `<text x="${W / 2}" y="${T + h / 2}" text-anchor="middle"
           font-size="13" fill="#8A7680">Sin movimiento en este período</text>`}
+      </svg>
+    </div>`;
+}
+
+/** Segunda gráfica: barras verticales con todas las citas de cada punto. */
+function svgBarrasCitas(serieUsd, serieCup, periodo) {
+  const serie = serieUsd.length ? serieUsd : serieCup;
+  if (!serie.length) return "";
+  const W = 720;
+  const H = 264;
+  const L = 44;
+  const R = 24;
+  const T = 28;
+  const B = 42;
+  const w = W - L - R;
+  const h = H - T - B;
+  const citas = serie.map((_, i) =>
+    Number(serieUsd[i]?.citas || 0) + Number(serieCup[i]?.citas || 0)
+  );
+  const maximo = Math.max(...citas, 1);
+  const paso = w / serie.length;
+  const centro = (i) => L + paso * i + paso / 2;
+  const ancho = Math.max(4, Math.min(30, paso * 0.56));
+  const hayDatos = citas.some((v) => v > 0);
+  const guias = [0, 1, 2, 3].map((i) => `
+    <line x1="${L}" x2="${W - R}" y1="${T + (h / 3) * i}" y2="${T + (h / 3) * i}"
+      stroke="#F1DDE4" stroke-width="1"/>`).join("");
+  const etiquetasY = [0, 1, 2, 3].map((i) => {
+    const valor = Math.round((maximo * (3 - i)) / 3);
+    return `<text x="${L - 8}" y="${T + (h / 3) * i + 4}" text-anchor="end"
+      font-size="10" fill="#8A7680">${valor}</text>`;
+  }).join("");
+  const barras = citas.map((valor, i) => {
+    const alto = (valor / maximo) * h;
+    const y = T + h - alto;
+    const etiqueta = serie.length <= 12 && valor > 0
+      ? `<text x="${centro(i)}" y="${Math.max(y - 6, T + 9)}" text-anchor="middle"
+          font-size="9" font-weight="700" fill="#4F8F6B">${valor}</text>`
+      : "";
+    return `
+      <rect x="${centro(i) - ancho / 2}" y="${y}" width="${ancho}" height="${Math.max(alto, 0)}"
+        rx="${Math.min(4, ancho / 3)}" fill="url(#degradadoCitas)"/>
+      ${etiqueta}`;
+  }).join("");
+  const indices = periodo === "anio"
+    ? [0, 2, 4, 6, 8, 10, 11]
+    : serie.map((_, i) => i);
+  const fuenteEje = periodo === "anio" ? 11 : serie.length > 10 ? 8 : 10;
+  const xEtiquetas = indices
+    .filter((i) => i >= 0 && i < serie.length)
+    .map((i) => `<text x="${centro(i)}" y="${H - 16}" text-anchor="middle"
+      font-size="${fuenteEje}" fill="#8A7680">${escapeHtml(serie[i].etiqueta)}</text>`)
+    .join("");
+
+  return `
+    <div class="dash-chart">
+      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Citas completadas del período">
+        <defs>
+          <linearGradient id="degradadoCitas" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#5B9A6B"/>
+            <stop offset="100%" stop-color="#A8CFB0"/>
+          </linearGradient>
+        </defs>
+        ${guias}
+        ${etiquetasY}
+        <text x="${L - 8}" y="${T - 10}" text-anchor="end" font-size="9" font-weight="700" fill="#4F8F6B">CITAS</text>
+        ${barras}
+        <line x1="${L}" x2="${W - R}" y1="${T + h}" y2="${T + h}" stroke="#D9C7CF" stroke-width="1"/>
+        ${xEtiquetas}
+        ${hayDatos ? "" : `<text x="${W / 2}" y="${T + h / 2}" text-anchor="middle"
+          font-size="13" fill="#8A7680">Sin citas en este período</text>`}
       </svg>
     </div>`;
 }

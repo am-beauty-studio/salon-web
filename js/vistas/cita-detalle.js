@@ -12,6 +12,7 @@ import { esAdmin } from "../auth.js?v=52";
 import { icono, icoCategoria } from "../iconos.js?v=64";
 import { crearSelectorDia, crearHorarios, consultaDisponibilidad } from "./componentes.js?v=52";
 import { mostrarExitoReprogramar } from "../modal-exito.js?v=50";
+import { selectorMoneda, conectarSelectorMoneda } from "../moneda-switch.js?v=1";
 
 export async function render(raiz, params, query) {
   // Día desde el que se abrió la cita. Se propaga en los enlaces internos para
@@ -190,12 +191,7 @@ export async function render(raiz, params, query) {
               <p class="form-seccion-sub">La clienta puede pagar en USD o en CUP. El catálogo sigue en USD.</p>
             </div>
           </div>
-          <div class="segmentado" role="tablist" aria-label="Moneda de cobro">
-            <button class="segmento ${normalizarMoneda(cita.moneda) === "USD" ? "activo" : ""}"
-              data-cambiar-moneda="USD" type="button" role="tab">USD</button>
-            <button class="segmento ${normalizarMoneda(cita.moneda) === "CUP" ? "activo" : ""}"
-              data-cambiar-moneda="CUP" type="button" role="tab">CUP</button>
-          </div>
+          ${selectorMoneda(cita.moneda)}
           <p class="nota" style="margin:8px 0 0">
             Se cobrará <b>${importe(cita.precio_total_moneda ?? cita.precio_total, cita.moneda)} ${etiquetaMoneda(cita.moneda)}</b>
             (${usd(cita.precio_total)} USD)
@@ -282,9 +278,7 @@ export async function render(raiz, params, query) {
           }));
         }
       };
-      $$("[data-cambiar-moneda]").forEach((boton) => {
-        boton.onclick = () => cambiarMoneda(boton.dataset.cambiarMoneda);
-      });
+      conectarSelectorMoneda(raiz, cambiarMoneda);
       if (reprogramando) pintarReprogramar();
     }
   }
@@ -307,6 +301,7 @@ export async function render(raiz, params, query) {
       pintar();
     } catch (e) {
       aviso(e.message || "No se pudo cambiar la moneda.", "error");
+      pintar(); // revierte el interruptor a la moneda guardada
     }
   }
 

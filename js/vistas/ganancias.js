@@ -8,6 +8,7 @@ import {
 } from "../util.js?v=54";
 import { icoCategoria, icono } from "../iconos.js?v=64";
 import { abrirCalendario } from "./componentes.js?v=52";
+import { selectorMoneda, conectarSelectorMoneda } from "../moneda-switch.js?v=1";
 
 const ROSAS = [
   "#B25572", "#C06A86", "#CD7E97", "#D992A8",
@@ -56,10 +57,9 @@ export async function render(raiz) {
         <button class="segmento" data-p="semestre" type="button" role="tab">Semestre</button>
         <button class="segmento" data-p="anio" type="button" role="tab">Año</button>
       </div>
-      <div class="filtro-etiqueta">Moneda</div>
-      <div class="segmentado" role="tablist" aria-label="Moneda de las ganancias">
-        <button class="segmento activo" data-m="USD" type="button" role="tab" aria-selected="true">USD</button>
-        <button class="segmento" data-m="CUP" type="button" role="tab" aria-selected="false">CUP</button>
+      <div class="filtro-moneda">
+        <span class="filtro-etiqueta">Moneda</span>
+        ${selectorMoneda(moneda)}
       </div>
       <div class="nav-fecha">
         <button class="nav-flecha" id="g-prev" type="button" aria-label="Período anterior">‹</button>
@@ -80,16 +80,9 @@ export async function render(raiz) {
       cargar();
     };
   });
-  $$(".segmentado [data-m]").forEach((chip) => {
-    chip.onclick = () => {
-      moneda = chip.dataset.m;
-      $$(".segmentado [data-m]").forEach((c) => {
-        const activo = c.dataset.m === moneda;
-        c.classList.toggle("activo", activo);
-        c.setAttribute("aria-selected", activo ? "true" : "false");
-      });
-      cargar();
-    };
+  conectarSelectorMoneda(raiz, (nuevaMoneda) => {
+    moneda = nuevaMoneda;
+    cargar();
   });
   $("#g-prev").onclick = () => { fecha = retroceder(fecha, -1); cargar(); };
   $("#g-next").onclick = () => { fecha = retroceder(fecha, 1); cargar(); };

@@ -5,7 +5,7 @@
 
 import { del, get, patch } from "../api.js?v=49";
 import { usuario as usuarioActual } from "../auth.js?v=52";
-import { animarCifras } from "../contador.js?v=2";
+import { animarCifras } from "../contador.js?v=3";
 import { icono } from "../iconos.js?v=64";
 import { confirmarPeligro } from "../modal-confirmar.js?v=1";
 import { $, $$, aviso, escapeHtml, fechaCorta, hora, importe, etiquetaMoneda } from "../util.js?v=54";

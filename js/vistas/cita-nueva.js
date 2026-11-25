@@ -10,13 +10,14 @@
 import { get, post } from "../api.js?v=49";
 import {
   $, $$, aviso, escapeHtml, aISO, etiqueta, hora, usd, importe, etiquetaMoneda,
-  normalizarMoneda, convertirMoneda, duracionTxt,
+  convertirMoneda, duracionTxt,
   compatible, combinables, textoSubtipo, mostrarCategoria, sumarDias, nombreCorto,
   compararCategorias,
 } from "../util.js?v=54";
 import { crearSelectorDia, crearHorarios, consultaDisponibilidad } from "./componentes.js?v=52";
 import { icono, icoCategoria } from "../iconos.js?v=64";
 import { mostrarExitoCita } from "../modal-exito.js?v=50";
+import { selectorMoneda, conectarSelectorMoneda } from "../moneda-switch.js?v=1";
 import { esAdmin } from "../auth.js?v=52";
 
 const MAX_SERVICIOS = 3;
@@ -517,12 +518,7 @@ export async function render(raiz, _params, query) {
     const totalCobro = convertirMoneda(precio, moneda, tasaCup);
     caja.innerHTML = `
       <div class="paso-titulo">Moneda de cobro</div>
-      <div class="segmentado" role="tablist" aria-label="Moneda de cobro">
-        <button class="segmento ${moneda === "USD" ? "activo" : ""}" data-moneda="USD"
-          type="button" role="tab">USD</button>
-        <button class="segmento ${moneda === "CUP" ? "activo" : ""}" data-moneda="CUP"
-          type="button" role="tab" ${tasaCup <= 0 ? "disabled" : ""}>CUP</button>
-      </div>
+      ${selectorMoneda(moneda, { cupDeshabilitada: tasaCup <= 0 })}
       <p class="nota" style="margin:8px 0 0">
         ${moneda === "CUP"
           ? `Se cobrará en CUP con la tasa 1 USD = ${tasaCup.toLocaleString("en-US", {
@@ -533,12 +529,10 @@ export async function render(raiz, _params, query) {
           ? `<br/>El superadministrador aún no configuró la tasa del CUP.`
           : `<br/>La tasa la configura el superadministrador en el Panel de control.`}
       </p>`;
-    $$("[data-moneda]", caja).forEach((boton) => {
-      boton.onclick = () => {
-        moneda = normalizarMoneda(boton.dataset.moneda);
-        pintarMoneda();
-        actualizar();
-      };
+    conectarSelectorMoneda(caja, (nuevaMoneda) => {
+      moneda = nuevaMoneda;
+      pintarMoneda();
+      actualizar();
     });
   }
 
