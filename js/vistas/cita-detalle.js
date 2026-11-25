@@ -99,7 +99,7 @@ export async function render(raiz, params) {
 
       <div class="cita-card cita-detalle">
         <div class="cita-cab">
-          <span class="cita-hora">${icono.reloj(15)}${hora(cita.inicio)} – ${hora(cita.fin)}</span>
+          <span class="cita-hora">${icono.reloj(15)}${hora(cita.inicio)}–${hora(cita.fin)}</span>
           <span class="cita-etiquetas">
             ${cita.archivada ? `<span class="badge badge-dorado">Archivada</span>` : cita.grupo_id ? `<span class="badge badge-dorado">Enlazada</span>` : ""}
             ${reprogCita

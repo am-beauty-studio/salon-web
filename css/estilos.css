@@ -2418,7 +2418,21 @@ body.en-login .app { padding-bottom: 16px; }
   border-color: var(--border);
   box-shadow: 0 2px 10px rgba(58, 43, 49, .05);
 }
-.cita-detalle .cita-hora { font-size: 19px; }
+.cita-detalle .cita-hora { font-size: 19px; font-variant-numeric: tabular-nums; }
+/* Las etiquetas del detalle van siempre arriba a la derecha, en una sola
+   fila: aunque haya varias (Enlazada + Reprogramada) no deben bajar ni
+   desplazarse. La hora se compacta para dejarles sitio. */
+.cita-detalle .cita-cab {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  min-width: 0;
+}
+.cita-detalle .cita-etiquetas {
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  align-self: flex-start;
+  white-space: nowrap;
+}
 .cita-detalle .cita-info { margin-top: 10px; }
 .cita-detalle .cita-linea { font-size: 14px; }
 a.cita-cliente { color: var(--text); text-decoration: none; }
@@ -5038,6 +5052,19 @@ a.notif-fila:hover { border-color: rgba(206, 124, 148, .55); }
 .resumen-aviso .ico { vertical-align: 0; flex-shrink: 0; }
 .resumen-vacio { color: var(--muted); font-size: 13px; }
 .prod-mov-cant.sube { color: var(--ok); }
+
+@media (max-width: 420px) {
+  /* Móvil: hora sin reloj y etiquetas más compactas, fijas a la derecha. */
+  .cita-detalle .cita-hora { font-size: 15px; gap: 3px; }
+  .cita-detalle .cita-hora .ico { display: none; }
+  .cita-detalle .cita-etiquetas { gap: 4px; }
+  .cita-detalle .badge { padding: 2px 7px; font-size: 10px; letter-spacing: .2px; }
+}
+
+@media (max-width: 360px) {
+  .cita-detalle .cita-cab { gap: 5px; }
+  .cita-detalle .badge { padding: 2px 6px; font-size: 9.5px; }
+}
 
 @media (max-width: 640px) {
   .form-seccion { padding: 14px; border-radius: 14px; }
