@@ -9,8 +9,16 @@ import { esAdmin } from "../auth.js?v=52";
 import { icono } from "../iconos.js?v=64";
 import { abrirCalendario } from "./componentes.js?v=52";
 
-export async function render(raiz) {
-  let fecha = new Date();
+export async function render(raiz, params, query) {
+  // Si venimos del detalle de una cita, respetamos el día que se estaba viendo
+  // en la agenda en lugar de volver siempre a hoy.
+  const fechaParam = query?.get("fecha");
+  let fecha = /^\d{4}-\d{2}-\d{2}$/.test(fechaParam || "")
+    ? (() => {
+        const [a, m, d] = fechaParam.split("-").map(Number);
+        return new Date(a, m - 1, d);
+      })()
+    : new Date();
   let empleadoId = null;
   let empleados = [];
   let citas = [];
@@ -128,7 +136,7 @@ export async function render(raiz) {
       const cita = visibles.find((x) => String(x.id) === card.dataset.id);
       card.addEventListener("click", (e) => {
         if (e.target.closest("button")) return;
-        location.hash = `#/cita/${cita.id}`;
+        location.hash = `#/cita/${cita.id}?fecha=${encodeURIComponent(aISO(fecha))}`;
       });
       card.querySelector("[data-accion='completar']")?.addEventListener("click", async () => {
         if (await confirmar("Completar cita",

@@ -12,8 +12,19 @@ import { icono, icoCategoria } from "../iconos.js?v=64";
 import { crearSelectorDia, crearHorarios, consultaDisponibilidad } from "./componentes.js?v=52";
 import { mostrarExitoReprogramar } from "../modal-exito.js?v=49";
 
-export async function render(raiz, params) {
+export async function render(raiz, params, query) {
+  // Día desde el que se abrió la cita. Se propaga en los enlaces internos para
+  // que «Volver» regrese a la agenda exactamente al mismo día. Si se abre la
+  // cita directamente, se usa la fecha de la propia cita como referencia.
+  const fechaParam = query?.get("fecha");
+  const fechaParamValida = /^\d{4}-\d{2}-\d{2}$/.test(fechaParam || "") ? fechaParam : "";
+
   let cita = await get(`/citas/${params.id}`);
+  const fechaOrigen = fechaParamValida || String(cita.inicio || "").slice(0, 10);
+  const sufijoFecha = /^\d{4}-\d{2}-\d{2}$/.test(fechaOrigen)
+    ? `?fecha=${encodeURIComponent(fechaOrigen)}`
+    : "";
+  const volver = sufijoFecha ? `#/agenda${sufijoFecha}` : "#/agenda";
   let grupo = null;
   if (cita.grupo_id) {
     try {
@@ -95,6 +106,7 @@ export async function render(raiz, params) {
       <div class="vista-cab">
         <span class="vista-ico">${icono.calendario(22)}</span>
         <h1 class="vista-titulo">Cita</h1>
+        <a class="detalle-volver" href="${volver}" aria-label="Volver a la agenda"><span class="flecha" aria-hidden="true">←</span> Volver</a>
       </div>
 
       <div class="cita-card cita-detalle">
@@ -125,7 +137,7 @@ export async function render(raiz, params) {
         <div class="paso-titulo detalle-paso">${cita.archivada ? "Reserva archivada" : "Reserva enlazada"} (${grupo.length} servicios)</div>
         <div class="reserva-lista">
           ${grupo.map((g) => `
-            <a class="reserva-item ${g.id === cita.id ? "propia" : ""}" href="#/cita/${g.id}">
+            <a class="reserva-item ${g.id === cita.id ? "propia" : ""}" href="#/cita/${g.id}${sufijoFecha}">
               <span class="reserva-hora">${icono.reloj(14)}${hora(g.inicio)}</span>
               <span class="reserva-datos">
                 <span class="reserva-servicio">${escapeHtml(g.servicio_nombre)}${textoSubtipo(g.subtipo) ? ` · ${escapeHtml(textoSubtipo(g.subtipo))}` : ""}</span>

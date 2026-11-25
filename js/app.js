@@ -11,9 +11,9 @@ import { cerrarCuenta, marcarMenuInferior, pintarMenuInferior } from "./menu-inf
 import { iniciarDespertar, terminarDespertar } from "./espera.js?v=1";
 
 import { render as vistaLogin } from "./vistas/login.js?v=62";
-import { render as vistaAgenda } from "./vistas/agenda.js?v=62";
+import { render as vistaAgenda } from "./vistas/agenda.js?v=63";
 import { render as vistaCitaNueva } from "./vistas/cita-nueva.js?v=57";
-import { render as vistaCitaDetalle } from "./vistas/cita-detalle.js?v=72";
+import { render as vistaCitaDetalle } from "./vistas/cita-detalle.js?v=74";
 import { render as vistaClientes } from "./vistas/clientes.js?v=52";
 import { render as vistaClienteFicha } from "./vistas/cliente-ficha.js?v=63";
 import { render as vistaServicios } from "./vistas/servicios.js?v=64";
