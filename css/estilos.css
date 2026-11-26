@@ -4273,18 +4273,22 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 .dash-donut-leyenda li strong { color: var(--gold-dark); font-size: 13px; }
 .dash-donut-leyenda li i { width: 9px; height: 9px; border-radius: 50%; }
 
-.dash-cats { display: flex; flex-direction: column; }
-/* Separador claro entre categorías para que no se mezcle la información. */
-.dash-cat { padding: 10px 0; }
-.dash-cat:first-child { padding-top: 0; }
-.dash-cat:last-child { padding-bottom: 0; }
+.dash-cats { display: flex; flex-direction: column; gap: 8px; }
+/* Cada categoría va en su propio contenedor, como clientas/empleadas. */
+.dash-cat {
+  padding: 10px 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: border-color .15s;
+}
 .dash-cat-cab {
   display: flex; align-items: center; gap: 10px;
-  margin: 0 -15px 8px;
-  padding: 9px 15px;
+  margin: -10px -12px 8px;
+  padding: 9px 12px;
   background: #FBEDF2;
-  border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
+  border-radius: 11px 11px 0 0;
 }
 .dash-cat-ico {
   width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
@@ -4434,13 +4438,16 @@ a.dash-persona:hover { border-color: var(--gold); text-decoration: none; }
 .dash-persona-valores small { color: var(--muted); font-size: 9.5px; }
 .dash-persona-flecha { color: var(--muted); font-size: 20px; line-height: 1; }
 
-/* Rankings de servicios */
-.dash-servs { display: flex; flex-direction: column; }
-/* Separador claro entre servicios para que no se mezcle la información. */
-.dash-serv { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; }
-.dash-serv:first-child { padding-top: 0; }
-.dash-serv:last-child { padding-bottom: 0; }
-.dash-serv + .dash-serv { border-top: 1px solid rgba(227, 188, 204, .55); }
+/* Rankings de servicios: un contenedor por servicio, igual que clientas/empleadas */
+.dash-servs { display: flex; flex-direction: column; gap: 8px; }
+.dash-serv {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: border-color .15s;
+}
 .dash-rank {
   width: 23px; height: 23px; border-radius: 50%;
   background: var(--bg); border: 1px solid var(--border);
