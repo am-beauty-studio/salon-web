@@ -4232,6 +4232,76 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 .dash-chart { margin-top: 4px; }
 .dash-chart svg { width: 100%; height: auto; display: block; overflow: visible; }
 
+/* Tendencia: ejes legibles y entrada animada de líneas, puntos y barras. */
+.dash-chart text {
+  paint-order: stroke;
+  stroke: var(--card);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.dash-chart .dash-eje-x,
+.dash-chart .dash-eje-y,
+.dash-chart .dash-eje-titulo { font-size: 11px; }
+.dash-chart .dash-guia,
+.dash-chart .dash-eje-y,
+.dash-chart .dash-eje-x,
+.dash-chart .dash-eje-titulo {
+  animation: dash-svg-aparece .45s ease-out .1s both;
+}
+.dash-chart .dash-area { animation: dash-svg-aparece .8s ease-out .25s both; }
+.dash-chart .dash-linea {
+  stroke-dasharray: 4000;
+  stroke-dashoffset: 4000;
+  animation: dash-trazo 1.05s cubic-bezier(.22, 1, .36, 1) .15s forwards;
+}
+.dash-chart .dash-punto {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dash-punto-entra .35s ease-out forwards;
+  animation-delay: calc(var(--i, 0) * 45ms + 650ms);
+}
+.dash-chart .dash-barra-citas {
+  transform-box: fill-box;
+  transform-origin: bottom center;
+  animation: dash-barra-svg .7s cubic-bezier(.22, 1, .36, 1) forwards;
+  animation-delay: calc(var(--i, 0) * 35ms + 150ms);
+}
+.dash-chart .dash-dato-valor {
+  opacity: 0;
+  animation: dash-svg-aparece .35s ease-out forwards;
+  animation-delay: calc(var(--i, 0) * 35ms + 550ms);
+}
+@keyframes dash-svg-aparece { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dash-trazo { to { stroke-dashoffset: 0; } }
+@keyframes dash-punto-entra {
+  from { opacity: 0; transform: scale(.2); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes dash-barra-svg {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+@media (max-width: 560px) {
+  .dash-chart .dash-eje-x,
+  .dash-chart .dash-eje-y,
+  .dash-chart .dash-eje-titulo,
+  .dash-chart .dash-dato-valor { font-size: 15px; }
+  /* Con muchos puntos se muestran solo las etiquetas principales. */
+  .dash-chart .dash-eje-x-sec { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dash-chart .dash-linea { stroke-dasharray: none; stroke-dashoffset: 0; animation: none; }
+  .dash-chart .dash-area,
+  .dash-chart .dash-punto,
+  .dash-chart .dash-barra-citas,
+  .dash-chart .dash-dato-valor,
+  .dash-chart .dash-guia,
+  .dash-chart .dash-eje-y,
+  .dash-chart .dash-eje-x,
+  .dash-chart .dash-eje-titulo { animation: none; opacity: 1; transform: none; }
+}
+
 /* Donut de categorías */
 
 /* Efecto de carga: el anillo se dibuja, el total cuenta hacia arriba y las

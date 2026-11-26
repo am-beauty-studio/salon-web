@@ -708,44 +708,48 @@ function svgRecaudado(serieUsd, serieCup, periodo) {
   const hayDatos = [...serieUsd, ...serieCup].some((p) => numero(p.estudio) > 0);
 
   const linea = (pts, color) => `
-    <polyline fill="none" stroke="${color}" stroke-width="2.5"
+    <polyline class="dash-linea" fill="none" stroke="${color}" stroke-width="2.5"
       stroke-linecap="round" stroke-linejoin="round"
       points="${pts.map((p) => p.join(",")).join(" ")}"/>`;
-  const puntos = (pts, color) => pts.map((p) => `
-    <circle cx="${p[0]}" cy="${p[1]}" r="3.1" fill="#fff"
+  const puntos = (pts, color) => pts.map((p, idx) => `
+    <circle class="dash-punto" style="--i:${idx}" cx="${p[0]}" cy="${p[1]}" r="3.1" fill="#fff"
       stroke="${color}" stroke-width="2"/>`).join("");
   const area = (pts, gradiente) => pts.length
-    ? `<path d="M ${pts[0][0]} ${T + h} L ${pts.map((p) => p.join(" ")).join(" L ")} L ${pts[pts.length - 1][0]} ${T + h} Z"
+    ? `<path class="dash-area" d="M ${pts[0][0]} ${T + h} L ${pts.map((p) => p.join(" ")).join(" L ")} L ${pts[pts.length - 1][0]} ${T + h} Z"
         fill="url(#${gradiente})"/>`
     : "";
   const guias = [0, 1, 2, 3].map((i) => `
-    <line x1="${L}" x2="${W - R}" y1="${T + (h / 3) * i}" y2="${T + (h / 3) * i}"
+    <line class="dash-guia" x1="${L}" x2="${W - R}" y1="${T + (h / 3) * i}" y2="${T + (h / 3) * i}"
       stroke="#F1DDE4" stroke-width="1"/>`).join("");
-  const dinero = (valor) => `$${valor >= 100
-    ? Math.round(valor).toLocaleString("en-US")
-    : valor.toFixed(0)}`;
+  const dinero = (valor) => valor >= 1000
+    ? `$${(valor / 1000).toFixed(valor >= 10000 ? 0 : 1)}k`
+    : `$${Math.round(valor)}`;
   const etiquetasUsd = [0, 1, 2, 3].map((i) => {
     const valor = (maxUsd * (3 - i)) / 3;
-    return `<text x="${L - 8}" y="${T + (h / 3) * i + 4}" text-anchor="end"
+    return `<text class="dash-eje-y" x="${L - 8}" y="${T + (h / 3) * i + 4}" text-anchor="end"
       font-size="9" fill="#B25572">${dinero(valor)}</text>`;
   }).join("");
   const etiquetasCup = [0, 1, 2, 3].map((i) => {
     const valor = (maxCup * (3 - i)) / 3;
-    return `<text x="${W - R + 8}" y="${T + (h / 3) * i + 4}" text-anchor="start"
+    return `<text class="dash-eje-y" x="${W - R + 8}" y="${T + (h / 3) * i + 4}" text-anchor="start"
       font-size="9" fill="#74619D">${dinero(valor)}</text>`;
   }).join("");
   const indices = periodo === "anio"
     ? [0, 2, 4, 6, 8, 10, 11]
     : serie.map((_, i) => i);
   const fuenteEje = periodo === "anio" ? 11 : serie.length > 10 ? 8 : 10;
+  const densas = periodo !== "anio" && serie.length > 10;
   const xEtiquetas = indices
     .filter((i) => i >= 0 && i < serie.length)
-    .map((i) => `<text x="${x(i)}" y="${H - 16}" text-anchor="middle"
-      font-size="${fuenteEje}" fill="#8A7680">${escapeHtml(serie[i].etiqueta)}</text>`)
+    .map((i) => {
+      const secundaria = densas && i % 3 !== 0;
+      return `<text class="dash-eje-x${secundaria ? " dash-eje-x-sec" : ""}" x="${x(i)}" y="${H - 16}" text-anchor="middle"
+        font-size="${fuenteEje}" fill="#8A7680">${escapeHtml(serie[i].etiqueta)}</text>`;
+    })
     .join("");
 
   return `
-    <div class="dash-chart">
+    <div class="dash-chart dash-chart-datos">
       <svg viewBox="0 0 ${W} ${H}" role="img"
         aria-label="Recaudado por AM Luxury en USD y CUP">
         <defs>
@@ -761,8 +765,8 @@ function svgRecaudado(serieUsd, serieCup, periodo) {
         ${guias}
         ${etiquetasUsd}
         ${etiquetasCup}
-        <text x="${L - 8}" y="${T - 10}" text-anchor="end" font-size="9" font-weight="700" fill="#B25572">USD</text>
-        <text x="${W - R + 8}" y="${T - 10}" text-anchor="start" font-size="9" font-weight="700" fill="#74619D">CUP</text>
+        <text class="dash-eje-titulo" x="${L - 8}" y="${T - 10}" text-anchor="end" font-size="9" font-weight="700" fill="#B25572">USD</text>
+        <text class="dash-eje-titulo" x="${W - R + 8}" y="${T - 10}" text-anchor="start" font-size="9" font-weight="700" fill="#74619D">CUP</text>
         ${area(puntosUsd, "degradadoUsd")}
         ${area(puntosCup, "degradadoCup")}
         ${linea(puntosUsd, "#CE7C94")}
@@ -797,22 +801,22 @@ function svgBarrasCitas(serieUsd, serieCup, periodo) {
   const ancho = Math.max(4, Math.min(30, paso * 0.56));
   const hayDatos = citas.some((v) => v > 0);
   const guias = [0, 1, 2, 3].map((i) => `
-    <line x1="${L}" x2="${W - R}" y1="${T + (h / 3) * i}" y2="${T + (h / 3) * i}"
+    <line class="dash-guia" x1="${L}" x2="${W - R}" y1="${T + (h / 3) * i}" y2="${T + (h / 3) * i}"
       stroke="#F1DDE4" stroke-width="1"/>`).join("");
   const etiquetasY = [0, 1, 2, 3].map((i) => {
     const valor = Math.round((maximo * (3 - i)) / 3);
-    return `<text x="${L - 8}" y="${T + (h / 3) * i + 4}" text-anchor="end"
+    return `<text class="dash-eje-y" x="${L - 8}" y="${T + (h / 3) * i + 4}" text-anchor="end"
       font-size="10" fill="#8A7680">${valor}</text>`;
   }).join("");
   const barras = citas.map((valor, i) => {
     const alto = (valor / maximo) * h;
     const y = T + h - alto;
     const etiqueta = serie.length <= 12 && valor > 0
-      ? `<text x="${centro(i)}" y="${Math.max(y - 6, T + 9)}" text-anchor="middle"
+      ? `<text class="dash-dato-valor" style="--i:${i}" x="${centro(i)}" y="${Math.max(y - 6, T + 9)}" text-anchor="middle"
           font-size="9" font-weight="700" fill="#4F8F6B">${valor}</text>`
       : "";
     return `
-      <rect x="${centro(i) - ancho / 2}" y="${y}" width="${ancho}" height="${Math.max(alto, 0)}"
+      <rect class="dash-barra-citas" style="--i:${i}" x="${centro(i) - ancho / 2}" y="${y}" width="${ancho}" height="${Math.max(alto, 0)}"
         rx="${Math.min(4, ancho / 3)}" fill="url(#degradadoCitas)"/>
       ${etiqueta}`;
   }).join("");
@@ -820,14 +824,18 @@ function svgBarrasCitas(serieUsd, serieCup, periodo) {
     ? [0, 2, 4, 6, 8, 10, 11]
     : serie.map((_, i) => i);
   const fuenteEje = periodo === "anio" ? 11 : serie.length > 10 ? 8 : 10;
+  const densas = periodo !== "anio" && serie.length > 10;
   const xEtiquetas = indices
     .filter((i) => i >= 0 && i < serie.length)
-    .map((i) => `<text x="${centro(i)}" y="${H - 16}" text-anchor="middle"
-      font-size="${fuenteEje}" fill="#8A7680">${escapeHtml(serie[i].etiqueta)}</text>`)
+    .map((i) => {
+      const secundaria = densas && i % 3 !== 0;
+      return `<text class="dash-eje-x${secundaria ? " dash-eje-x-sec" : ""}" x="${centro(i)}" y="${H - 16}" text-anchor="middle"
+        font-size="${fuenteEje}" fill="#8A7680">${escapeHtml(serie[i].etiqueta)}</text>`;
+    })
     .join("");
 
   return `
-    <div class="dash-chart">
+    <div class="dash-chart dash-chart-datos">
       <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Citas completadas del período">
         <defs>
           <linearGradient id="degradadoCitas" x1="0" y1="0" x2="0" y2="1">
@@ -837,7 +845,7 @@ function svgBarrasCitas(serieUsd, serieCup, periodo) {
         </defs>
         ${guias}
         ${etiquetasY}
-        <text x="${L - 8}" y="${T - 10}" text-anchor="end" font-size="9" font-weight="700" fill="#4F8F6B">CITAS</text>
+        <text class="dash-eje-titulo" x="${L - 8}" y="${T - 10}" text-anchor="end" font-size="9" font-weight="700" fill="#4F8F6B">CITAS</text>
         ${barras}
         <line x1="${L}" x2="${W - R}" y1="${T + h}" y2="${T + h}" stroke="#D9C7CF" stroke-width="1"/>
         ${xEtiquetas}
