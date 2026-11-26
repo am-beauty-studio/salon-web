@@ -4252,7 +4252,12 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 .dash-donut-leyenda li strong { color: var(--gold-dark); font-size: 13px; }
 .dash-donut-leyenda li i { width: 9px; height: 9px; border-radius: 50%; }
 
-.dash-cats { display: flex; flex-direction: column; gap: 13px; }
+.dash-cats { display: flex; flex-direction: column; }
+/* Separador claro entre categorías para que no se mezcle la información. */
+.dash-cat { padding: 10px 0; }
+.dash-cat:first-child { padding-top: 0; }
+.dash-cat:last-child { padding-bottom: 0; }
+.dash-cat + .dash-cat { border-top: 1px solid rgba(227, 188, 204, .55); }
 .dash-cat-cab { display: flex; align-items: center; gap: 9px; margin-bottom: 5px; }
 .dash-cat-ico { display: inline-flex; align-items: center; justify-content: center; }
 .dash-cat-ico .cat-ico { width: 22px; height: 22px; margin: 0; vertical-align: 0; }
@@ -4400,8 +4405,12 @@ a.dash-persona:hover { border-color: var(--gold); text-decoration: none; }
 .dash-persona-flecha { color: var(--muted); font-size: 20px; line-height: 1; }
 
 /* Rankings de servicios */
-.dash-servs { display: flex; flex-direction: column; gap: 13px; }
-.dash-serv { display: flex; align-items: flex-start; gap: 10px; }
+.dash-servs { display: flex; flex-direction: column; }
+/* Separador claro entre servicios para que no se mezcle la información. */
+.dash-serv { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; }
+.dash-serv:first-child { padding-top: 0; }
+.dash-serv:last-child { padding-bottom: 0; }
+.dash-serv + .dash-serv { border-top: 1px solid rgba(227, 188, 204, .55); }
 .dash-rank {
   width: 23px; height: 23px; border-radius: 50%;
   background: var(--bg); border: 1px solid var(--border);
