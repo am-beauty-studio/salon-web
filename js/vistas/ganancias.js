@@ -275,15 +275,13 @@ export async function render(raiz) {
                 <strong>${escapeHtml(f.titulo)}</strong>
                 <span>${f.citas} ${f.citas === 1 ? "cita" : "citas"}</span>
               </div>
-              <div class="gan-fila-datos">
-                <div class="gan-fila-dato">
-                  <small>Generado</small>
-                  <span class="gan-fila-monto">${f.generado}</span>
-                </div>
-                <div class="gan-fila-dato gan-fila-dato-final">
-                  <small>Le corresponde</small>
-                  <span class="gan-fila-monto">${f.corresponde}</span>
-                </div>
+              <div class="gan-fila-linea">
+                <span class="gan-fila-etiqueta">Generado</span>
+                <span class="gan-fila-importes">${f.generado}</span>
+              </div>
+              <div class="gan-fila-linea">
+                <span class="gan-fila-etiqueta">Le corresponde</span>
+                <span class="gan-fila-importes">${f.corresponde}</span>
               </div>
             </div>`).join("")}
         </div>
