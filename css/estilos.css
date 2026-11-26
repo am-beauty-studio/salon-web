@@ -4203,6 +4203,7 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 }
 
 .dash-leyenda { display: flex; flex-wrap: wrap; gap: 14px; }
+.dash-leyenda-tendencia { margin: 0 0 12px; }
 .dash-leyenda span {
   display: inline-flex; align-items: center; gap: 6px;
   color: var(--muted); font-size: 12px;

@@ -222,11 +222,11 @@ function dashboard(datos) {
             <p>Recaudado por AM Luxury en las dos monedas y cantidad total de citas</p>
           </div>
         </div>
-        <div class="dash-leyenda">
-          <span><i style="background:var(--gold)"></i>USD <span class="texto-usd">${monto(usd.totales.estudio, "USD")}</span></span>
-          <span><i style="background:var(--violeta)"></i>CUP <span class="texto-cup">${monto(cup.totales.estudio, "CUP")}</span></span>
-          <span><i style="background:var(--verde)"></i>${totalCitas} citas</span>
-        </div>
+      </div>
+      <div class="dash-leyenda dash-leyenda-tendencia">
+        <span><i style="background:var(--gold)"></i>USD <span class="texto-usd">${monto(usd.totales.estudio, "USD")}</span></span>
+        <span><i style="background:var(--violeta)"></i>CUP <span class="texto-cup">${monto(cup.totales.estudio, "CUP")}</span></span>
+        <span><i style="background:var(--verde)"></i>${totalCitas} citas</span>
       </div>
       <div class="dash-tendencias">
         <div class="dash-tendencia">
