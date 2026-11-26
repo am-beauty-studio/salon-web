@@ -4265,20 +4265,21 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 .dash-cat-ico { display: inline-flex; align-items: center; justify-content: center; }
 .dash-cat-ico .cat-ico { width: 22px; height: 22px; margin: 0; vertical-align: 0; }
 .dash-cat-nombre { flex: 1; min-width: 0; color: var(--text); font-size: 14.5px; font-weight: 600; }
-.dash-cat-total { flex-shrink: 0; text-align: right; white-space: nowrap; }
-.dash-cat-total > small {
-  display: block; color: var(--muted); font-size: 9.5px; font-weight: 800;
-  letter-spacing: .6px; text-transform: uppercase;
+.dash-cat-detalle { margin: 2px 0 5px; }
+.dash-cat-citas {
+  display: block; color: var(--text); font-size: 11.5px; font-weight: 600;
 }
-.dash-cat-metricas {
-  grid-template-columns: minmax(64px, .7fr) minmax(0, 1.3fr);
-  gap: 8px;
-  margin: 0 0 8px;
+.dash-cat-am {
+  display: block; color: var(--muted); font-size: 11px; font-weight: 400;
+  overflow-wrap: anywhere;
 }
-.dash-cat-metricas .cat-metrica { padding: 7px 9px; gap: 1px; }
-.dash-cat-metricas .cat-metrica strong { font-size: 14px; }
-.dash-cat-metricas .dash-monto-dual { align-items: flex-start; }
-.dash-cat-metricas .dash-monto-dual > span { font-size: 13px; font-weight: 700; }
+.dash-cat-am .texto-usd,
+.dash-cat-am .texto-cup { font-weight: 700; }
+.dash-cat-monto {
+  color: var(--gold-dark); font-size: 14.5px; font-weight: 700;
+  text-align: right; white-space: nowrap;
+}
+.dash-cat-monto small { display: block; color: var(--muted); font-size: 11px; font-weight: 400; }
 .dash-barra {
   height: 6px; border-radius: 3px; background: var(--bg);
   overflow: hidden;

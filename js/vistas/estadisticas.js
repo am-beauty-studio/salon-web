@@ -508,20 +508,19 @@ function filaCategoria(c, datos, i = 0, coloresUsd = new Map(), coloresCup = new
         <span class="dash-cat-nombre">
           ${escapeHtml(mostrarCategoria(c.categoria))}
         </span>
-        <span class="dash-cat-total" title="Recaudado del estudio">
-          <small>Recaudado</small>
+        <span class="dash-cat-monto" title="Recaudado del estudio">
           ${montoDual(ingresosUsd, ingresosCup)}
         </span>
       </div>
-      <div class="cat-metricas dash-cat-metricas">
-        <div class="cat-metrica">
-          <span>Citas</span>
-          <strong>${c.citas}</strong>
-        </div>
-        <div class="cat-metrica destacada">
-          <span>AM Luxury</span>
-          ${montoDual(c.USD?.estudio, c.CUP?.estudio)}
-        </div>
+      <div class="dash-cat-detalle">
+        <span class="dash-cat-citas">
+          ${c.citas} ${c.citas === 1 ? "cita" : "citas"}
+        </span>
+        <span class="dash-cat-am">
+          AM Luxury:
+          <span class="texto-usd">${monto(c.USD?.estudio, "USD")} USD</span>
+          · <span class="texto-cup">${monto(c.CUP?.estudio, "CUP")} CUP</span>
+        </span>
       </div>
       <div class="dash-serv-barras">
         <div class="dash-serv-barra">
