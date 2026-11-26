@@ -214,7 +214,7 @@ function dashboard(datos) {
     </div>
 
     <div class="dash-card">
-      <div class="dash-cab">
+      <div class="dash-cab dash-cab-banda">
         <div class="dash-cab-titulo">
           <span class="dash-kpi-ico">${icono.estadisticas(16)}</span>
           <div>
@@ -241,7 +241,7 @@ function dashboard(datos) {
     </div>
 
     <div class="dash-card" id="dash-categoria-card">
-      <div class="dash-cab">
+      <div class="dash-cab dash-cab-banda">
         <div class="dash-cab-titulo">
           <span class="dash-kpi-ico">${icono.capas(16)}</span>
           <div>
@@ -559,7 +559,7 @@ function listaServiciosHtml(titulo, sub, servicios, datos) {
 
   return `
     <div class="dash-card">
-      <div class="dash-cab">
+      <div class="dash-cab dash-cab-banda">
         <div class="dash-cab-titulo">
           <span class="dash-kpi-ico">${icono.etiqueta(16)}</span>
           <div><h2>${escapeHtml(titulo)}</h2><p>${escapeHtml(sub)}</p></div>
@@ -596,7 +596,7 @@ function listaServiciosHtml(titulo, sub, servicios, datos) {
 function topClientasHtml(clientes) {
   return `
     <div class="dash-card">
-      <div class="dash-cab">
+      <div class="dash-cab dash-cab-banda">
         <div class="dash-cab-titulo">
           <span class="dash-kpi-ico">${icono.personas(16)}</span>
           <div>
@@ -630,7 +630,7 @@ function topClientasHtml(clientes) {
 function empleadasHtml(empleadas) {
   return `
     <div class="dash-card">
-      <div class="dash-cab">
+      <div class="dash-cab dash-cab-banda">
         <div class="dash-cab-titulo">
           <span class="dash-kpi-ico">${icono.usuario(16)}</span>
           <div>
