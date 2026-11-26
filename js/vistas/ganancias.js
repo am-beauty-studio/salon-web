@@ -19,18 +19,46 @@ const VIOLETAS = [
   "#A793C7", "#B8A5D5", "#C9B7E2", "#E1D7F0",
 ];
 
-// Moneda seleccionada en el filtro. Los importes que llegan del API ya están
-// convertidos, así que solo hay que darles formato con su símbolo.
+// Moneda elegida para la gráfica de ingresos. El resto de la sección muestra
+// siempre los importes de las dos monedas.
+let monedaGrafica = "USD";
 let monedaActual = "USD";
 const monto = (valor) => importe(valor, monedaActual);
+const numero = (valor) => Number(valor) || 0;
+
+/** Importes de las dos monedas apilados, con el mismo estilo de Estadísticas. */
+function ambas(usd, cup) {
+  return `
+    <span class="dash-monto-dual">
+      <span class="usd">${importe(usd, "USD")} <small>USD</small></span>
+      <span class="cup">${importe(cup, "CUP")} <small>CUP</small></span>
+    </span>`;
+}
+
+/** Citas de las dos monedas en un mismo concepto. */
+function citasDe(item) {
+  return numero(item?.USD?.citas) + numero(item?.CUP?.citas);
+}
+
+/** Une por clave los resúmenes de USD y CUP para mostrarlos juntos. */
+function unirMonedas(clave, listaUsd = [], listaCup = []) {
+  const mapa = new Map();
+  for (const x of listaUsd) mapa.set(clave(x), { ...x, USD: x, CUP: null });
+  for (const x of listaCup) {
+    const k = clave(x);
+    if (mapa.has(k)) mapa.get(k).CUP = x;
+    else mapa.set(k, { ...x, USD: null, CUP: x });
+  }
+  return [...mapa.values()];
+}
 
 /**
  * Colores por puesto para las gráficas de barra: el porcentaje mayor toma el
  * tono más oscuro y los siguientes bajan de forma pareja hasta el más claro,
  * sin importar cuánto se diferencien entre sí. Devuelve valor → color.
  */
-function coloresPorPuesto(valores) {
-  const colores = monedaActual === "CUP" ? VIOLETAS : ROSAS;
+function coloresPorPuesto(valores, moneda = "USD") {
+  const colores = moneda === "CUP" ? VIOLETAS : ROSAS;
   const unicos = [...new Set(valores.map(Number))].sort((a, b) => b - a);
   const pasos = new Map();
   unicos.forEach((v, i) => {
@@ -45,7 +73,7 @@ function coloresPorPuesto(valores) {
 export async function render(raiz) {
   let periodo = "dia";
   let fecha = new Date();
-  let moneda = "USD";
+  let resumenes = null;
 
   raiz.innerHTML = `
     <div class="vista-cab">
@@ -62,10 +90,6 @@ export async function render(raiz) {
         <button class="segmento" data-p="semestre" type="button" role="tab">Semestre</button>
         <button class="segmento" data-p="anio" type="button" role="tab">Año</button>
       </div>
-      <div class="filtro-moneda">
-        <span class="filtro-etiqueta">Moneda</span>
-        ${selectorMoneda(moneda)}
-      </div>
       <div class="nav-fecha">
         <button class="nav-flecha" id="g-prev" type="button" aria-label="Período anterior">‹</button>
         <button class="nav-fecha-titulo" id="g-hoy" type="button"></button>
@@ -75,7 +99,7 @@ export async function render(raiz) {
     <div id="contenido"></div>
     <p class="nota" style="text-align:center;margin-top:14px">
       La ganancia se cuenta cuando la cita se marca como completada, en el día del servicio.
-      El filtro de moneda separa lo cobrado en USD de lo cobrado en CUP.
+      La gráfica de ingresos se puede ver en USD o en CUP; el resto muestra ambas monedas.
     </p>`;
 
   $$(".segmentado [data-p]").forEach((chip) => {
@@ -84,10 +108,6 @@ export async function render(raiz) {
       pintarChips();
       cargar();
     };
-  });
-  conectarSelectorMoneda(raiz, (nuevaMoneda) => {
-    moneda = nuevaMoneda;
-    cargar();
   });
   $("#g-prev").onclick = () => { fecha = retroceder(fecha, -1); cargar(); };
   $("#g-next").onclick = () => { fecha = retroceder(fecha, 1); cargar(); };
@@ -137,47 +157,56 @@ export async function render(raiz) {
     pintarTitulo();
     const caja = $("#contenido");
     caja.innerHTML = `<div class="vacio">Cargando…</div>`;
-    let resumen;
     try {
       const iso = aISOFecha(fecha);
-      resumen = await get(`/finanzas/resumen?periodo=${periodo}&fecha=${iso}&moneda=${moneda}`);
+      const [usd, cup] = await Promise.all(["USD", "CUP"].map((moneda) =>
+        get(`/finanzas/resumen?periodo=${periodo}&fecha=${iso}&moneda=${moneda}`)
+      ));
+      resumenes = { USD: usd, CUP: cup };
     } catch (e) {
       caja.innerHTML = `<p class="error-txt">${escapeHtml(e.message)}</p>`;
       return;
     }
-    pintar(resumen);
+    pintar(resumenes);
   }
 
-  function pintar(r) {
+  function pintar(dos) {
+    // Solo la gráfica sigue la moneda elegida en su interruptor.
+    const r = monedaGrafica === "CUP" ? dos.CUP : dos.USD;
     const t = r.totales;
     const caja = $("#contenido");
-    monedaActual = r.moneda || moneda;
+    monedaActual = r.moneda || monedaGrafica;
     caja.classList.toggle("moneda-cup", monedaActual === "CUP");
 
-    if (!t.citas) {
-      caja.innerHTML = `<div class="vacio">Sin ganancias registradas en este período.</div>
-        ${r.pendiente.citas ? pendienteHtml(r) : ""}`;
-      return;
-    }
+    const hayCitas = numero(dos.USD.totales.citas) + numero(dos.CUP.totales.citas) > 0;
+    const porTrabajadora = unirMonedas(
+      (x) => x.empleado_id, dos.USD.por_trabajadora, dos.CUP.por_trabajadora
+    );
+    const porServicio = unirMonedas(
+      (x) => x.servicio_id, dos.USD.por_servicio, dos.CUP.por_servicio
+    );
+    const porDia = unirMonedas((x) => x.fecha, dos.USD.por_dia, dos.CUP.por_dia);
+    const pendiente = { USD: dos.USD.pendiente, CUP: dos.CUP.pendiente };
 
-    const pct = (monto) => Number(t.ingresos) ? (Number(monto) / Number(t.ingresos)) * 100 : 0;
-    // El mayor porcentaje toma el rosa más oscuro; los demás bajan parejo.
+    const pct = (valor) => numero(t.ingresos) ? (numero(valor) / numero(t.ingresos)) * 100 : 0;
+    // El mayor porcentaje toma el tono más oscuro; los demás bajan parejo.
     const colorDe = coloresPorPuesto([
-      Number(t.trabajadoras) || 0,
-      Number(t.reinversion) || 0,
-      Number(t.estudio_libre) || 0,
-    ]);
+      numero(t.trabajadoras), numero(t.reinversion), numero(t.estudio_libre),
+    ], monedaActual);
     const filas = [
       { nombre: "Trabajadoras", monto: t.trabajadoras },
       { nombre: "Reinversión en el salón", monto: t.reinversion },
       { nombre: "Libre para AM Luxury", monto: t.estudio_libre },
-    ].map((f) => ({ ...f, color: colorDe(f.monto) }));
+    ].map((f) => ({ ...f, color: colorDe(numero(f.monto)) }));
     // Tramos de menor a mayor: el tono más oscuro siempre queda a la derecha.
-    const tramos = [...filas].sort((a, b) => Number(a.monto) - Number(b.monto));
+    const tramos = [...filas].sort((a, b) => numero(a.monto) - numero(b.monto));
 
     caja.innerHTML = `
-      <div class="tarjeta">
-        <div class="nota">Ingresos · ${t.citas} ${t.citas === 1 ? "cita" : "citas"} completada(s)</div>
+      <div class="tarjeta gan-ingresos">
+        <div class="gan-ingresos-cab">
+          <div class="nota">Ingresos · ${t.citas} ${t.citas === 1 ? "cita" : "citas"} completada(s)</div>
+        </div>
+        <div class="gan-ingresos-moneda">${selectorMoneda(monedaGrafica)}</div>
         <div class="gan-num">${monto(t.ingresos)} <small>${monedaActual}</small></div>
         <div class="barra-reparto">
           ${tramos.map((f) => `
@@ -198,24 +227,34 @@ export async function render(raiz) {
         <p class="nota">Reinversión + parte libre. La parte de cada trabajadora sale directo del servicio.</p>
       </div>
 
-      ${r.pendiente.citas ? pendienteHtml(r) : ""}
+      ${!hayCitas ? `<div class="vacio">Sin ganancias registradas en este período.</div>` : ""}
+      ${citasDe(pendiente) ? pendienteHtml(pendiente) : ""}
 
-      ${seccionLista("Por trabajadora", r.por_trabajadora.map((x) => ({
-        titulo: x.empleado_nombre,
-        detalle: `${x.citas} ${x.citas === 1 ? "cita" : "citas"} · ${monto(x.ingresos)} ${monedaActual} generados`,
-        derecho: `le corresponde ${monto(x.trabajadoras)} ${monedaActual}`,
-      })), !r.por_trabajadora.length)}
+      ${seccionLista("Por trabajadora", porTrabajadora.map((x) => {
+        const citas = citasDe(x);
+        return {
+          titulo: x.empleado_nombre,
+          detalle: `${citas} ${citas === 1 ? "cita" : "citas"} · ${ambas(x.USD?.ingresos, x.CUP?.ingresos)} generados`,
+          derecho: `le corresponde ${ambas(x.USD?.trabajadoras, x.CUP?.trabajadoras)}`,
+        };
+      }), !porTrabajadora.length)}
 
-      ${seccionServicios(r.por_servicio)}
+      ${seccionServicios(porServicio)}
 
-      ${periodo !== "dia" ? seccionBarras(r.por_dia) : ""}
+      ${periodo !== "dia" ? seccionBarras(porDia) : ""}
     `;
+
+    conectarSelectorMoneda(caja, (nueva) => {
+      monedaGrafica = nueva;
+      if (resumenes) pintar(resumenes);
+    });
   }
 
-  function pendienteHtml(r) {
+  function pendienteHtml(p) {
+    const citas = citasDe(p);
     return `
       <div class="caja-amarilla">
-        <b>Pendiente: ${r.pendiente.citas} ${r.pendiente.citas === 1 ? "cita" : "citas"} programada(s) · ${monto(r.pendiente.monto)} ${monedaActual}</b>
+        <b>Pendiente: ${citas} ${citas === 1 ? "cita" : "citas"} programada(s) · ${ambas(p.USD?.monto, p.CUP?.monto)}</b>
         <div class="nota">Aún no cuentan como ganancia: se suman al marcarlas como completadas.</div>
       </div>`;
   }
@@ -228,9 +267,9 @@ export async function render(raiz) {
         <div class="lista-fila" style="cursor:default">
           <span class="lista-principal">
             ${escapeHtml(f.titulo)}
-            <br/><span class="lista-secundario">${escapeHtml(f.detalle)}</span>
+            <br/><span class="lista-secundario">${f.detalle}</span>
           </span>
-          <span class="lista-secundario">${escapeHtml(f.derecho)}</span>
+          <span class="lista-secundario">${f.derecho}</span>
         </div>`).join("")}`;
   }
 
@@ -245,7 +284,7 @@ export async function render(raiz) {
     const TITULO = "flex:1;min-width:0;font-weight:600;font-size:15px;color:var(--text,#3A2B31)";
     const SUB = "display:block;color:var(--muted,#8A7680);font-size:12.5px;font-weight:400";
     const ETIQUETA = "display:inline-block;margin-left:7px;padding:1px 8px 2px;border-radius:10px;background:rgba(223, 185, 140, .16);color:var(--gold-dark,#96405C);font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;vertical-align:1px;white-space:nowrap";
-    const MONTO = "color:var(--gold-dark,#96405C);font-weight:700;font-size:16px;white-space:nowrap";
+    const MONTO = "font-weight:700;font-size:15px;white-space:nowrap;text-align:right";
     const CUERPO = "padding:6px 16px 14px;border-top:1px solid var(--border,#E3BCCC)";
     const FILA = "display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px";
     const NOTA = "color:var(--muted,#8A7680);font-size:12.5px;line-height:17px;margin:6px 0 0";
@@ -266,19 +305,25 @@ export async function render(raiz) {
     grupos.sort((a, b) => compararCategorias(a.categoria, b.categoria));
     for (const g of grupos) {
       g.items.sort((a, b) =>
-        (Number(b.ingresos) || 0) - (Number(a.ingresos) || 0)
+        Math.max(numero(b.USD?.ingresos), numero(b.CUP?.ingresos))
+        - Math.max(numero(a.USD?.ingresos), numero(a.CUP?.ingresos))
         || String(a.servicio_nombre).localeCompare(String(b.servicio_nombre), "es")
       );
     }
 
-    /** Totales de la categoría: montos y número de citas. */
+    /** Totales de la categoría por moneda: montos y número de citas. */
     const sumarCategoria = (items) => {
-      const t = { ingresos: 0, reinversion: 0, libre: 0, citas: 0 };
+      const t = {
+        USD: { ingresos: 0, reinversion: 0, libre: 0, citas: 0 },
+        CUP: { ingresos: 0, reinversion: 0, libre: 0, citas: 0 },
+      };
       for (const p of items) {
-        t.ingresos += Number(p.ingresos) || 0;
-        t.reinversion += Number(p.reinversion) || 0;
-        t.libre += Number(p.estudio_libre) || 0;
-        t.citas += Number(p.citas) || 0;
+        for (const m of ["USD", "CUP"]) {
+          t[m].ingresos += numero(p[m]?.ingresos);
+          t[m].reinversion += numero(p[m]?.reinversion);
+          t[m].libre += numero(p[m]?.estudio_libre);
+          t[m].citas += numero(p[m]?.citas);
+        }
       }
       return t;
     };
@@ -286,33 +331,36 @@ export async function render(raiz) {
     const acordeon = (p) => {
       // Porcentajes tal como están configurados en el servicio
       // (respaldo: según lo liquidado, por si el API aún no los envía).
-      const pctR = p.pct_reinversion != null ? Number(p.pct_reinversion)
-        : Number(p.ingresos) ? (Number(p.reinversion) / Number(p.ingresos)) * 100 : 0;
-      const pctT = p.pct_trabajadora != null ? Number(p.pct_trabajadora)
-        : Number(p.ingresos) ? (Number(p.trabajadoras) / Number(p.ingresos)) * 100 : 0;
+      const base = p.USD || p.CUP || {};
+      const pctR = base.pct_reinversion != null ? Number(base.pct_reinversion)
+        : numero(base.ingresos) ? (numero(base.reinversion) / numero(base.ingresos)) * 100 : 0;
+      const pctT = base.pct_trabajadora != null ? Number(base.pct_trabajadora)
+        : numero(base.ingresos) ? (numero(base.trabajadoras) / numero(base.ingresos)) * 100 : 0;
       const pctE = Math.max(0, 100 - pctR - pctT);
       const filas = [
-        { nombre: "Ganancia de la empleada", monto: p.trabajadoras, pct: pctT },
-        { nombre: "Reinversión en el salón", monto: p.reinversion, pct: pctR },
-        { nombre: "AM Luxury Beauty Estudio", monto: p.estudio_libre, pct: pctE },
+        { nombre: "Ganancia de la empleada", USD: p.USD?.trabajadoras, CUP: p.CUP?.trabajadoras, pct: pctT },
+        { nombre: "Reinversión en el salón", USD: p.USD?.reinversion, CUP: p.CUP?.reinversion, pct: pctR },
+        { nombre: "AM Luxury Beauty Estudio", USD: p.USD?.estudio_libre, CUP: p.CUP?.estudio_libre, pct: pctE },
       ];
       // El mayor porcentaje toma el rosa más oscuro; los demás bajan parejo.
-      const colorDe = coloresPorPuesto(filas.map((f) => f.pct));
+      const colorDe = coloresPorPuesto(filas.map((f) => f.pct), "USD");
       for (const f of filas) f.color = colorDe(f.pct);
       // Tramos de menor a mayor: el tono más oscuro siempre queda a la derecha.
       const tramos = [...filas].sort((a, b) => a.pct - b.pct);
+      const citas = citasDe(p);
+      const conIngresos = numero(p.USD?.ingresos) + numero(p.CUP?.ingresos) > 0;
       return `
       <details class="acordeon" style="${TARJETA}">
         <summary style="${CABECERA}">
           <span class="acordeon-flecha" style="${FLECHA}">›</span>
           <span class="acordeon-titulo" style="${TITULO}">
             ${escapeHtml(p.servicio_nombre)}${p.es_adicional ? `<span class="etiqueta-adicional" style="${ETIQUETA}">Adicional</span>` : ""}
-            <span style="${SUB}">${p.citas} ${p.citas === 1 ? "cita" : "citas"}</span>
+            <span style="${SUB}">${citas} ${citas === 1 ? "cita" : "citas"}</span>
           </span>
-          <span class="acordeon-monto" style="${MONTO}">${monto(p.ingresos)}</span>
+          <span class="acordeon-monto" style="${MONTO}">${ambas(p.USD?.ingresos, p.CUP?.ingresos)}</span>
         </summary>
         <div class="acordeon-cuerpo" style="${CUERPO}">
-          ${Number(p.ingresos) > 0 ? `
+          ${conIngresos ? `
           <div class="barra-reparto" style="display:flex;height:12px;border-radius:6px;overflow:hidden;margin:10px 0;background:var(--border,#E3BCCC)">
             ${tramos.map((f) => `<div style="background:${f.color};width:${f.pct}%"></div>`).join("")}
           </div>
@@ -321,12 +369,15 @@ export async function render(raiz) {
               <span class="reparto-punto" style="width:10px;height:10px;border-radius:50%;flex-shrink:0;background:${f.color}"></span>
               <span class="reparto-nombre" style="flex:1">${f.nombre}</span>
               <span class="lista-secundario" style="color:var(--muted,#8A7680);font-size:13px">${pctTxt(f.pct)}</span>
-              <span class="reparto-monto" style="color:var(--gold-dark,#96405C);font-weight:700;white-space:nowrap">${monto(f.monto)}</span>
+              <span class="reparto-monto" style="font-weight:700;white-space:nowrap">${ambas(f.USD, f.CUP)}</span>
             </div>`).join("")}
           <hr style="border:none;border-top:1px solid var(--border,#E3BCCC);margin:8px 0" />
           <div class="reparto-fila" style="${FILA}">
             <span style="flex:1;font-weight:700">AM Luxury en total</span>
-            <span style="color:var(--gold-dark,#96405C);font-weight:700;white-space:nowrap">${monto(p.estudio_total)}</span>
+            <span class="reparto-monto" style="font-weight:700;white-space:nowrap">${ambas(
+              numero(p.USD?.reinversion) + numero(p.USD?.estudio_libre),
+              numero(p.CUP?.reinversion) + numero(p.CUP?.estudio_libre)
+            )}</span>
           </div>
           <p style="${NOTA}">Porcentajes del servicio: reinversión ${pctTxt(pctR)} · empleada ${pctTxt(pctT)}. La reinversión también es de AM Luxury.</p>
           ` : `<p style="${NOTA};margin:8px 0 0">Sin ingresos en este período.</p>`}
@@ -335,18 +386,19 @@ export async function render(raiz) {
     };
 
     return `
-      <div class="paso-titulo" style="margin-top:18px">Por categoría · ${monedaActual}</div>
+      <div class="paso-titulo" style="margin-top:18px">Por categoría</div>
       ${grupos.map((g) => {
         const ico = icoCategoria(g.categoria);
         const t = sumarCategoria(g.items);
-        const amLuxury = t.reinversion + t.libre;
-        const pctDe = (v) => (t.ingresos > 0 ? (v / t.ingresos) * 100 : 0);
-        // Cada métrica: importe principal y, si hay ingresos, su peso en el total.
-        const metrica = (etiqueta, valor, pct, destacada = false) => `
+        const base = numero(t.USD.ingresos) > 0 ? t.USD : t.CUP;
+        const totalCitas = t.USD.citas + t.CUP.citas;
+        const pctDe = (v) => (base.ingresos > 0 ? (v / base.ingresos) * 100 : 0);
+        // Cada métrica: importes de ambas monedas y su peso en el total.
+        const metrica = (etiqueta, usd, cup, pct, destacada = false) => `
           <div class="cat-metrica${destacada ? " destacada" : ""}">
             <span>${etiqueta}</span>
-            <strong>${monto(valor)}</strong>
-            ${t.ingresos > 0 ? `<small>${pctTxt(pct)} del total</small>` : ""}
+            <strong>${ambas(usd, cup)}</strong>
+            ${base.ingresos > 0 ? `<small>${pctTxt(pct)} del total</small>` : ""}
           </div>`;
         return `
         <div class="cat-card">
@@ -354,18 +406,19 @@ export async function render(raiz) {
             <span class="cat-cab-ico">${ico ? `<img src="${ico}" alt="" />` : `<i></i>`}</span>
             <div class="cat-cab-info">
               <div class="cat-cab-nombre">${escapeHtml(mostrarCategoria(g.categoria))}</div>
-              <div class="cat-cab-meta">${g.items.length} ${g.items.length === 1 ? "servicio" : "servicios"} · ${t.citas} ${t.citas === 1 ? "cita" : "citas"}</div>
+              <div class="cat-cab-meta">${g.items.length} ${g.items.length === 1 ? "servicio" : "servicios"} · ${totalCitas} ${totalCitas === 1 ? "cita" : "citas"}</div>
             </div>
             <div class="cat-cab-total">
               <span>Recaudado</span>
-              <strong>${monto(t.ingresos)}</strong>
+              <strong>${ambas(t.USD.ingresos, t.CUP.ingresos)}</strong>
             </div>
           </div>
           <div class="cat-cuerpo">
             <div class="cat-metricas">
-              ${metrica("Reinversión", t.reinversion, pctDe(t.reinversion))}
-              ${metrica("Libre para AM", t.libre, pctDe(t.libre))}
-              ${metrica("AM Luxury", amLuxury, pctDe(amLuxury), true)}
+              ${metrica("Reinversión", t.USD.reinversion, t.CUP.reinversion, pctDe(base.reinversion))}
+              ${metrica("Libre para AM", t.USD.libre, t.CUP.libre, pctDe(base.libre))}
+              ${metrica("AM Luxury", t.USD.reinversion + t.USD.libre, t.CUP.reinversion + t.CUP.libre,
+                pctDe(base.reinversion + base.libre), true)}
             </div>
             <div class="cat-lista-titulo">Servicios <b>(${g.items.length})</b></div>
             <div class="cat-servicios">${g.items.map(acordeon).join("")}</div>
@@ -384,30 +437,32 @@ export async function render(raiz) {
     if (!dias?.length) return "";
     // En trimestre/semestre/año se resume por mes (un día por barra sería ilegible).
     const porMes = ["trimestre", "semestre", "anio"].includes(periodo);
-    let filas;
-    if (porMes) {
-      const mapa = new Map();
-      for (const d of dias) {
-        const clave = d.fecha.slice(0, 7);
-        mapa.set(clave, (mapa.get(clave) || 0) + Number(d.ingresos));
+    const mapa = new Map();
+    for (const d of dias) {
+      const clave = porMes ? d.fecha.slice(0, 7) : d.fecha;
+      if (!mapa.has(clave)) {
+        mapa.set(clave, {
+          etiqueta: porMes ? mesCorto(clave) : diaCorto(d.fecha),
+          usd: 0, cup: 0,
+        });
       }
-      filas = [...mapa.entries()].map(([clave, monto]) => ({ etiqueta: mesCorto(clave), monto }));
-    } else {
-      filas = dias.map((d) => ({ etiqueta: diaCorto(d.fecha), monto: Number(d.ingresos) }));
+      const fila = mapa.get(clave);
+      fila.usd += numero(d.USD?.ingresos);
+      fila.cup += numero(d.CUP?.ingresos);
     }
-    const max = Math.max(...filas.map((f) => f.monto), 1);
-    // La barra mayor toma el tono más oscuro; el resto baja parejo hasta el claro.
-    const colorDe = coloresPorPuesto(
-      filas.filter((f) => Number(f.monto) > 0).map((f) => f.monto)
-    );
+    const filas = [...mapa.values()];
+    const maxUsd = Math.max(...filas.map((f) => f.usd), 1);
+    const maxCup = Math.max(...filas.map((f) => f.cup), 1);
     return `
       <div class="paso-titulo">${porMes ? "Por mes" : "Por día"}</div>
       ${filas.map((f) => `
         <div class="barra-dia">
           <span class="nombre">${escapeHtml(f.etiqueta)}</span>
-          <span class="pista"><span class="relleno"
-            style="display:block;height:100%;background:linear-gradient(to right,${monedaActual === "CUP" ? "#E1D7F0" : "#F8DEE6"},${colorDe(f.monto)});border-radius:5px;width:${(f.monto / max) * 100}%"></span></span>
-          <span class="monto">${monto(f.monto)}</span>
+          <span class="pista">
+            <span class="relleno relleno-usd" style="width:${(f.usd / maxUsd) * 100}%;background:#CE7C94"></span>
+            <span class="relleno relleno-cup" style="width:${(f.cup / maxCup) * 100}%;background:#8E6BB8"></span>
+          </span>
+          <span class="monto">${ambas(f.usd, f.cup)}</span>
         </div>`).join("")}`;
   }
 

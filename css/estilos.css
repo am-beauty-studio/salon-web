@@ -3037,6 +3037,35 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 }
 
 /* ===== Ganancias ===== */
+/* Gráfica de ingresos: interruptor fijo arriba a la derecha, con ancho
+   adaptable para que no se desacople al cambiar el tamaño de pantalla. */
+.gan-ingresos { position: relative; }
+.gan-ingresos-cab { padding-right: clamp(150px, 38%, 230px); }
+.gan-ingresos-moneda {
+  position: absolute;
+  top: 12px; right: 14px;
+  width: clamp(150px, 36%, 220px);
+  z-index: 2;
+}
+.gan-ingresos .selector-moneda { width: 100%; }
+.gan-ingresos .selector-moneda-opcion {
+  min-height: 32px;
+  padding: 5px 9px;
+  font-size: 11.5px;
+  letter-spacing: .4px;
+}
+.gan-ingresos .selector-moneda-simbolo { width: 17px; height: 17px; font-size: 11px; }
+@media (max-width: 560px) {
+  .gan-ingresos-cab { padding-right: 0; padding-top: 42px; }
+  .gan-ingresos-moneda { top: 10px; right: 10px; width: min(150px, 52%); }
+}
+
+/* Importes USD/CUP juntos en el resto de la sección. */
+.acordeon-monto .dash-monto-dual > span,
+.cat-cab-total .dash-monto-dual > span,
+.cat-metrica .dash-monto-dual > span,
+.reparto-monto .dash-monto-dual > span { font-size: 13px; }
+.cat-metrica .dash-monto-dual { align-items: flex-start; }
 .gan-num { color: var(--gold-dark); font-size: 34px; font-weight: 700; }
 .barra-reparto { display: flex; height: 12px; border-radius: 6px; overflow: hidden; margin: 12px 0; background: var(--border); }
 /* Separación fina entre tramos, como en el reparto del servicio */
@@ -3250,6 +3279,9 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 .barra-dia .pista { flex: 1; background: var(--border); border-radius: 5px; height: 10px; overflow: hidden; }
 .barra-dia .relleno { display: block; background: #CE7C94; height: 100%; border-radius: 5px; }
 .barra-dia .monto { color: var(--gold-dark); font-weight: 600; white-space: nowrap; }
+/* Dos barras por fila: arriba USD, abajo CUP; cada una con su propia escala. */
+.barra-dia .pista { height: 16px; display: flex; flex-direction: column; gap: 2px; padding: 2px 0; }
+.barra-dia .pista .relleno { display: block; height: 5px; border-radius: 3px; }
 
 /* ===== Editor de horarios ===== */
 .dia-card {
@@ -3754,16 +3786,11 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 .dash-persona-valores .dash-monto-dual > span.usd { color: var(--gold); }
 .dash-persona-valores .dash-monto-dual > span.cup { color: var(--violeta); }
 
-/* En Ganancias, todos los importes del filtro CUP se muestran en violeta. */
-#contenido.moneda-cup { --gold-dark: var(--violeta); }
-#contenido.moneda-cup .gan-num,
-#contenido.moneda-cup .reparto-monto,
-#contenido.moneda-cup .lista-secundario,
-#contenido.moneda-cup .acordeon-monto,
-#contenido.moneda-cup .cat-cab-total strong,
-#contenido.moneda-cup .cat-metrica strong,
-#contenido.moneda-cup .barra-dia .monto,
-#contenido.moneda-cup .caja-amarilla b {
+/* Solo la gráfica cambia de tono con la moneda elegida. */
+#contenido.moneda-cup .gan-ingresos { --gold-dark: var(--violeta); }
+#contenido.moneda-cup .gan-ingresos .gan-num,
+#contenido.moneda-cup .gan-ingresos .reparto-monto,
+#contenido.moneda-cup .gan-ingresos .lista-secundario {
   color: var(--violeta);
 }
 
