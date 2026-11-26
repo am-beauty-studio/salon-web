@@ -35,6 +35,15 @@ function ambas(usd, cup) {
     </span>`;
 }
 
+/** Importes en una sola línea, con los dos montos separados por una barra. */
+function ambasEnLinea(usd, cup) {
+  return `
+    <span class="dash-monto-dual gan-monto-linea">
+      <span class="usd">${importe(usd, "USD")} <small>USD</small></span>
+      <span class="cup">${importe(cup, "CUP")} <small>CUP</small></span>
+    </span>`;
+}
+
 /** Citas de las dos monedas en un mismo concepto. */
 function citasDe(item) {
   return numero(item?.USD?.citas) + numero(item?.CUP?.citas);
@@ -276,11 +285,11 @@ export async function render(raiz) {
                 <span>${f.citas} ${f.citas === 1 ? "cita" : "citas"}</span>
               </div>
               <div class="gan-fila-linea">
-                <span class="gan-fila-etiqueta">Generado</span>
+                <span class="gan-fila-etiqueta">${icono.grafico(14)} Generado</span>
                 <span class="gan-fila-importes">${f.generado}</span>
               </div>
               <div class="gan-fila-linea">
-                <span class="gan-fila-etiqueta">Le corresponde</span>
+                <span class="gan-fila-etiqueta">${icono.usuario(14)} Le corresponde</span>
                 <span class="gan-fila-importes">${f.corresponde}</span>
               </div>
             </div>`).join("")}
@@ -372,7 +381,7 @@ export async function render(raiz) {
             ${escapeHtml(p.servicio_nombre)}${p.es_adicional ? `<span class="etiqueta-adicional" style="${ETIQUETA}">Adicional</span>` : ""}
             <span style="${SUB}">${citas} ${citas === 1 ? "cita" : "citas"}</span>
           </span>
-          <span class="acordeon-monto" style="${MONTO}">${ambas(p.USD?.ingresos, p.CUP?.ingresos)}</span>
+          <span class="acordeon-monto" style="${MONTO}">${ambasEnLinea(p.USD?.ingresos, p.CUP?.ingresos)}</span>
         </summary>
         <div class="acordeon-cuerpo" style="${CUERPO}">
           ${conIngresos ? `
@@ -380,16 +389,16 @@ export async function render(raiz) {
             ${tramos.map((f) => `<div style="background:${f.color};width:${f.pct}%"></div>`).join("")}
           </div>
           ${filas.map((f) => `
-            <div class="reparto-fila" style="${FILA}">
-              <span class="reparto-punto" style="width:10px;height:10px;border-radius:50%;flex-shrink:0;background:${f.color}"></span>
-              <span class="reparto-nombre" style="flex:1">${f.nombre}</span>
-              <span class="lista-secundario" style="color:var(--muted,#8A7680);font-size:13px">${pctTxt(f.pct)}</span>
-              <span class="reparto-monto" style="font-weight:700;white-space:nowrap">${ambas(f.USD, f.CUP)}</span>
+            <div class="gan-reparto-fila">
+              <span class="gan-reparto-etiqueta">
+                <i style="background:${f.color}"></i>
+                ${f.nombre} <small>${pctTxt(f.pct)}</small>
+              </span>
+              <span class="gan-reparto-monto">${ambasEnLinea(f.USD, f.CUP)}</span>
             </div>`).join("")}
-          <hr style="border:none;border-top:1px solid var(--border,#E3BCCC);margin:8px 0" />
-          <div class="reparto-fila" style="${FILA}">
-            <span style="flex:1;font-weight:700">AM Luxury en total</span>
-            <span class="reparto-monto" style="font-weight:700;white-space:nowrap">${ambas(
+          <div class="gan-reparto-total">
+            <strong>AM Luxury en total</strong>
+            <span class="gan-reparto-monto">${ambasEnLinea(
               numero(p.USD?.reinversion) + numero(p.USD?.estudio_libre),
               numero(p.CUP?.reinversion) + numero(p.CUP?.estudio_libre)
             )}</span>
@@ -429,7 +438,6 @@ export async function render(raiz) {
               <div class="cat-cab-meta">${g.items.length} ${g.items.length === 1 ? "servicio" : "servicios"} · ${totalCitas} ${totalCitas === 1 ? "cita" : "citas"}</div>
             </div>
             <div class="cat-cab-total">
-              <span>Recaudado</span>
               <strong>${ambas(t.USD.ingresos, t.CUP.ingresos)}</strong>
             </div>
           </div>
@@ -476,16 +484,28 @@ export async function render(raiz) {
     const maxUsd = Math.max(...filas.map((f) => f.usd), 1);
     const maxCup = Math.max(...filas.map((f) => f.cup), 1);
     return `
-      <div class="paso-titulo">${porMes ? "Por mes" : "Por día"}</div>
-      ${filas.map((f) => `
-        <div class="barra-dia">
-          <span class="nombre">${escapeHtml(f.etiqueta)}</span>
-          <span class="pista">
-            <span class="relleno relleno-usd" style="width:${(f.usd / maxUsd) * 100}%;background:#CE7C94"></span>
-            <span class="relleno relleno-cup" style="width:${(f.cup / maxCup) * 100}%;background:#8E6BB8"></span>
-          </span>
-          <span class="monto">${ambas(f.usd, f.cup)}</span>
-        </div>`).join("")}`;
+      <div class="gan-bloque gan-barras">
+        <div class="gan-bloque-cab">
+          <span class="gan-bloque-ico">${icono.calendario(16)}</span>
+          <h3>${porMes ? "Por mes" : "Por día"}</h3>
+        </div>
+        <div class="gan-barras-lista">
+          <div class="gan-barra-cab">
+            <span>${porMes ? "Mes" : "Día"}</span>
+            <span>Barras</span>
+            <span>Montos</span>
+          </div>
+          ${filas.map((f) => `
+            <div class="gan-barra-fila">
+              <span class="gan-barra-nombre">${escapeHtml(f.etiqueta)}</span>
+              <span class="pista">
+                <span class="relleno relleno-usd" style="width:${(f.usd / maxUsd) * 100}%;background:#CE7C94"></span>
+                <span class="relleno relleno-cup" style="width:${(f.cup / maxCup) * 100}%;background:#8E6BB8"></span>
+              </span>
+              <span class="gan-barra-monto">${ambasEnLinea(f.usd, f.cup)}</span>
+            </div>`).join("")}
+        </div>
+      </div>`;
   }
 
   /** Fecha local como YYYY-MM-DD. */

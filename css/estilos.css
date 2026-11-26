@@ -3111,29 +3111,42 @@ a.cita-cliente:hover { color: var(--gold-dark); }
   border-bottom: 1px solid var(--border);
 }
 .gan-fila-cab strong {
-  min-width: 0; color: var(--text); font-size: 14px; font-weight: 600;
+  min-width: 0; color: var(--text); font-size: 14.5px; font-weight: 600;
   overflow-wrap: anywhere;
 }
-.gan-fila-cab > span { color: var(--muted); font-size: 11px; white-space: nowrap; flex-shrink: 0; }
+.gan-fila-cab > span { color: var(--muted); font-size: 11.5px; white-space: nowrap; flex-shrink: 0; }
 .gan-fila-linea {
   display: flex; align-items: center; justify-content: space-between;
   gap: 10px;
-  padding: 5px 0;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 7px 10px;
 }
-.gan-fila-linea + .gan-fila-linea { border-top: 1px solid var(--border); }
-.gan-fila-etiqueta { color: var(--muted); font-size: 11.5px; font-weight: 600; flex-shrink: 0; }
+.gan-fila-linea + .gan-fila-linea { margin-top: 6px; }
+.gan-fila-etiqueta {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--gold-dark); font-size: 12.5px; font-weight: 700; flex-shrink: 0;
+}
+.gan-fila-etiqueta .ico { color: var(--gold-dark); flex-shrink: 0; }
 .gan-fila-importes { min-width: 0; text-align: right; }
 .gan-fila-importes .dash-monto-dual {
   flex-direction: row; align-items: baseline;
   flex-wrap: wrap; justify-content: flex-end;
-  gap: 3px 12px;
+  gap: 3px 0;
 }
-.gan-fila-importes .dash-monto-dual > span { gap: 3px; font-size: 12px; white-space: nowrap; }
-.gan-fila-importes .dash-monto-dual small { font-size: 9px; }
+.gan-fila-importes .dash-monto-dual > span { gap: 3px; font-size: 13px; white-space: nowrap; }
+.gan-fila-importes .dash-monto-dual .cup {
+  margin-left: 11px;
+  padding-left: 11px;
+  border-left: 1px solid var(--border);
+}
+.gan-fila-importes .dash-monto-dual small { font-size: 9.5px; }
 @media (max-width: 420px) {
-  .gan-fila-etiqueta { font-size: 11px; }
-  .gan-fila-importes .dash-monto-dual { gap: 2px 8px; }
-  .gan-fila-importes .dash-monto-dual > span { font-size: 11px; }
+  .gan-fila-etiqueta { font-size: 12px; }
+  .gan-fila-importes .dash-monto-dual { gap: 2px 0; }
+  .gan-fila-importes .dash-monto-dual > span { font-size: 12px; }
+  .gan-fila-importes .dash-monto-dual .cup { margin-left: 8px; padding-left: 8px; }
 }
 
 .acordeon-monto .dash-monto-dual > span,
@@ -3149,6 +3162,103 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 .reparto-punto { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .reparto-nombre { flex: 1; }
 .reparto-monto { color: var(--gold-dark); font-weight: 700; white-space: nowrap; }
+
+/* Reparto del acordeón: una fila por concepto e importes en una sola línea. */
+.gan-monto-linea {
+  flex-direction: row; align-items: baseline;
+  flex-wrap: wrap; justify-content: flex-end;
+  gap: 2px 0;
+}
+.gan-monto-linea > span { gap: 3px; font-size: 12px; white-space: nowrap; }
+.acordeon-monto .gan-monto-linea > span { font-size: 12px; }
+.gan-monto-linea .cup {
+  margin-left: 10px; padding-left: 10px;
+  border-left: 1px solid var(--border);
+}
+.gan-monto-linea small { font-size: 9px; }
+.gan-reparto-fila,
+.gan-reparto-total {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 6px 9px;
+  margin-top: 5px;
+}
+.gan-reparto-etiqueta {
+  display: flex; align-items: center; gap: 7px;
+  min-width: 0; color: var(--text); font-size: 12.5px; font-weight: 600;
+}
+.gan-reparto-etiqueta i { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.gan-reparto-etiqueta small { color: var(--muted); font-size: 10.5px; font-weight: 600; }
+.gan-reparto-monto { min-width: 0; text-align: right; }
+.gan-reparto-total { background: #FCF0F3; }
+.gan-reparto-total strong { color: var(--gold-dark); font-size: 12.5px; }
+@media (max-width: 420px) {
+  .gan-monto-linea .cup { margin-left: 7px; padding-left: 7px; }
+  .gan-monto-linea > span { font-size: 11px; }
+  .gan-reparto-etiqueta { font-size: 12px; }
+}
+
+/* Última sección: barras por día/mes con cabecera y una fila por fecha. */
+.gan-barras-lista { display: flex; flex-direction: column; gap: 6px; }
+.gan-barra-cab {
+  display: grid;
+  grid-template-columns: 60px minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 0 10px 2px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+}
+.gan-barra-cab span:last-child { text-align: right; }
+.gan-barra-fila {
+  display: grid;
+  grid-template-columns: 60px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 7px 10px;
+}
+.gan-barra-nombre {
+  color: var(--muted); font-size: 12px; font-weight: 600; white-space: nowrap;
+}
+.gan-barra-fila .pista {
+  height: 16px;
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 2px 0;
+  background: var(--border);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.gan-barra-fila .relleno { display: block; height: 5px; border-radius: 3px; }
+.gan-barra-monto { min-width: 0; text-align: right; }
+@media (max-width: 560px) {
+  /* Fecha y barra con ancho fijo; el importe queda siempre a la derecha. */
+  .gan-barra-fila {
+    grid-template-columns: 46px minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+  .gan-barra-monto { text-align: right; }
+  .gan-barra-cab { grid-template-columns: 46px minmax(0, 1fr) auto; gap: 8px; }
+}
+
+/* Ajuste móvil común: etiqueta arriba e importes debajo, alineados a la
+   izquierda, para que nada quede colgando en pantallas estrechas. */
+@media (max-width: 560px) {
+  .gan-fila-linea,
+  .gan-reparto-fila { flex-wrap: wrap; align-items: flex-start; }
+  .gan-fila-importes,
+  .gan-reparto-monto { text-align: left; }
+  .gan-fila-importes .dash-monto-dual,
+  .gan-monto-linea { justify-content: flex-start; }
+  .gan-barra-nombre { font-size: 11.5px; }
+}
 
 /* Acordeón de servicios en Ganancias */
 .acordeon {
@@ -3253,6 +3363,14 @@ a.cita-cliente:hover { color: var(--gold-dark); }
   line-height: 1.25;
   margin-top: 1px;
 }
+/* Importe y moneda en pequeño, USD arriba y CUP abajo. */
+.cat-cab-total .dash-monto-dual {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+.cat-cab-total .dash-monto-dual small { font-size: 9px; }
 
 /* Cuerpo: métricas del reparto y lista de servicios */
 .cat-cuerpo {
@@ -3263,20 +3381,36 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 }
 .cat-metricas {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+/* En móvil las tres tarjetas siguen en una sola fila, compactando tipografía. */
+@media (max-width: 560px) {
+  .cat-metrica { padding: 8px 6px; gap: 3px; }
+  .cat-metrica span { font-size: 9px; letter-spacing: .2px; }
+  .cat-metrica .dash-monto-dual { align-items: flex-start; }
+  .cat-metrica .dash-monto-dual > span {
+    font-size: 10.5px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .cat-metrica .dash-monto-dual small { font-size: 8px; }
+  .cat-metrica small { font-size: 9px; }
 }
 .cat-metrica {
   min-width: 0;
   padding: 10px 11px;
-  border-radius: 12px;
-  border: 1px solid var(--border, #E3BCCC);
   background: rgba(206, 124, 148, .07);
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
-.cat-metrica.destacada { background: #FCF0F3; border-color: rgba(206, 124, 148, .45); }
+.cat-metrica + .cat-metrica { border-left: 1px solid var(--border); }
+.cat-metrica.destacada { background: #FCF0F3; }
 .cat-metrica span {
   color: var(--muted);
   font-size: 10px;
@@ -3294,6 +3428,21 @@ a.cita-cliente:hover { color: var(--gold-dark); }
   line-height: 1.3;
 }
 .cat-metrica small { color: var(--muted); font-size: 11px; }
+/* Divisores internos: etiqueta / importe / porcentaje */
+.cat-metricas .cat-metrica > span {
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--border);
+}
+.cat-metricas .cat-metrica > strong { padding: 5px 0; }
+.cat-metricas .cat-metrica > small {
+  padding-top: 5px;
+  border-top: 1px solid var(--border);
+}
+@media (max-width: 560px) {
+  .cat-metricas .cat-metrica > span,
+  .cat-metricas .cat-metrica > small { padding-top: 3px; padding-bottom: 3px; }
+  .cat-metricas .cat-metrica > strong { padding: 3px 0; }
+}
 /* Separador con la lista de servicios: evita que todo parezca un bloque */
 .cat-lista-titulo {
   display: flex;
