@@ -204,9 +204,12 @@ export async function render(raiz) {
     caja.innerHTML = `
       <div class="tarjeta gan-ingresos">
         <div class="gan-ingresos-cab">
-          <div class="nota">Ingresos · ${t.citas} ${t.citas === 1 ? "cita" : "citas"} completada(s)</div>
+          <div class="gan-ingresos-titulo">
+            <strong>Ingresos</strong>
+            <span>${t.citas} ${t.citas === 1 ? "cita" : "citas"} completada(s)</span>
+          </div>
+          <div class="gan-ingresos-moneda">${selectorMoneda(monedaGrafica)}</div>
         </div>
-        <div class="gan-ingresos-moneda">${selectorMoneda(monedaGrafica)}</div>
         <div class="gan-num">${monto(t.ingresos)} <small>${monedaActual}</small></div>
         <div class="barra-reparto">
           ${tramos.map((f) => `
