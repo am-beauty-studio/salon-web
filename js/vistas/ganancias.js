@@ -217,7 +217,7 @@ export async function render(raiz) {
             <strong>Ingresos</strong>
             <span>${t.citas} ${t.citas === 1 ? "cita" : "citas"} completada(s)</span>
           </div>
-          <div class="gan-ingresos-moneda">${selectorMoneda(monedaGrafica)}</div>
+          <div class="gan-ingresos-moneda selector-moneda-bicolor">${selectorMoneda(monedaGrafica)}</div>
         </div>
         <div class="gan-num">${monto(t.ingresos)} <small>${monedaActual}</small></div>
         <div class="barra-reparto">

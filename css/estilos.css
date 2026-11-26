@@ -927,6 +927,26 @@ textarea.input { resize: vertical; min-height: 70px; }
   .selector-moneda-deslizador,
   .selector-moneda-opcion { transition: none; }
 }
+/* Interruptor bicolor: USD en rosa/dorado y CUP en violeta, como los importes. */
+.selector-moneda-bicolor .selector-moneda-deslizador {
+  background: linear-gradient(135deg, var(--gold), #B25572);
+}
+.selector-moneda-bicolor .selector-moneda[data-valor="CUP"] .selector-moneda-deslizador {
+  background: linear-gradient(135deg, #8E6BB8, var(--violeta));
+}
+.selector-moneda-bicolor .selector-moneda-opcion[data-moneda="USD"] { color: #B25572; }
+.selector-moneda-bicolor .selector-moneda-opcion[data-moneda="CUP"] { color: #74619D; }
+.selector-moneda-bicolor .selector-moneda-opcion[data-moneda="USD"] .selector-moneda-simbolo {
+  background: rgba(178, 85, 114, .14); color: #B25572;
+}
+.selector-moneda-bicolor .selector-moneda-opcion[data-moneda="CUP"] .selector-moneda-simbolo {
+  background: rgba(116, 97, 157, .14); color: #74619D;
+}
+.selector-moneda-bicolor .selector-moneda-opcion.activa,
+.selector-moneda-bicolor .selector-moneda-opcion.activa .selector-moneda-simbolo { color: #fff; }
+.selector-moneda-bicolor .selector-moneda-opcion.activa .selector-moneda-simbolo {
+  background: rgba(255, 255, 255, .24);
+}
 
 .filtro-ganancias .nav-fecha {
   margin: 12px 0 0;

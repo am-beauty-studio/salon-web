@@ -52,6 +52,7 @@ export async function render(raiz, params, query) {
   let subtipoNuevo = cita.subtipo;
   let adicionalesNuevos = new Set(cita.adicional_ids || []);
   let empleadoNuevo = cita.empleado_id;
+  let monedaEditada = normalizarMoneda(cita.moneda);
   let fecha = desdeISO(cita.inicio);
   let slot = null;
   // Aviso bajo el horario cuando el tiempo elegido deja de ser posible.
@@ -181,28 +182,7 @@ export async function render(raiz, params, query) {
             <button class="btn btn-suave-ok" id="btn-completar" type="button">${icono.check(15)}Completar cita</button>
             <button class="btn btn-suave-peligro" id="btn-cancelar" type="button">${icono.equis(15)}Cancelar cita</button>
           </div>
-        </div>
-
-        <section class="form-seccion">
-          <div class="form-seccion-cab">
-            <span class="form-seccion-ico">${icono.dolar(17)}</span>
-            <div class="form-seccion-textos">
-              <p class="form-seccion-titulo">Moneda de cobro</p>
-              <p class="form-seccion-sub">La clienta puede pagar en USD o en CUP. El catálogo sigue en USD.</p>
-            </div>
-          </div>
-          ${selectorMoneda(cita.moneda)}
-          <p class="nota" style="margin:8px 0 0">
-            Se cobrará <b>${importe(cita.precio_total_moneda ?? cita.precio_total, cita.moneda)} ${etiquetaMoneda(cita.moneda)}</b>
-            (${usd(cita.precio_total)} USD)
-            ${normalizarMoneda(cita.moneda) === "CUP"
-              ? ` · tasa 1 USD = ${Number(cita.tasa_cambio).toLocaleString("en-US", { maximumFractionDigits: 4 })} CUP`
-              : ""}.
-            ${grupo && grupo.length > 1
-              ? " El cambio se aplica a las citas programadas de esta reserva."
-              : ""}
-          </p>
-        </section>` : ""}
+        </div>` : ""}
 
       <div id="zona-reprogramar"></div>`;
 
@@ -258,6 +238,7 @@ export async function render(raiz, params, query) {
         reprogramando = !reprogramando;
         notaHora = "";
         if (reprogramando) {
+          monedaEditada = normalizarMoneda(cita.moneda);
           servicioNuevo = todosServicios.find((s) => s.id === cita.servicio_id) || servicio;
           subtipoNuevo = cita.subtipo;
           adicionalesNuevos = new Set(cita.adicional_ids || []);
@@ -278,30 +259,7 @@ export async function render(raiz, params, query) {
           }));
         }
       };
-      conectarSelectorMoneda(raiz, cambiarMoneda);
       if (reprogramando) pintarReprogramar();
-    }
-  }
-
-  async function cambiarMoneda(nueva) {
-    const moneda = normalizarMoneda(nueva);
-    if (moneda === normalizarMoneda(cita.moneda)) return;
-    const aplicarGrupo = Boolean(cita.grupo_id);
-    try {
-      cita = await patch(`/citas/${cita.id}/moneda`, {
-        moneda,
-        aplicar_grupo: aplicarGrupo,
-      });
-      if (aplicarGrupo) {
-        try {
-          grupo = await get(`/citas?grupo_id=${encodeURIComponent(cita.grupo_id)}`);
-        } catch { /* se mantiene la reserva ya cargada */ }
-      }
-      aviso(`Cita en ${moneda}`, "ok");
-      pintar();
-    } catch (e) {
-      aviso(e.message || "No se pudo cambiar la moneda.", "error");
-      pintar(); // revierte el interruptor a la moneda guardada
     }
   }
 
@@ -444,6 +402,27 @@ export async function render(raiz, params, query) {
             </div>` : `<div class="vacio">Ninguna especialista realiza esta combinación de servicios.</div>`}
         </section>
 
+        <section class="form-seccion moneda-cobro">
+          <div class="form-seccion-cab">
+            <span class="form-seccion-ico">${icono.dolar(17)}</span>
+            <div class="form-seccion-textos">
+              <p class="form-seccion-titulo">Moneda de cobro</p>
+              <p class="form-seccion-sub">La clienta puede pagar en USD o en CUP. El catálogo sigue en USD.</p>
+            </div>
+          </div>
+          <div class="selector-moneda-bicolor">${selectorMoneda(monedaEditada)}</div>
+          <p class="nota" style="margin:8px 0 0">
+            Se cobrará <b>${importe(convertirMoneda(totalPrecio, monedaEditada, cita.tasa_cambio), monedaEditada)} ${etiquetaMoneda(monedaEditada)}</b>
+            (${usd(totalPrecio)} USD)
+            ${monedaEditada === "CUP"
+              ? ` · tasa 1 USD = ${Number(cita.tasa_cambio).toLocaleString("en-US", { maximumFractionDigits: 4 })} CUP`
+              : ""}.
+            ${grupo && grupo.length > 1
+              ? " El cambio se aplica a las citas programadas de esta reserva."
+              : ""}
+          </p>
+        </section>
+
         <section class="form-seccion">
           <div class="form-seccion-cab">
             <span class="form-seccion-ico">${icono.reloj(17)}</span>
@@ -461,8 +440,8 @@ export async function render(raiz, params, query) {
         </section>
 
         <div class="resumen-caja reprog-resumen">
-          <div class="linea"><b>Total:</b> ${importe(convertirMoneda(totalPrecio, cita.moneda, cita.tasa_cambio), cita.moneda)} ${etiquetaMoneda(cita.moneda)} · ${duracionTxt(totalDuracion)}</div>
-          ${normalizarMoneda(cita.moneda) === "CUP"
+          <div class="linea"><b>Total:</b> ${importe(convertirMoneda(totalPrecio, monedaEditada, cita.tasa_cambio), monedaEditada)} ${etiquetaMoneda(monedaEditada)} · ${duracionTxt(totalDuracion)}</div>
+          ${monedaEditada === "CUP"
             ? `<div class="linea"><b>Equivalente:</b> ${usd(totalPrecio)} USD · tasa 1 USD = ${Number(cita.tasa_cambio).toLocaleString("en-US", { maximumFractionDigits: 4 })} CUP</div>`
             : ""}
           <div class="linea"><b>Servicio:</b> ${escapeHtml(servicioNuevo.nombre)}${textoSubtipo(subtipoNuevo) ? ` · ${escapeHtml(textoSubtipo(subtipoNuevo))}` : ""}</div>
@@ -476,6 +455,11 @@ export async function render(raiz, params, query) {
           <button class="btn btn-dorado" id="btn-confirmar" type="button" disabled>Guardar cambios</button>
         </div>
       </div>`;
+
+    conectarSelectorMoneda(caja, (nueva) => {
+      monedaEditada = normalizarMoneda(nueva);
+      pintarReprogramar();
+    });
 
     function actualizarConfirmar() {
       const btn = $("#btn-confirmar");
@@ -623,6 +607,7 @@ export async function render(raiz, params, query) {
         inicio: cita.inicio,
         empleadoId: cita.empleado_id,
         empleada: cita.empleado_nombre,
+        adicionales: new Set(cita.adicional_ids || []),
       };
       const servicioGuardado = servicioNuevo;
       guardandoEdicion = true;
@@ -635,7 +620,22 @@ export async function render(raiz, params, query) {
           inicio: slot.inicio,
           empleado_id: empleadoNuevo,
         });
-        const movida = antes.inicio !== cita.inicio || antes.empleadoId !== cita.empleado_id;
+        const monedaCambiada = monedaEditada !== normalizarMoneda(cita.moneda);
+        if (monedaCambiada) {
+          cita = await patch(`/citas/${cita.id}/moneda`, {
+            moneda: monedaEditada,
+            aplicar_grupo: Boolean(cita.grupo_id),
+          });
+          if (cita.grupo_id) {
+            try {
+              grupo = await get(`/citas?grupo_id=${encodeURIComponent(cita.grupo_id)}`);
+            } catch { /* se mantiene la reserva ya cargada */ }
+          }
+        }
+        const movida = antes.inicio !== cita.inicio;
+        const adicionalesCambiados =
+          adicionalesNuevos.size !== antes.adicionales.size
+          || [...adicionalesNuevos].some((id) => !antes.adicionales.has(id));
         servicio = todosServicios.find((s) => s.id === cita.servicio_id) || servicioGuardado;
         servicioNuevo = servicio;
         subtipoNuevo = cita.subtipo;
@@ -664,8 +664,10 @@ export async function render(raiz, params, query) {
               empleada: cita.empleado_nombre,
             },
           });
+        } else if (adicionalesCambiados) {
+          aviso("Servicios adicionales actualizados", "ok");
         } else {
-          aviso("Cita actualizada", "ok");
+          aviso(monedaCambiada ? `Cita actualizada en ${monedaEditada}` : "Cita actualizada", "ok");
         }
       } catch (e) {
         guardandoEdicion = false;

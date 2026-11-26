@@ -518,7 +518,7 @@ export async function render(raiz, _params, query) {
     const totalCobro = convertirMoneda(precio, moneda, tasaCup);
     caja.innerHTML = `
       <div class="paso-titulo">Moneda de cobro</div>
-      ${selectorMoneda(moneda, { cupDeshabilitada: tasaCup <= 0 })}
+      <div class="selector-moneda-bicolor">${selectorMoneda(moneda, { cupDeshabilitada: tasaCup <= 0 })}</div>
       <p class="nota" style="margin:8px 0 0">
         ${moneda === "CUP"
           ? `Se cobrará en CUP con la tasa 1 USD = ${tasaCup.toLocaleString("en-US", {
@@ -526,8 +526,8 @@ export async function render(raiz, _params, query) {
             })} CUP: <b>${importe(totalCobro, "CUP")} CUP</b> (${usd(precio)} USD).`
           : `Se cobrará en USD: <b>${importe(totalCobro, "USD")} USD</b>.`}
         ${tasaCup <= 0
-          ? `<br/>El superadministrador aún no configuró la tasa del CUP.`
-          : `<br/>La tasa la configura el superadministrador en el Panel de control.`}
+          ? `<br/>El administrador aún no configuró la tasa del CUP.`
+          : `<br/>La tasa la configura el administrador en el Panel de control.`}
       </p>`;
     conectarSelectorMoneda(caja, (nuevaMoneda) => {
       moneda = nuevaMoneda;
