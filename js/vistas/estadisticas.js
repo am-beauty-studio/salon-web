@@ -266,9 +266,13 @@ function dashboard(datos) {
 function kpi(ico, titulo, valor, sub, destacado = false) {
   return `
     <div class="dash-kpi${destacado ? " destacado" : ""}">
-      <span class="dash-kpi-ico">${icono[ico](16)}</span>
-      <span class="dash-kpi-titulo">${escapeHtml(titulo)}</span>
-      <strong class="dash-kpi-valor" data-contar="${escapeHtml(String(valor))}">${escapeHtml(String(valor))}</strong>
+      <div class="dash-kpi-cab">
+        <span class="dash-kpi-ico">${icono[ico](16)}</span>
+        <span class="dash-kpi-titulo">${escapeHtml(titulo)}</span>
+      </div>
+      <div class="dash-kpi-valores">
+        <strong class="dash-kpi-valor" data-contar="${escapeHtml(String(valor))}">${escapeHtml(String(valor))}</strong>
+      </div>
       <span class="dash-kpi-sub">${escapeHtml(sub)}</span>
     </div>`;
 }
@@ -282,10 +286,14 @@ function kpiMonedas(ico, titulo, usd, cup, sub, destacado = false) {
     </span>`;
   return `
     <div class="dash-kpi${destacado ? " destacado" : ""}">
-      <span class="dash-kpi-ico">${icono[ico](16)}</span>
-      <span class="dash-kpi-titulo">${escapeHtml(titulo)}</span>
-      ${linea(usd, "USD")}
-      ${linea(cup, "CUP", true)}
+      <div class="dash-kpi-cab">
+        <span class="dash-kpi-ico">${icono[ico](16)}</span>
+        <span class="dash-kpi-titulo">${escapeHtml(titulo)}</span>
+      </div>
+      <div class="dash-kpi-valores">
+        ${linea(usd, "USD")}
+        ${linea(cup, "CUP", true)}
+      </div>
       <span class="dash-kpi-sub">${escapeHtml(sub)}</span>
     </div>`;
 }

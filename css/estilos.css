@@ -3673,29 +3673,42 @@ a.cita-cliente:hover { color: var(--gold-dark); }
   padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
 }
 .dash-kpi.destacado { background: #FCF0F3; border-color: #F0C8D4; }
+/* Cabecera: icono y título juntos, para dar unidad a la tarjeta. */
+.dash-kpi-cab {
+  display: flex; align-items: center; gap: 9px;
+  min-width: 0; margin-bottom: 10px;
+}
 .dash-kpi-ico {
-  width: 30px; height: 30px; border-radius: 10px;
+  width: 32px; height: 32px; border-radius: 10px;
   display: inline-flex; align-items: center; justify-content: center;
   background: rgba(206, 124, 148, .12); color: var(--gold-dark);
-  margin-bottom: 5px;
+  flex-shrink: 0;
 }
 .dash-kpi.destacado .dash-kpi-ico { background: var(--gold); color: #fff; }
 .dash-kpi-ico .ico { vertical-align: 0; }
 .dash-kpi-titulo {
   color: var(--muted); font-size: 11px; font-weight: 700;
   letter-spacing: .8px; text-transform: uppercase;
+  line-height: 1.25; min-width: 0;
 }
+/* Bloque de valores y pie separados, con el mismo ritmo en todas las tarjetas. */
+.dash-kpi-valores { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
 .dash-kpi-valor {
   color: var(--gold-dark);
   font-size: 23px;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
 }
-.dash-kpi-sub { color: var(--muted); font-size: 11.5px; }
+.dash-kpi-sub {
+  color: var(--muted); font-size: 11.5px; line-height: 1.35;
+  border-top: 1px solid var(--border);
+  padding-top: 7px;
+  margin-top: auto;
+}
 .dash-kpi-moneda {
   display: flex;
   align-items: baseline;
@@ -3707,6 +3720,10 @@ a.cita-cliente:hover { color: var(--gold-dark); }
   font-size: 10px;
   font-weight: 800;
   letter-spacing: .5px;
+}
+.dash-kpi-moneda + .dash-kpi-moneda {
+  padding-top: 5px;
+  border-top: 1px solid var(--border);
 }
 .dash-kpi-moneda.usd .dash-kpi-valor,
 .dash-kpi-moneda.usd small { color: var(--gold); }
