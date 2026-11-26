@@ -597,9 +597,12 @@ function topClientasHtml(clientes) {
   return `
     <div class="dash-card">
       <div class="dash-cab">
-        <div>
-          <h2>Clientas más frecuentes</h2>
-          <p>Las 5 con más citas en el período · haz clic para ver su historial</p>
+        <div class="dash-cab-titulo">
+          <span class="dash-kpi-ico">${icono.personas(16)}</span>
+          <div>
+            <h2>Clientas más frecuentes</h2>
+            <p>Las 5 con más citas en el período · haz clic para ver su historial</p>
+          </div>
         </div>
       </div>
       ${clientes.length === 0
@@ -628,9 +631,12 @@ function empleadasHtml(empleadas) {
   return `
     <div class="dash-card">
       <div class="dash-cab">
-        <div>
-          <h2>Rendimiento de las empleadas</h2>
-          <p>Citas, recaudado y ganancia en el período</p>
+        <div class="dash-cab-titulo">
+          <span class="dash-kpi-ico">${icono.usuario(16)}</span>
+          <div>
+            <h2>Rendimiento de las empleadas</h2>
+            <p>Citas, recaudado y ganancia en el período</p>
+          </div>
         </div>
       </div>
       ${empleadas.length === 0
