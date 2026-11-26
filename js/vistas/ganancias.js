@@ -14,6 +14,10 @@ const ROSAS = [
   "#B25572", "#C06A86", "#CD7E97", "#D992A8",
   "#E3A6B9", "#EBBAC9", "#F2CCD8", "#F8DEE6",
 ];
+const VIOLETAS = [
+  "#65548F", "#74619D", "#8571AB", "#9682B9",
+  "#A793C7", "#B8A5D5", "#C9B7E2", "#E1D7F0",
+];
 
 // Moneda seleccionada en el filtro. Los importes que llegan del API ya están
 // convertidos, así que solo hay que darles formato con su símbolo.
@@ -26,15 +30,16 @@ const monto = (valor) => importe(valor, monedaActual);
  * sin importar cuánto se diferencien entre sí. Devuelve valor → color.
  */
 function coloresPorPuesto(valores) {
+  const colores = monedaActual === "CUP" ? VIOLETAS : ROSAS;
   const unicos = [...new Set(valores.map(Number))].sort((a, b) => b - a);
   const pasos = new Map();
   unicos.forEach((v, i) => {
     const paso = unicos.length > 1
-      ? Math.round((i / (unicos.length - 1)) * (ROSAS.length - 1))
+      ? Math.round((i / (unicos.length - 1)) * (colores.length - 1))
       : 0;
-    pasos.set(v, ROSAS[paso]);
+    pasos.set(v, colores[paso]);
   });
-  return (valor) => pasos.get(Number(valor)) ?? ROSAS[ROSAS.length - 1];
+  return (valor) => pasos.get(Number(valor)) ?? colores[colores.length - 1];
 }
 
 export async function render(raiz) {
@@ -147,6 +152,7 @@ export async function render(raiz) {
     const t = r.totales;
     const caja = $("#contenido");
     monedaActual = r.moneda || moneda;
+    caja.classList.toggle("moneda-cup", monedaActual === "CUP");
 
     if (!t.citas) {
       caja.innerHTML = `<div class="vacio">Sin ganancias registradas en este período.</div>
@@ -400,7 +406,7 @@ export async function render(raiz) {
         <div class="barra-dia">
           <span class="nombre">${escapeHtml(f.etiqueta)}</span>
           <span class="pista"><span class="relleno"
-            style="display:block;height:100%;background:linear-gradient(to right,#F8DEE6,${colorDe(f.monto)});border-radius:5px;width:${(f.monto / max) * 100}%"></span></span>
+            style="display:block;height:100%;background:linear-gradient(to right,${monedaActual === "CUP" ? "#E1D7F0" : "#F8DEE6"},${colorDe(f.monto)});border-radius:5px;width:${(f.monto / max) * 100}%"></span></span>
           <span class="monto">${monto(f.monto)}</span>
         </div>`).join("")}`;
   }

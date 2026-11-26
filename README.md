@@ -113,8 +113,9 @@ salon_web/
 - Estadísticas: muestra los importes en USD y CUP a la vez y las citas
   combinadas; tendencia con recaudado dual y barras de citas, y dos donuts
   por moneda en "Recaudado por categoría".
-- Panel de control (superadmin): tasa de cambio USD → CUP, facturado separado
-  por moneda, control de accesos y mantenimiento de citas.
+- Panel de control (administradoras): tasa de cambio USD → CUP, facturado
+  separado por moneda y mantenimiento de citas. El control de accesos y la zona
+  de peligro (borrado masivo) solo se muestran al superadmin.
 - Rol `recepcion`: ve Agenda y Clientas; Servicios, Empleadas y Ganancias
   quedan bloqueadas.
 - Sesión: token en localStorage; si la API responde 401 se cierra sesión y

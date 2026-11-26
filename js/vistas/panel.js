@@ -1,10 +1,11 @@
-// Panel de control del superadministrador.
-// Reúne los conteos del salón, la gestión de usuarios, las citas completadas
-// (reabrir o eliminar) y el borrado masivo de datos de citas.
+// Panel de control de la administración.
+// Reúne los conteos del salón, la tasa de cambio y las citas completadas
+// (reabrir o eliminar). El control de acceso y la zona de peligro solo se
+// muestran al superadministrador.
 // Equivalente a src/app/panel/index.tsx de salon_app.
 
 import { del, get, patch } from "../api.js?v=49";
-import { usuario as usuarioActual } from "../auth.js?v=52";
+import { esSuperadmin, usuario as usuarioActual } from "../auth.js?v=52";
 import { animarCifras } from "../contador.js?v=3";
 import { icono } from "../iconos.js?v=64";
 import { confirmarPeligro } from "../modal-confirmar.js?v=1";
@@ -167,6 +168,7 @@ function filaUsuarioAcceso(u, ahora) {
 }
 
 export async function render(raiz) {
+  const esSuper = esSuperadmin();
   let resumen = null;
   let accesos = null;
   let configMoneda = null;
@@ -179,10 +181,14 @@ export async function render(raiz) {
     <div class="vista-cab">
       <span class="vista-ico">${icono.escudo(22)}</span>
       <h1 class="vista-titulo">Panel de control</h1>
-      <span class="badge badge-dorado">Superadmin</span>
+      <span class="badge ${esSuper ? "badge-dorado" : "badge-azul"}">
+        ${escapeHtml(ETIQUETA_ROL[usuarioActual?.rol] || "Administrador")}
+      </span>
     </div>
     <p class="lista-secundario" style="margin:0 0 14px">
-      Control total del salón: usuarios, citas completadas y mantenimiento de la base de datos.
+      ${esSuper
+        ? "Control total del salón: usuarios, citas completadas y mantenimiento de la base de datos."
+        : "Resumen del salón, tasa de cambio e historial de citas completadas."}
     </p>
 
     <div class="dash-kpis" id="panel-kpis">
@@ -212,6 +218,7 @@ export async function render(raiz) {
       </p>
     </div>
 
+    ${esSuper ? `
     <div class="dash-card panel-accesos-card">
       <div class="dash-cab">
         <div>
@@ -230,7 +237,7 @@ export async function render(raiz) {
       <div id="panel-accesos">
         <div class="dash-vacio">Cargando accesos…</div>
       </div>
-    </div>
+    </div>` : ""}
 
     <div class="dash-card">
       <div class="dash-cab">
@@ -270,6 +277,7 @@ export async function render(raiz) {
       </div>
     </div>
 
+    ${esSuper ? `
     <div class="dash-card" style="border-color:rgba(190, 74, 87, .35);background:linear-gradient(0deg,rgba(190, 74, 87, .04),rgba(190, 74, 87, .04)),var(--card)">
       <div class="dash-cab">
         <div>
@@ -282,7 +290,7 @@ export async function render(raiz) {
           ${icono.papelera(16)} Borrar todos los datos de citas
         </button>
       </div>
-    </div>`;
+    </div>` : ""}`;
 
   const $kpis = $("#panel-kpis");
   const $accesos = $("#panel-accesos");
@@ -355,7 +363,7 @@ export async function render(raiz) {
   }
 
   function pintarAccesos() {
-    if (!accesos) return;
+    if (!accesos || !$accesos) return;
     $accesos.innerHTML = `
       <div class="acceso-resumen" aria-live="polite">
         ${statAcceso(icono.usuario(16), accesos.en_linea, "En línea", "en-linea")}
@@ -372,6 +380,7 @@ export async function render(raiz) {
   }
 
   async function cargarAccesos(silencioso = false) {
+    if (!$accesos) return;
     if (!silencioso) {
       $accesos.innerHTML = `<div class="dash-vacio">Cargando accesos…</div>`;
     }
@@ -513,7 +522,7 @@ export async function render(raiz) {
     await Promise.all([
       cargarResumen(),
       cargarMoneda(),
-      cargarAccesos(),
+      esSuper ? cargarAccesos() : null,
       buscado ? buscarCitas() : null,
     ]);
   }
@@ -631,7 +640,7 @@ export async function render(raiz) {
     $buscar.focus();
   };
 
-  $borrarTodo.onclick = async () => {
+  if ($borrarTodo) $borrarTodo.onclick = async () => {
     const ok = await confirmarPeligro({
       titulo: "Borrar todos los datos de citas",
       mensaje: "Se eliminarán TODAS las citas del salón y sus datos derivados.",
@@ -662,23 +671,27 @@ export async function render(raiz) {
     }
   };
 
-  $refrescarAccesos.onclick = async () => {
-    $refrescarAccesos.disabled = true;
-    try {
-      await cargarAccesos();
-    } finally {
-      $refrescarAccesos.disabled = false;
-    }
-  };
+  if ($refrescarAccesos) {
+    $refrescarAccesos.onclick = async () => {
+      $refrescarAccesos.disabled = true;
+      try {
+        await cargarAccesos();
+      } finally {
+        $refrescarAccesos.disabled = false;
+      }
+    };
+  }
 
   // Mientras esta vista siga montada, actualiza presencia y accesos cada minuto.
-  const refrescoAccesos = setInterval(() => {
-    if (!document.body.contains($accesos)) {
-      clearInterval(refrescoAccesos);
-      return;
-    }
-    if (document.visibilityState === "visible") cargarAccesos(true);
-  }, 60000);
+  if ($accesos) {
+    const refrescoAccesos = setInterval(() => {
+      if (!document.body.contains($accesos)) {
+        clearInterval(refrescoAccesos);
+        return;
+      }
+      if (document.visibilityState === "visible") cargarAccesos(true);
+    }, 60000);
+  }
 
   await cargar();
 }

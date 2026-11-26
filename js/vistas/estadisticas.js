@@ -113,6 +113,16 @@ export async function render(raiz) {
         get(`/finanzas/estadisticas?periodo=${periodo}&fecha=${aISO(fecha)}&moneda=${moneda}`)
       ));
       if (actual !== solicitud) return;
+      // Compatibilidad con una API que aún no devuelve `estudio_libre` en
+      // Estadísticas: ese dato ya existe en el resumen de Ganancias.
+      if (usd.totales.estudio_libre == null || cup.totales.estudio_libre == null) {
+        const [resumenUsd, resumenCup] = await Promise.all(["USD", "CUP"].map((moneda) =>
+          get(`/finanzas/resumen?periodo=${periodo}&fecha=${aISO(fecha)}&moneda=${moneda}`)
+        ));
+        if (actual !== solicitud) return;
+        usd.totales.estudio_libre = resumenUsd.totales.estudio_libre;
+        cup.totales.estudio_libre = resumenCup.totales.estudio_libre;
+      }
       datos = { USD: usd, CUP: cup };
       const $dash = $("#dash");
       $dash.innerHTML = dashboard(datos);
@@ -170,6 +180,8 @@ function dashboard(datos) {
   const usd = datos.USD;
   const cup = datos.CUP;
   const totalCitas = usd.totales.citas + cup.totales.citas;
+  const totalCanceladas = numero(usd.totales.citas_canceladas)
+    + numero(cup.totales.citas_canceladas);
   const servicios = combinarServicios(usd.por_servicio, cup.por_servicio);
   const principales = servicios.filter((x) => !x.es_adicional);
   const adicionales = servicios.filter((x) => x.es_adicional);
@@ -179,17 +191,23 @@ function dashboard(datos) {
   return `
     <div class="dash-kpis">
       ${kpiMonedas(
-        "dolar", "AM Luxury",
-        monto(usd.totales.estudio, "USD"), monto(cup.totales.estudio, "CUP"),
-        `Recaudado: ${monto(usd.totales.ingresos, "USD")} USD · ${monto(cup.totales.ingresos, "CUP")} CUP`,
+        "dolar", "Recaudado por el estudio",
+        monto(usd.totales.ingresos, "USD"), monto(cup.totales.ingresos, "CUP"),
+        `Servicios completados en el período`,
         true
       )}
+      ${kpiMonedas("grafico", "Libre para AM Luxury",
+        monto(usd.totales.estudio_libre, "USD"),
+        monto(cup.totales.estudio_libre, "CUP"),
+        "sin incluir la reinversión")}
       ${kpi("calendario", "Citas completadas", String(totalCitas),
         `${totalCitas === 1 ? "1 cita" : `${totalCitas} citas`} en el período`)}
-      ${kpiMonedas("porcentaje", "Ticket promedio",
-        monto(usd.totales.ticket_promedio, "USD"),
-        monto(cup.totales.ticket_promedio, "CUP"),
-        "por cita completada en cada moneda")}
+      ${kpi("equis", "Citas canceladas", String(totalCanceladas),
+        `${totalCanceladas === 1 ? "1 cita" : `${totalCanceladas} citas`} en el período`)}
+      ${kpiMonedas("porcentaje", "Para reinversión del estudio",
+        monto(reinversionDe(usd), "USD"),
+        monto(reinversionDe(cup), "CUP"),
+        "parte del recaudado destinada al salón")}
       ${kpiMonedas("grafico", usd.periodo === "anio" ? "Mejor mes" : "Mejor día",
         mejorValor(usd, "USD"), mejorValor(cup, "CUP"),
         `${mejorEtiqueta(usd, "USD")} · ${mejorEtiqueta(cup, "CUP")}`)}
@@ -202,8 +220,8 @@ function dashboard(datos) {
           <p>Recaudado por AM Luxury en las dos monedas y cantidad total de citas</p>
         </div>
         <div class="dash-leyenda">
-          <span><i style="background:var(--gold)"></i>USD ${monto(usd.totales.estudio, "USD")}</span>
-          <span><i style="background:var(--violeta)"></i>CUP ${monto(cup.totales.estudio, "CUP")}</span>
+          <span><i style="background:var(--gold)"></i>USD <span class="texto-usd">${monto(usd.totales.estudio, "USD")}</span></span>
+          <span><i style="background:var(--violeta)"></i>CUP <span class="texto-cup">${monto(cup.totales.estudio, "CUP")}</span></span>
           <span><i style="background:var(--verde)"></i>${totalCitas} citas</span>
         </div>
       </div>
@@ -252,7 +270,7 @@ function kpi(ico, titulo, valor, sub, destacado = false) {
 /** KPI con dos importes: uno en USD y otro en CUP. */
 function kpiMonedas(ico, titulo, usd, cup, sub, destacado = false) {
   const linea = (valor, moneda, secundaria = false) => `
-    <span class="dash-kpi-moneda${secundaria ? " secundaria" : ""}">
+    <span class="dash-kpi-moneda${secundaria ? " secundaria cup" : " usd"}">
       <strong class="dash-kpi-valor" data-contar="${escapeHtml(String(valor))}">${escapeHtml(String(valor))}</strong>
       <small>${moneda}</small>
     </span>`;
@@ -266,18 +284,24 @@ function kpiMonedas(ico, titulo, usd, cup, sub, destacado = false) {
     </div>`;
 }
 
+function reinversionDe(r) {
+  // `estudio` incluye reinversión + libre; al restar lo libre queda solo la
+  // parte destinada a reinvertir en el salón.
+  return Math.max(0, numero(r.totales.estudio) - numero(r.totales.estudio_libre));
+}
+
 function mejorPunto(r) {
-  return [...(r.serie || [])].sort((a, b) => numero(b.estudio) - numero(a.estudio))[0];
+  return [...(r.serie || [])].sort((a, b) => numero(b.ingresos) - numero(a.ingresos))[0];
 }
 
 function mejorValor(r, moneda) {
   const mejor = mejorPunto(r);
-  return mejor && numero(mejor.estudio) > 0 ? monto(mejor.estudio, moneda) : "—";
+  return mejor && numero(mejor.ingresos) > 0 ? monto(mejor.ingresos, moneda) : "—";
 }
 
 function mejorEtiqueta(r, moneda) {
   const mejor = mejorPunto(r);
-  if (!mejor || numero(mejor.estudio) <= 0) return `${moneda}: sin movimiento`;
+  if (!mejor || numero(mejor.ingresos) <= 0) return `${moneda}: sin movimiento`;
   return `${moneda}: ${r.periodo === "anio" ? mejor.etiqueta : `día ${mejor.etiqueta}`}`;
 }
 
@@ -285,8 +309,8 @@ function mejorEtiqueta(r, moneda) {
 function montoDual(usd, cup) {
   return `
     <span class="dash-monto-dual">
-      <span>${monto(usd, "USD")} <small>USD</small></span>
-      <span>${monto(cup, "CUP")} <small>CUP</small></span>
+      <span class="usd">${monto(usd, "USD")} <small>USD</small></span>
+      <span class="cup">${monto(cup, "CUP")} <small>CUP</small></span>
     </span>`;
 }
 
@@ -422,7 +446,7 @@ function donutHtml(categorias, total, moneda) {
         <div class="dash-donut" style="background:var(--border)">
           <div class="dash-donut-centro">
             <span>Sin movimiento</span>
-            <strong>${monto(0, moneda)}</strong>
+            <strong class="${moneda === "CUP" ? "texto-cup" : "texto-usd"}">${monto(0, moneda)}</strong>
             <small>${moneda}</small>
           </div>
         </div>
@@ -444,7 +468,7 @@ function donutHtml(categorias, total, moneda) {
       <div class="dash-donut" style="background:conic-gradient(${paradas})">
         <div class="dash-donut-centro">
           <span>Total recaudado</span>
-          <strong data-contar-diferido="${monto(total, moneda)}">${monto(total, moneda)}</strong>
+          <strong class="${moneda === "CUP" ? "texto-cup" : "texto-usd"}" data-contar-diferido="${monto(total, moneda)}">${monto(total, moneda)}</strong>
           <small>${moneda}</small>
         </div>
       </div>
@@ -479,12 +503,11 @@ function filaCategoria(c, datos, i = 0, coloresUsd = new Map(), coloresCup = new
           ${escapeHtml(mostrarCategoria(c.categoria))}
           <small>
             ${c.citas} ${c.citas === 1 ? "cita" : "citas"} · AM Luxury
-            ${monto(c.USD?.estudio, "USD")} USD · ${monto(c.CUP?.estudio, "CUP")} CUP
+            <span class="texto-usd">${monto(c.USD?.estudio, "USD")} USD</span> · <span class="texto-cup">${monto(c.CUP?.estudio, "CUP")} CUP</span>
           </small>
         </span>
         <span class="dash-cat-monto">
           ${montoDual(ingresosUsd, ingresosCup)}
-          <small>${shareUsd.toFixed(0)}% USD · ${shareCup.toFixed(0)}% CUP</small>
         </span>
       </div>
       <div class="dash-serv-barras">
@@ -540,9 +563,8 @@ function listaServiciosHtml(titulo, sub, servicios, datos) {
                   </span>
                   <span class="dash-serv-monto">${montoDual(x.USD?.ingresos, x.CUP?.ingresos)}</span>
                 </div>
-                <div class="dash-serv-sub">
-                  ${x.citas} ${x.citas === 1 ? "cita" : "citas"} · AM Luxury
-                  ${monto(x.USD?.estudio, "USD")} USD · ${monto(x.CUP?.estudio, "CUP")} CUP
+                <div class="dash-serv-citas">
+                  ${x.citas} ${x.citas === 1 ? "cita" : "citas"}
                 </div>
                 <div class="dash-serv-barras">
                   ${barra("USD", numero(x.USD?.ingresos), totalUsd, maxUsd)}
@@ -585,7 +607,7 @@ function topClientasHtml(clientes) {
     </div>`;
 }
 
-/** Citas, recaudado, AM Luxury y ganancia de cada empleada. */
+/** Citas, recaudado y ganancia de cada empleada. */
 function empleadasHtml(empleadas) {
   return `
     <div class="dash-card">
@@ -606,8 +628,10 @@ function empleadasHtml(empleadas) {
                 ${e.activo ? "" : `<span class="dash-tag">Inactiva</span>`}
               </span>
               <span class="dash-persona-sub">
-                ${e.citas} ${e.citas === 1 ? "cita" : "citas"}<br>
-                Recaudado: ${monto(e.USD?.ingresos, "USD")} USD · ${monto(e.CUP?.ingresos, "CUP")} CUP
+                ${e.citas} ${e.citas === 1 ? "cita" : "citas"}
+              </span>
+              <span class="dash-persona-sub dash-empleada-recaudado">
+                Recaudado: <span class="texto-usd">${monto(e.USD?.ingresos, "USD")} USD</span> · <span class="texto-cup">${monto(e.CUP?.ingresos, "CUP")} CUP</span>
               </span>
             </span>
             <span class="dash-persona-valores">

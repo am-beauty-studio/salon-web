@@ -3708,10 +3708,15 @@ a.cita-cliente:hover { color: var(--gold-dark); }
   font-weight: 800;
   letter-spacing: .5px;
 }
+.dash-kpi-moneda.usd .dash-kpi-valor,
+.dash-kpi-moneda.usd small { color: var(--gold); }
 .dash-kpi-moneda.secundaria .dash-kpi-valor {
-  color: var(--text);
+  color: var(--violeta);
   font-size: 17px;
 }
+.dash-kpi-moneda.secundaria small { color: var(--violeta); }
+.texto-usd { color: var(--gold); }
+.texto-cup { color: var(--violeta); }
 .dash-monto-dual {
   display: inline-flex;
   flex-direction: column;
@@ -3725,6 +3730,25 @@ a.cita-cliente:hover { color: var(--gold-dark); }
   font-size: 9px;
   font-weight: 800;
   letter-spacing: .4px;
+}
+.dash-monto-dual .usd,
+.dash-monto-dual .usd small { color: var(--gold); }
+.dash-monto-dual .cup,
+.dash-monto-dual .cup small { color: var(--violeta); }
+.dash-persona-valores .dash-monto-dual > span.usd { color: var(--gold); }
+.dash-persona-valores .dash-monto-dual > span.cup { color: var(--violeta); }
+
+/* En Ganancias, todos los importes del filtro CUP se muestran en violeta. */
+#contenido.moneda-cup { --gold-dark: var(--violeta); }
+#contenido.moneda-cup .gan-num,
+#contenido.moneda-cup .reparto-monto,
+#contenido.moneda-cup .lista-secundario,
+#contenido.moneda-cup .acordeon-monto,
+#contenido.moneda-cup .cat-cab-total strong,
+#contenido.moneda-cup .cat-metrica strong,
+#contenido.moneda-cup .barra-dia .monto,
+#contenido.moneda-cup .caja-amarilla b {
+  color: var(--violeta);
 }
 
 .dash-card {
@@ -3782,11 +3806,15 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 }
 .dash-serv-barra > small {
   color: var(--muted);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: .3px;
 }
-.dash-serv-barra > small:last-child { text-align: right; }
+.dash-serv-barra > small:last-child {
+  text-align: right;
+  color: var(--text);
+  font-size: 11px;
+}
 @media (max-width: 800px) {
   .dash-tendencias,
   .dash-donuts { grid-template-columns: 1fr; }
@@ -4210,7 +4238,9 @@ a.cita-cliente:hover { color: var(--gold-dark); }
   color: var(--muted); font-size: 10px; font-weight: 700;
   text-transform: uppercase; letter-spacing: .6px;
 }
-.dash-donut-centro strong { color: var(--gold-dark); font-size: 18px; }
+.dash-donut-centro strong { color: var(--gold); font-size: 18px; }
+.dash-donut-centro strong.texto-usd { color: var(--gold); }
+.dash-donut-centro strong.texto-cup { color: var(--violeta); }
 .dash-donut-leyenda {
   list-style: none; flex: 1; min-width: 210px;
   display: flex; flex-direction: column; gap: 7px;
@@ -4337,6 +4367,14 @@ a.dash-persona:hover { border-color: var(--gold); text-decoration: none; }
   font-weight: 600;
 }
 .dash-persona-sub { color: var(--muted); font-size: 11.5px; margin-top: 1px; }
+.dash-empleada-recaudado {
+  display: block;
+  white-space: nowrap;
+  font-size: 11px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.dash-empleada-recaudado::-webkit-scrollbar { display: none; }
 .dash-persona-valores {
   display: flex;
   flex-direction: column;
@@ -4370,6 +4408,12 @@ a.dash-persona:hover { border-color: var(--gold); text-decoration: none; }
   display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap;
 }
 .dash-serv-monto { color: var(--gold-dark); font-size: 14px; font-weight: 700; white-space: nowrap; }
+.dash-serv-citas {
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 600;
+  margin: 2px 0 6px;
+}
 .dash-serv-sub {
   color: var(--muted); font-size: 11.5px; margin-bottom: 4px;
 }

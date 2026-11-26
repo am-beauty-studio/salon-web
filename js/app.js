@@ -22,11 +22,11 @@ import { render as vistaProductos } from "./vistas/productos.js?v=70";
 import { render as vistaProductoForm } from "./vistas/producto-form.js?v=75";
 import { render as vistaEmpleadas } from "./vistas/empleadas.js?v=55";
 import { render as vistaEmpleadaForm } from "./vistas/empleada-form.js?v=52";
-import { render as vistaGanancias } from "./vistas/ganancias.js?v=71";
-import { render as vistaEstadisticas } from "./vistas/estadisticas.js?v=63";
+import { render as vistaGanancias } from "./vistas/ganancias.js?v=72";
+import { render as vistaEstadisticas } from "./vistas/estadisticas.js?v=67";
 import { render as vistaUsuarios } from "./vistas/usuarios.js?v=53";
 import { render as vistaUsuarioForm } from "./vistas/usuario-form.js?v=54";
-import { render as vistaPanel } from "./vistas/panel.js?v=11";
+import { render as vistaPanel } from "./vistas/panel.js?v=12";
 import { render as vistaNotificaciones } from "./vistas/notificaciones.js?v=62";
 
 const RUTAS = [
@@ -51,7 +51,7 @@ const RUTAS = [
   { patron: /^\/empleadas\/(\d+)$/, vista: vistaEmpleadaForm, soloAdmin: true, params: ["id"] },
   { patron: /^\/ganancias$/, vista: vistaGanancias, soloAdmin: true },
   { patron: /^\/estadisticas$/, vista: vistaEstadisticas, soloAdmin: true },
-  { patron: /^\/panel$/, vista: vistaPanel, soloSuperadmin: true },
+  { patron: /^\/panel$/, vista: vistaPanel, soloAdmin: true },
   { patron: /^\/usuarios$/, vista: vistaUsuarios, soloSuperadmin: true },
   { patron: /^\/usuarios\/nuevo$/, vista: vistaUsuarioForm, soloSuperadmin: true, modo: "nuevo" },
   { patron: /^\/usuarios\/(\d+)$/, vista: vistaUsuarioForm, soloSuperadmin: true, params: ["id"] },
@@ -66,7 +66,7 @@ function pintarNav() {
     { hash: "#/empleadas", texto: "Empleadas", admin: true, ico: icono.usuario() },
     { hash: "#/ganancias", texto: "Ganancias", admin: true, ico: icono.grafico() },
     { hash: "#/estadisticas", texto: "Estadísticas", admin: true, ico: icono.estadisticas() },
-    { hash: "#/panel", texto: "Panel de control", superadmin: true, ico: icono.escudo() },
+    { hash: "#/panel", texto: "Panel de control", admin: true, ico: icono.escudo() },
   ].filter((c) => (!c.admin || esAdmin()) && (!c.superadmin || esSuperadmin()));
 
   $("#nav-chips").innerHTML = chips
