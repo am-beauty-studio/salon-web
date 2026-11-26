@@ -4257,13 +4257,20 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 .dash-cat-cab { display: flex; align-items: center; gap: 9px; margin-bottom: 5px; }
 .dash-cat-ico { display: inline-flex; align-items: center; justify-content: center; }
 .dash-cat-ico .cat-ico { width: 22px; height: 22px; margin: 0; vertical-align: 0; }
-.dash-cat-nombre { flex: 1; color: var(--text); font-size: 14.5px; font-weight: 600; }
+.dash-cat-nombre { flex: 1; min-width: 0; color: var(--text); font-size: 14.5px; font-weight: 600; }
 .dash-cat-nombre small { display: block; color: var(--muted); font-size: 11.5px; font-weight: 400; }
-.dash-cat-monto {
-  color: var(--gold-dark); font-size: 14.5px; font-weight: 700;
-  text-align: right; white-space: nowrap;
+.dash-cat-nombre .dash-cat-citas {
+  color: var(--text); font-size: 11.5px; font-weight: 600;
 }
-.dash-cat-monto small { display: block; color: var(--muted); font-size: 11px; font-weight: 400; }
+.dash-cat-nombre .dash-cat-am {
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.dash-cat-am::-webkit-scrollbar { display: none; }
+.dash-cat-am .texto-usd,
+.dash-cat-am .texto-cup { font-weight: 700; }
 .dash-barra {
   height: 6px; border-radius: 3px; background: var(--bg);
   overflow: hidden;
@@ -4408,12 +4415,21 @@ a.dash-persona:hover { border-color: var(--gold); text-decoration: none; }
   display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap;
 }
 .dash-serv-monto { color: var(--gold-dark); font-size: 14px; font-weight: 700; white-space: nowrap; }
-.dash-serv-citas {
-  color: var(--text);
-  font-size: 12.5px;
-  font-weight: 600;
-  margin: 2px 0 6px;
+.dash-serv-citas-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 3px 0 7px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(206, 124, 148, .10);
+  color: var(--gold-dark);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
 }
+.dash-serv-citas-tag .ico { flex-shrink: 0; }
 .dash-serv-sub {
   color: var(--muted); font-size: 11.5px; margin-bottom: 4px;
 }

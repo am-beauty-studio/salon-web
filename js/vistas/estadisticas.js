@@ -501,13 +501,14 @@ function filaCategoria(c, datos, i = 0, coloresUsd = new Map(), coloresCup = new
         </span>
         <span class="dash-cat-nombre">
           ${escapeHtml(mostrarCategoria(c.categoria))}
-          <small>
-            ${c.citas} ${c.citas === 1 ? "cita" : "citas"} · AM Luxury
-            <span class="texto-usd">${monto(c.USD?.estudio, "USD")} USD</span> · <span class="texto-cup">${monto(c.CUP?.estudio, "CUP")} CUP</span>
+          <small class="dash-cat-citas">
+            ${c.citas} ${c.citas === 1 ? "cita" : "citas"}
           </small>
-        </span>
-        <span class="dash-cat-monto">
-          ${montoDual(ingresosUsd, ingresosCup)}
+          <small class="dash-cat-am">
+            AM Luxury:
+            <span class="texto-usd">${monto(c.USD?.estudio, "USD")} USD</span>
+            · <span class="texto-cup">${monto(c.CUP?.estudio, "CUP")} CUP</span>
+          </small>
         </span>
       </div>
       <div class="dash-serv-barras">
@@ -563,9 +564,10 @@ function listaServiciosHtml(titulo, sub, servicios, datos) {
                   </span>
                   <span class="dash-serv-monto">${montoDual(x.USD?.ingresos, x.CUP?.ingresos)}</span>
                 </div>
-                <div class="dash-serv-citas">
+                <span class="dash-serv-citas-tag">
+                  ${icono.etiqueta(11)}
                   ${x.citas} ${x.citas === 1 ? "cita" : "citas"}
-                </div>
+                </span>
                 <div class="dash-serv-barras">
                   ${barra("USD", numero(x.USD?.ingresos), totalUsd, maxUsd)}
                   ${barra("CUP", numero(x.CUP?.ingresos), totalCup, maxCup)}
