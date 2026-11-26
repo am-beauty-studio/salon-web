@@ -3762,7 +3762,7 @@ a.cita-cliente:hover { color: var(--gold-dark); }
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: 12px; flex-wrap: wrap; margin-bottom: 10px;
 }
-/* Cabecera de sección con icono, como las tarjetas informativas */
+/* Enunciado de sección con icono, como las tarjetas informativas */
 .dash-cab-titulo { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
 .dash-cab-titulo .dash-kpi-ico { margin-bottom: 0; flex-shrink: 0; }
 .dash-cab h2 { color: var(--text); font-size: 15.5px; font-weight: 700; }
@@ -3787,19 +3787,11 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 }
 .dash-donuts .dash-donut-wrap { gap: 16px; }
 .dash-donuts .dash-donut-leyenda { min-width: 160px; }
-.dash-tendencia {
-  min-width: 0;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 10px 12px 6px;
-}
+.dash-tendencia { min-width: 0; }
 .dash-tendencia-titulo {
   display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin: 0 0 2px;
-  padding: 2px 9px;
+  margin: 4px 0 2px 44px;
+  padding: 2px 8px;
   border-radius: 999px;
   background: rgba(206, 124, 148, .11);
   color: var(--gold-dark);
@@ -3808,14 +3800,6 @@ a.cita-cliente:hover { color: var(--gold-dark); }
   letter-spacing: .7px;
 }
 .dash-serv-barras { display: flex; flex-direction: column; gap: 3px; }
-/* Panel suave para separar las barras del resto de la fila */
-.dash-serv-barras-panel {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 7px 9px;
-  gap: 4px;
-}
 .dash-serv-barra {
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr) 32px;
@@ -4201,13 +4185,11 @@ a.cita-cliente:hover { color: var(--gold-dark); }
   .panel-cita-acciones .btn { flex: 1; justify-content: center; }
 }
 
-.dash-leyenda { display: flex; flex-wrap: wrap; gap: 8px; }
+.dash-leyenda { display: flex; flex-wrap: wrap; gap: 14px; }
 .dash-leyenda span {
   display: inline-flex; align-items: center; gap: 6px;
-  color: var(--muted); font-size: 11.5px;
+  color: var(--muted); font-size: 12px;
 }
-.dash-leyenda span b { font-weight: 700; }
-.dash-leyenda .dash-chip { padding: 4px 9px; }
 .dash-leyenda i, .dash-dot {
   width: 8px; height: 8px; border-radius: 50%; display: inline-block;
   flex-shrink: 0;
@@ -4431,6 +4413,13 @@ a.dash-persona:hover { border-color: var(--gold); text-decoration: none; }
 .dash-serv:first-child { padding-top: 0; }
 .dash-serv:last-child { padding-bottom: 0; }
 .dash-serv + .dash-serv { border-top: 1px solid rgba(227, 188, 204, .55); }
+.dash-rank {
+  width: 23px; height: 23px; border-radius: 50%;
+  background: var(--bg); border: 1px solid var(--border);
+  color: var(--gold-dark); font-size: 11px; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+}
 .dash-serv-cuerpo { flex: 1; min-width: 0; }
 .dash-serv-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .dash-serv-nombre {

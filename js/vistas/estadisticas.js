@@ -223,18 +223,18 @@ function dashboard(datos) {
           </div>
         </div>
         <div class="dash-leyenda">
-          <span class="dash-chip"><i style="background:var(--gold)"></i>USD <b class="texto-usd">${monto(usd.totales.estudio, "USD")}</b></span>
-          <span class="dash-chip"><i style="background:var(--violeta)"></i>CUP <b class="texto-cup">${monto(cup.totales.estudio, "CUP")}</b></span>
-          <span class="dash-chip"><i style="background:var(--verde)"></i>${totalCitas} citas</span>
+          <span><i style="background:var(--gold)"></i>USD <span class="texto-usd">${monto(usd.totales.estudio, "USD")}</span></span>
+          <span><i style="background:var(--violeta)"></i>CUP <span class="texto-cup">${monto(cup.totales.estudio, "CUP")}</span></span>
+          <span><i style="background:var(--verde)"></i>${totalCitas} citas</span>
         </div>
       </div>
       <div class="dash-tendencias">
         <div class="dash-tendencia">
-          <div class="dash-tendencia-titulo">${icono.dolar(11)}<span>Recaudado · USD y CUP</span></div>
+          <div class="dash-tendencia-titulo">Recaudado · USD y CUP</div>
           ${svgRecaudado(usd.serie || [], cup.serie || [], usd.periodo)}
         </div>
         <div class="dash-tendencia">
-          <div class="dash-tendencia-titulo">${icono.calendario(11)}<span>Citas completadas</span></div>
+          <div class="dash-tendencia-titulo">Citas completadas</div>
           ${svgBarrasCitas(usd.serie || [], cup.serie || [], usd.periodo)}
         </div>
       </div>
@@ -570,7 +570,7 @@ function listaServiciosHtml(titulo, sub, servicios, datos) {
         ? `<p class="dash-vacio">Sin servicios con movimiento en este período.</p>`
         : `<div class="dash-servs">${servicios.map((x, i) => `
             <div class="dash-serv">
-              <span class="dash-persona-rank${x.citas === 0 ? " vacio" : ""}">${i + 1}</span>
+              <span class="dash-rank">${i + 1}</span>
               <div class="dash-serv-cuerpo">
                 <div class="dash-serv-cab">
                   <span class="dash-serv-nombre">
@@ -583,7 +583,7 @@ function listaServiciosHtml(titulo, sub, servicios, datos) {
                   ${icono.etiqueta(11)}
                   ${x.citas} ${x.citas === 1 ? "cita" : "citas"}
                 </span>
-                <div class="dash-serv-barras dash-serv-barras-panel">
+                <div class="dash-serv-barras">
                   ${barra("USD", numero(x.USD?.ingresos), totalUsd, maxUsd)}
                   ${barra("CUP", numero(x.CUP?.ingresos), totalCup, maxCup)}
                 </div>
