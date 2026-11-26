@@ -3098,31 +3098,35 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 .gan-bloque-filas,
 .gan-categorias-lista { display: flex; flex-direction: column; gap: 8px; }
 .gan-fila {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
-  align-items: center;
-  gap: 12px;
+  display: flex; flex-direction: column; gap: 8px;
   background: transparent;
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 10px 12px;
 }
-.gan-fila-nombre { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.gan-fila-nombre strong {
-  color: var(--text); font-size: 14px; font-weight: 600;
+.gan-fila-cab {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.gan-fila-cab strong {
+  min-width: 0; color: var(--text); font-size: 14px; font-weight: 600;
   overflow-wrap: anywhere;
 }
-.gan-fila-nombre small { color: var(--muted); font-size: 11px; }
+.gan-fila-cab > span { color: var(--muted); font-size: 11px; white-space: nowrap; flex-shrink: 0; }
+.gan-fila-datos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .gan-fila-dato { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .gan-fila-dato > small {
   color: var(--muted); font-size: 10px; font-weight: 700;
   letter-spacing: .5px; text-transform: uppercase;
 }
-.gan-fila-monto .dash-monto-dual > span { font-size: 12.5px; }
-.gan-fila-dato-final { align-items: flex-end; text-align: right; }
-@media (max-width: 560px) {
-  .gan-fila { grid-template-columns: minmax(0, 1fr); gap: 8px; }
-  .gan-fila-dato-final { align-items: flex-start; text-align: left; }
+.gan-fila-monto .dash-monto-dual { align-items: flex-start; }
+.gan-fila-monto .dash-monto-dual > span { font-size: 12px; }
+.gan-fila-dato-final .gan-fila-monto .dash-monto-dual { align-items: flex-end; text-align: right; }
+@media (max-width: 420px) {
+  .gan-fila-datos { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .gan-fila-dato-final .gan-fila-monto .dash-monto-dual { align-items: flex-start; text-align: left; }
 }
 
 .acordeon-monto .dash-monto-dual > span,

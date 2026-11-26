@@ -271,18 +271,20 @@ export async function render(raiz) {
         <div class="gan-bloque-filas">
           ${filas.map((f) => `
             <div class="gan-fila">
-              <span class="gan-fila-nombre">
+              <div class="gan-fila-cab">
                 <strong>${escapeHtml(f.titulo)}</strong>
-                <small>${f.citas} ${f.citas === 1 ? "cita" : "citas"}</small>
-              </span>
-              <span class="gan-fila-dato">
-                <small>Generado</small>
-                <span class="gan-fila-monto">${f.generado}</span>
-              </span>
-              <span class="gan-fila-dato gan-fila-dato-final">
-                <small>Le corresponde</small>
-                <span class="gan-fila-monto">${f.corresponde}</span>
-              </span>
+                <span>${f.citas} ${f.citas === 1 ? "cita" : "citas"}</span>
+              </div>
+              <div class="gan-fila-datos">
+                <div class="gan-fila-dato">
+                  <small>Generado</small>
+                  <span class="gan-fila-monto">${f.generado}</span>
+                </div>
+                <div class="gan-fila-dato gan-fila-dato-final">
+                  <small>Le corresponde</small>
+                  <span class="gan-fila-monto">${f.corresponde}</span>
+                </div>
+              </div>
             </div>`).join("")}
         </div>
       </div>`;
