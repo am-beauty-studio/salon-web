@@ -8,7 +8,7 @@ import { animarCifras } from "../contador.js?v=3";
 import {
   $, $$, aISO, escapeHtml, fechaCorta, sumarDias, sumarMeses, etiquetaSemana,
   tituloMes, tituloAnio, importe, mostrarCategoria,
-} from "../util.js?v=54";
+} from "../util.js?v=55";
 import { icoCategoria, icono } from "../iconos.js?v=64";
 
 const ROSAS = [
@@ -501,17 +501,19 @@ function filaCategoria(c, datos, i = 0, coloresUsd = new Map(), coloresCup = new
         </span>
         <span class="dash-cat-nombre">
           ${escapeHtml(mostrarCategoria(c.categoria))}
-          <small class="dash-cat-citas">
-            ${c.citas} ${c.citas === 1 ? "cita" : "citas"}
-          </small>
-          <small class="dash-cat-am">
-            AM Luxury:
-            <span class="texto-usd">${monto(c.USD?.estudio, "USD")} USD</span>
-            · <span class="texto-cup">${monto(c.CUP?.estudio, "CUP")} CUP</span>
-          </small>
         </span>
         <span class="dash-cat-monto" title="Recaudado del estudio">
           ${montoDual(ingresosUsd, ingresosCup)}
+        </span>
+      </div>
+      <div class="dash-cat-detalle">
+        <span class="dash-cat-citas">
+          ${c.citas} ${c.citas === 1 ? "cita" : "citas"}
+        </span>
+        <span class="dash-cat-am">
+          AM Luxury:
+          <span class="texto-usd">${monto(c.USD?.estudio, "USD")} USD</span>
+          · <span class="texto-cup">${monto(c.CUP?.estudio, "CUP")} CUP</span>
         </span>
       </div>
       <div class="dash-serv-barras">

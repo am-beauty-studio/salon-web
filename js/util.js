@@ -127,9 +127,11 @@ export function etiquetaMoneda(moneda) {
  */
 export function importe(valor, moneda = "USD") {
   const numero = Number(valor || 0);
+  // El CUP se muestra siempre sin centavos: del punto a la derecha no se pinta.
+  const decimales = normalizarMoneda(moneda) === "CUP" ? 0 : 2;
   const texto = numero.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: decimales,
+    maximumFractionDigits: decimales,
   });
   return `$${texto}`;
 }

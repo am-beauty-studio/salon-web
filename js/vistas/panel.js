@@ -9,7 +9,7 @@ import { esSuperadmin, usuario as usuarioActual } from "../auth.js?v=52";
 import { animarCifras } from "../contador.js?v=3";
 import { icono } from "../iconos.js?v=64";
 import { confirmarPeligro } from "../modal-confirmar.js?v=1";
-import { $, $$, aviso, escapeHtml, fechaCorta, hora, importe, etiquetaMoneda } from "../util.js?v=54";
+import { $, $$, aviso, escapeHtml, fechaCorta, hora, importe, etiquetaMoneda } from "../util.js?v=55";
 
 const ETIQUETA_ROL = {
   superadmin: "Superadmin",

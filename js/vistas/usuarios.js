@@ -2,7 +2,7 @@
 // Equivalente a src/app/usuarios/index.tsx.
 
 import { get } from "../api.js?v=49";
-import { $, escapeHtml } from "../util.js?v=54";
+import { $, escapeHtml } from "../util.js?v=55";
 import { icono } from "../iconos.js?v=64";
 
 const ETIQUETA_ROL = {

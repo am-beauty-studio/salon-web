@@ -3712,7 +3712,6 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 .dash-kpi-moneda.usd small { color: var(--gold); }
 .dash-kpi-moneda.secundaria .dash-kpi-valor {
   color: var(--violeta);
-  font-size: 17px;
 }
 .dash-kpi-moneda.secundaria small { color: var(--violeta); }
 .texto-usd { color: var(--gold); }
@@ -4258,17 +4257,14 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 .dash-cat-ico { display: inline-flex; align-items: center; justify-content: center; }
 .dash-cat-ico .cat-ico { width: 22px; height: 22px; margin: 0; vertical-align: 0; }
 .dash-cat-nombre { flex: 1; min-width: 0; color: var(--text); font-size: 14.5px; font-weight: 600; }
-.dash-cat-nombre small { display: block; color: var(--muted); font-size: 11.5px; font-weight: 400; }
-.dash-cat-nombre .dash-cat-citas {
-  color: var(--text); font-size: 11.5px; font-weight: 600;
+.dash-cat-detalle { margin: 2px 0 5px; }
+.dash-cat-citas {
+  display: block; color: var(--text); font-size: 11.5px; font-weight: 600;
 }
-.dash-cat-nombre .dash-cat-am {
-  margin-top: 1px;
-  white-space: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
+.dash-cat-am {
+  display: block; color: var(--muted); font-size: 11px; font-weight: 400;
+  overflow-wrap: anywhere;
 }
-.dash-cat-am::-webkit-scrollbar { display: none; }
 .dash-cat-am .texto-usd,
 .dash-cat-am .texto-cup { font-weight: 700; }
 .dash-cat-monto {

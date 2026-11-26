@@ -5,7 +5,7 @@ import {
   $, $$, aviso, confirmar, escapeHtml, aISO, sumarDias, etiqueta,
   esHoy, hora, usd, importe, etiquetaMoneda, normalizarMoneda, textoSubtipo,
   badgeCita, nombreCorto, esReprogramada,
-} from "../util.js?v=54";
+} from "../util.js?v=55";
 import { esAdmin } from "../auth.js?v=52";
 import { icono } from "../iconos.js?v=64";
 import { abrirCalendario } from "./componentes.js?v=52";
