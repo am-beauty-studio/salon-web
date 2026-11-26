@@ -262,15 +262,22 @@ export async function render(raiz) {
   function seccionLista(titulo, filas, vacio) {
     if (vacio) return "";
     return `
-      <div class="paso-titulo">${titulo}</div>
-      ${filas.map((f) => `
-        <div class="lista-fila" style="cursor:default">
-          <span class="lista-principal">
-            ${escapeHtml(f.titulo)}
-            <br/><span class="lista-secundario">${f.detalle}</span>
-          </span>
-          <span class="lista-secundario">${f.derecho}</span>
-        </div>`).join("")}`;
+      <div class="gan-bloque">
+        <div class="gan-bloque-cab">
+          <span class="gan-bloque-ico">${icono.usuario(16)}</span>
+          <h3>${escapeHtml(titulo)}</h3>
+        </div>
+        <div class="gan-bloque-filas">
+          ${filas.map((f) => `
+            <div class="gan-fila">
+              <span class="gan-fila-info">
+                <span class="gan-fila-titulo">${escapeHtml(f.titulo)}</span>
+                <span class="gan-fila-detalle">${f.detalle}</span>
+              </span>
+              <span class="gan-fila-valores">${f.derecho}</span>
+            </div>`).join("")}
+        </div>
+      </div>`;
   }
 
   /** Acordeón "Por categoría": servicios agrupados por su categoría, con
@@ -386,7 +393,12 @@ export async function render(raiz) {
     };
 
     return `
-      <div class="paso-titulo" style="margin-top:18px">Por categoría</div>
+      <div class="gan-bloque gan-categorias">
+        <div class="gan-bloque-cab">
+          <span class="gan-bloque-ico">${icono.capas(16)}</span>
+          <h3>Por categoría</h3>
+        </div>
+        <div class="gan-categorias-lista">
       ${grupos.map((g) => {
         const ico = icoCategoria(g.categoria);
         const t = sumarCategoria(g.items);
@@ -424,7 +436,9 @@ export async function render(raiz) {
             <div class="cat-servicios">${g.items.map(acordeon).join("")}</div>
           </div>
         </div>`;
-      }).join("")}`;
+      }).join("")}
+        </div>
+      </div>`;
   }
 
   /** 15 -> "15%", 12.5 -> "12.5%" */
