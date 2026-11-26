@@ -510,6 +510,9 @@ function filaCategoria(c, datos, i = 0, coloresUsd = new Map(), coloresCup = new
             · <span class="texto-cup">${monto(c.CUP?.estudio, "CUP")} CUP</span>
           </small>
         </span>
+        <span class="dash-cat-monto" title="Recaudado del estudio">
+          ${montoDual(ingresosUsd, ingresosCup)}
+        </span>
       </div>
       <div class="dash-serv-barras">
         <div class="dash-serv-barra">
