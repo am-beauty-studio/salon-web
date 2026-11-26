@@ -215,23 +215,26 @@ function dashboard(datos) {
 
     <div class="dash-card">
       <div class="dash-cab">
-        <div>
-          <h2>Tendencia del período</h2>
-          <p>Recaudado por AM Luxury en las dos monedas y cantidad total de citas</p>
+        <div class="dash-cab-titulo">
+          <span class="dash-kpi-ico">${icono.estadisticas(16)}</span>
+          <div>
+            <h2>Tendencia del período</h2>
+            <p>Recaudado por AM Luxury en las dos monedas y cantidad total de citas</p>
+          </div>
         </div>
         <div class="dash-leyenda">
-          <span><i style="background:var(--gold)"></i>USD <span class="texto-usd">${monto(usd.totales.estudio, "USD")}</span></span>
-          <span><i style="background:var(--violeta)"></i>CUP <span class="texto-cup">${monto(cup.totales.estudio, "CUP")}</span></span>
-          <span><i style="background:var(--verde)"></i>${totalCitas} citas</span>
+          <span class="dash-chip"><i style="background:var(--gold)"></i>USD <b class="texto-usd">${monto(usd.totales.estudio, "USD")}</b></span>
+          <span class="dash-chip"><i style="background:var(--violeta)"></i>CUP <b class="texto-cup">${monto(cup.totales.estudio, "CUP")}</b></span>
+          <span class="dash-chip"><i style="background:var(--verde)"></i>${totalCitas} citas</span>
         </div>
       </div>
       <div class="dash-tendencias">
         <div class="dash-tendencia">
-          <div class="dash-tendencia-titulo">Recaudado · USD y CUP</div>
+          <div class="dash-tendencia-titulo">${icono.dolar(11)}<span>Recaudado · USD y CUP</span></div>
           ${svgRecaudado(usd.serie || [], cup.serie || [], usd.periodo)}
         </div>
         <div class="dash-tendencia">
-          <div class="dash-tendencia-titulo">Citas completadas</div>
+          <div class="dash-tendencia-titulo">${icono.calendario(11)}<span>Citas completadas</span></div>
           ${svgBarrasCitas(usd.serie || [], cup.serie || [], usd.periodo)}
         </div>
       </div>
@@ -239,9 +242,12 @@ function dashboard(datos) {
 
     <div class="dash-card" id="dash-categoria-card">
       <div class="dash-cab">
-        <div>
-          <h2>Recaudado por categoría</h2>
-          <p>Reparto por categoría en USD y CUP</p>
+        <div class="dash-cab-titulo">
+          <span class="dash-kpi-ico">${icono.capas(16)}</span>
+          <div>
+            <h2>Recaudado por categoría</h2>
+            <p>Reparto por categoría en USD y CUP</p>
+          </div>
         </div>
       </div>
       ${categoriasHtml(datos)}
@@ -502,19 +508,20 @@ function filaCategoria(c, datos, i = 0, coloresUsd = new Map(), coloresCup = new
         <span class="dash-cat-nombre">
           ${escapeHtml(mostrarCategoria(c.categoria))}
         </span>
-        <span class="dash-cat-monto" title="Recaudado del estudio">
+        <span class="dash-cat-total" title="Recaudado del estudio">
+          <small>Recaudado</small>
           ${montoDual(ingresosUsd, ingresosCup)}
         </span>
       </div>
-      <div class="dash-cat-detalle">
-        <span class="dash-cat-citas">
-          ${c.citas} ${c.citas === 1 ? "cita" : "citas"}
-        </span>
-        <span class="dash-cat-am">
-          AM Luxury:
-          <span class="texto-usd">${monto(c.USD?.estudio, "USD")} USD</span>
-          · <span class="texto-cup">${monto(c.CUP?.estudio, "CUP")} CUP</span>
-        </span>
+      <div class="cat-metricas dash-cat-metricas">
+        <div class="cat-metrica">
+          <span>Citas</span>
+          <strong>${c.citas}</strong>
+        </div>
+        <div class="cat-metrica destacada">
+          <span>AM Luxury</span>
+          ${montoDual(c.USD?.estudio, c.CUP?.estudio)}
+        </div>
       </div>
       <div class="dash-serv-barras">
         <div class="dash-serv-barra">
@@ -554,13 +561,16 @@ function listaServiciosHtml(titulo, sub, servicios, datos) {
   return `
     <div class="dash-card">
       <div class="dash-cab">
-        <div><h2>${escapeHtml(titulo)}</h2><p>${escapeHtml(sub)}</p></div>
+        <div class="dash-cab-titulo">
+          <span class="dash-kpi-ico">${icono.etiqueta(16)}</span>
+          <div><h2>${escapeHtml(titulo)}</h2><p>${escapeHtml(sub)}</p></div>
+        </div>
       </div>
       ${servicios.length === 0
         ? `<p class="dash-vacio">Sin servicios con movimiento en este período.</p>`
         : `<div class="dash-servs">${servicios.map((x, i) => `
             <div class="dash-serv">
-              <span class="dash-rank">${i + 1}</span>
+              <span class="dash-persona-rank${x.citas === 0 ? " vacio" : ""}">${i + 1}</span>
               <div class="dash-serv-cuerpo">
                 <div class="dash-serv-cab">
                   <span class="dash-serv-nombre">
@@ -573,7 +583,7 @@ function listaServiciosHtml(titulo, sub, servicios, datos) {
                   ${icono.etiqueta(11)}
                   ${x.citas} ${x.citas === 1 ? "cita" : "citas"}
                 </span>
-                <div class="dash-serv-barras">
+                <div class="dash-serv-barras dash-serv-barras-panel">
                   ${barra("USD", numero(x.USD?.ingresos), totalUsd, maxUsd)}
                   ${barra("CUP", numero(x.CUP?.ingresos), totalCup, maxCup)}
                 </div>
