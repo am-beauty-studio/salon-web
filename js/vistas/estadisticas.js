@@ -513,7 +513,8 @@ function filaCategoria(c, datos, i = 0, coloresUsd = new Map(), coloresCup = new
         </span>
       </div>
       <div class="dash-cat-detalle">
-        <span class="dash-cat-citas">
+        <span class="dash-serv-citas-tag">
+          ${icono.etiqueta(11)}
           ${c.citas} ${c.citas === 1 ? "cita" : "citas"}
         </span>
         <span class="dash-cat-am">
