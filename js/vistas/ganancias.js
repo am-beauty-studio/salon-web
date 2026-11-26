@@ -233,14 +233,12 @@ export async function render(raiz) {
       ${!hayCitas ? `<div class="vacio">Sin ganancias registradas en este período.</div>` : ""}
       ${citasDe(pendiente) ? pendienteHtml(pendiente) : ""}
 
-      ${seccionLista("Por trabajadora", porTrabajadora.map((x) => {
-        const citas = citasDe(x);
-        return {
-          titulo: x.empleado_nombre,
-          detalle: `${citas} ${citas === 1 ? "cita" : "citas"} · ${ambas(x.USD?.ingresos, x.CUP?.ingresos)} generados`,
-          derecho: `le corresponde ${ambas(x.USD?.trabajadoras, x.CUP?.trabajadoras)}`,
-        };
-      }), !porTrabajadora.length)}
+      ${seccionLista("Por trabajadora", porTrabajadora.map((x) => ({
+        titulo: x.empleado_nombre,
+        citas: citasDe(x),
+        generado: ambas(x.USD?.ingresos, x.CUP?.ingresos),
+        corresponde: ambas(x.USD?.trabajadoras, x.CUP?.trabajadoras),
+      })), !porTrabajadora.length)}
 
       ${seccionServicios(porServicio)}
 
@@ -273,11 +271,18 @@ export async function render(raiz) {
         <div class="gan-bloque-filas">
           ${filas.map((f) => `
             <div class="gan-fila">
-              <span class="gan-fila-info">
-                <span class="gan-fila-titulo">${escapeHtml(f.titulo)}</span>
-                <span class="gan-fila-detalle">${f.detalle}</span>
+              <span class="gan-fila-nombre">
+                <strong>${escapeHtml(f.titulo)}</strong>
+                <small>${f.citas} ${f.citas === 1 ? "cita" : "citas"}</small>
               </span>
-              <span class="gan-fila-valores">${f.derecho}</span>
+              <span class="gan-fila-dato">
+                <small>Generado</small>
+                <span class="gan-fila-monto">${f.generado}</span>
+              </span>
+              <span class="gan-fila-dato gan-fila-dato-final">
+                <small>Le corresponde</small>
+                <span class="gan-fila-monto">${f.corresponde}</span>
+              </span>
             </div>`).join("")}
         </div>
       </div>`;

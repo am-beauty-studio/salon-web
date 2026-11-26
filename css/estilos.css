@@ -3098,18 +3098,32 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 .gan-bloque-filas,
 .gan-categorias-lista { display: flex; flex-direction: column; gap: 8px; }
 .gan-fila {
-  display: flex; align-items: center; justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
   gap: 12px;
   background: transparent;
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 10px 12px;
 }
-.gan-fila-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.gan-fila-titulo { color: var(--text); font-size: 14px; font-weight: 600; }
-.gan-fila-detalle { color: var(--muted); font-size: 11.5px; line-height: 1.4; }
-.gan-fila-valores { color: var(--muted); font-size: 11.5px; text-align: right; flex-shrink: 0; }
-.gan-fila-valores .dash-monto-dual > span { font-size: 12px; }
+.gan-fila-nombre { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.gan-fila-nombre strong {
+  color: var(--text); font-size: 14px; font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.gan-fila-nombre small { color: var(--muted); font-size: 11px; }
+.gan-fila-dato { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.gan-fila-dato > small {
+  color: var(--muted); font-size: 10px; font-weight: 700;
+  letter-spacing: .5px; text-transform: uppercase;
+}
+.gan-fila-monto .dash-monto-dual > span { font-size: 12.5px; }
+.gan-fila-dato-final { align-items: flex-end; text-align: right; }
+@media (max-width: 560px) {
+  .gan-fila { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .gan-fila-dato-final { align-items: flex-start; text-align: left; }
+}
 
 .acordeon-monto .dash-monto-dual > span,
 .cat-cab-total .dash-monto-dual > span,
