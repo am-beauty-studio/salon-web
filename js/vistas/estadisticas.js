@@ -43,6 +43,7 @@ export async function render(raiz) {
   let fecha = new Date();
   let datos = null;
   let observadorDonut = null;
+  let observadorTendencia = null;
   let solicitud = 0;
 
   raiz.innerHTML = `
@@ -106,6 +107,7 @@ export async function render(raiz) {
   async function cargar() {
     pintarTitulo();
     if (observadorDonut) observadorDonut.disconnect();
+    if (observadorTendencia) observadorTendencia.disconnect();
     $("#dash").innerHTML = `<div class="cargando">Cargando…</div>`;
     const actual = ++solicitud;
     try {
@@ -128,6 +130,7 @@ export async function render(raiz) {
       $dash.innerHTML = dashboard(datos);
       animarCifras($dash);
       observadorDonut = observarDonut($dash);
+      observadorTendencia = observarTendencia($dash);
     } catch (e) {
       if (actual !== solicitud) return;
       $("#dash").innerHTML = `
@@ -173,6 +176,33 @@ function observarDonut(dash) {
     });
   }, { threshold: 0.3 });
   wraps.forEach((wrap) => observador.observe(wrap));
+  return observador;
+}
+
+/**
+ * Las gráficas de tendencia esperan a entrar en pantalla para animar sus
+ * datos (trazos, puntos y barras).
+ */
+function observarTendencia(dash) {
+  const charts = [...dash.querySelectorAll(".dash-chart-datos")];
+  if (!charts.length) return null;
+
+  const activar = (chart) => chart.classList.remove("pendiente");
+
+  if (!("IntersectionObserver" in window)) {
+    charts.forEach(activar);
+    return null;
+  }
+
+  charts.forEach((chart) => chart.classList.add("pendiente"));
+  const observador = new IntersectionObserver((entradas) => {
+    entradas.forEach((entrada) => {
+      if (!entrada.isIntersecting) return;
+      activar(entrada.target);
+      observador.unobserve(entrada.target);
+    });
+  }, { threshold: 0.25 });
+  charts.forEach((chart) => observador.observe(chart));
   return observador;
 }
 
