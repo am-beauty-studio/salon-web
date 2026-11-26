@@ -3762,9 +3762,21 @@ a.cita-cliente:hover { color: var(--gold-dark); }
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: 12px; flex-wrap: wrap; margin-bottom: 10px;
 }
-/* Enunciado de sección con icono, como las tarjetas informativas */
-.dash-cab-titulo { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
-.dash-cab-titulo .dash-kpi-ico { margin-bottom: 0; flex-shrink: 0; }
+/* Enunciado de sección: franja teñida con icono, igual que las categorías */
+.dash-cab-titulo {
+  display: flex; align-items: center; gap: 11px; min-width: 0;
+  padding: 8px 12px;
+  background: #FBEDF2;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.dash-cab-titulo .dash-kpi-ico {
+  width: 34px; height: 34px; border-radius: 10px;
+  margin-bottom: 0; flex-shrink: 0;
+  background: var(--card);
+  border: 1px solid rgba(206, 124, 148, .28);
+}
+.dash-cab-titulo h2 { color: var(--gold-dark); }
 .dash-cab h2 { color: var(--text); font-size: 15.5px; font-weight: 700; }
 .dash-cab p { color: var(--muted); font-size: 12.5px; }
 .dash-cab-moneda { flex-shrink: 0; margin-left: auto; }
