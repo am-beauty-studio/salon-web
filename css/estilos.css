@@ -3803,7 +3803,7 @@ a.cita-cliente:hover { color: var(--gold-dark); }
   gap: 16px;
 }
 .dash-donuts .dash-donut-wrap { gap: 16px; }
-.dash-donuts .dash-donut-leyenda { min-width: 160px; }
+.dash-donuts .dash-donut-leyenda-box { min-width: 160px; }
 .dash-tendencia { min-width: 0; }
 .dash-tendencia-titulo {
   display: inline-flex;
@@ -4261,17 +4261,46 @@ a.cita-cliente:hover { color: var(--gold-dark); }
 .dash-donut-centro strong { color: var(--gold); font-size: 18px; }
 .dash-donut-centro strong.texto-usd { color: var(--gold); }
 .dash-donut-centro strong.texto-cup { color: var(--violeta); }
+.dash-donut-leyenda-box { flex: 1; min-width: 210px; }
+.dash-donut-leyenda-cab {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6px; padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted); font-size: 10px; font-weight: 800;
+  letter-spacing: .6px; text-transform: uppercase;
+}
 .dash-donut-leyenda {
-  list-style: none; flex: 1; min-width: 210px;
-  display: flex; flex-direction: column; gap: 7px;
+  list-style: none;
+  display: flex; flex-direction: column; gap: 5px;
 }
 .dash-donut-leyenda li {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 13.5px; color: var(--text);
+  display: flex; align-items: center; gap: 9px;
+  padding: 6px 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  font-size: 12.5px; color: var(--text);
 }
-.dash-donut-leyenda li span { flex: 1; }
-.dash-donut-leyenda li strong { color: var(--gold-dark); font-size: 13px; }
-.dash-donut-leyenda li i { width: 9px; height: 9px; border-radius: 50%; }
+.dash-donut-leyenda li > i {
+  width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0;
+}
+.dash-donut-leyenda-texto {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.dash-donut-leyenda-nombre {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dash-donut-leyenda-barra {
+  height: 4px; border-radius: 2px; background: var(--bg); overflow: hidden;
+}
+.dash-donut-leyenda-barra span { display: block; height: 100%; border-radius: 2px; }
+.dash-donut-leyenda-pct {
+  color: var(--gold-dark); font-size: 12px; font-weight: 800;
+  background: rgba(206, 124, 148, .10);
+  border-radius: 999px; padding: 3px 8px;
+  white-space: nowrap;
+}
 
 .dash-cats { display: flex; flex-direction: column; gap: 8px; }
 /* Cada categoría va en su propio contenedor, como clientas/empleadas. */

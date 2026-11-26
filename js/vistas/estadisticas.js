@@ -478,14 +478,27 @@ function donutHtml(categorias, total, moneda) {
           <small>${moneda}</small>
         </div>
       </div>
-      <ul class="dash-donut-leyenda">
-        ${ordenadas.map((c, i) => `
-          <li style="--i:${i}">
-            <i style="background:${colorCategoria(moneda, i)}"></i>
-            <span>${escapeHtml(mostrarCategoria(c.categoria))}</span>
-            <strong>${((numero(c.ingresos) / total) * 100).toFixed(0)}%</strong>
-          </li>`).join("")}
-      </ul>
+      <div class="dash-donut-leyenda-box">
+        <div class="dash-donut-leyenda-cab">
+          <span>${moneda}</span>
+          <span>% del total</span>
+        </div>
+        <ul class="dash-donut-leyenda">
+          ${ordenadas.map((c, i) => {
+            const pct = (numero(c.ingresos) / total) * 100;
+            const color = colorCategoria(moneda, i);
+            return `
+              <li style="--i:${i}">
+                <i style="background:${color}"></i>
+                <span class="dash-donut-leyenda-texto">
+                  <span class="dash-donut-leyenda-nombre">${escapeHtml(mostrarCategoria(c.categoria))}</span>
+                  <span class="dash-donut-leyenda-barra"><span style="width:${pct}%;background:${color}"></span></span>
+                </span>
+                <strong class="dash-donut-leyenda-pct">${Number(pct.toFixed(1))}%</strong>
+              </li>`;
+          }).join("")}
+        </ul>
+      </div>
     </div>`;
 }
 
