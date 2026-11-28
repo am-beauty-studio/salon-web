@@ -245,10 +245,9 @@ export async function render(raiz, params, query) {
           empleadoNuevo = cita.empleado_id;
           fecha = desdeISO(cita.inicio);
           // Mantener la hora actual permite corregir solo el servicio sin
-          // tener que volver a elegir día y hora.
-          slot = new Date(cita.inicio).getTime() >= Date.now() - 15 * 60 * 1000
-            ? { inicio: cita.inicio, fin: cita.fin }
-            : null;
+          // tener que volver a elegir día y hora, aunque la cita ya haya
+          // empezado (se corrige lo que realmente se hizo).
+          slot = { inicio: cita.inicio, fin: cita.fin };
         } else {
           slot = null;
         }
@@ -295,6 +294,7 @@ export async function render(raiz, params, query) {
     }
 
     const categoria = servicioNuevo.categoria || "";
+    const yaEmpezo = new Date(cita.inicio).getTime() < Date.now() - 15 * 60 * 1000;
     const listaServicios = serviciosDeCategoria();
     const extrasDisponibles = adicionalesDisponibles(servicioNuevo);
     const aptas = specialistsAptas(servicioNuevo, [...adicionalesNuevos]);
@@ -321,7 +321,9 @@ export async function render(raiz, params, query) {
           <span class="form-seccion-ico">${icono.lapiz(17)}</span>
           <div class="form-seccion-textos">
             <p class="form-seccion-titulo">Editar cita</p>
-            <p class="form-seccion-sub">Cambia el servicio, los adicionales, la especialista o el horario.</p>
+            <p class="form-seccion-sub">${yaEmpezo
+              ? "Cita ya iniciada: puedes corregir los servicios; la hora se mantiene."
+              : "Cambia el servicio, los adicionales, la especialista o el horario."}</p>
           </div>
         </div>
 
@@ -577,16 +579,30 @@ export async function render(raiz, params, query) {
         );
         if (solicitud !== solicitudHorarios) return; // ya hay otra comprobación
         verificandoHorario = false;
+        const mantieneOriginal = yaEmpezo &&
+          horaElegida === cita.inicio && empleadoNuevo === cita.empleado_id;
         if (resultado && horaElegida &&
             !resultado.slots.some((s) => s.inicio === horaElegida)) {
-          slot = null;
-          notaHora = cita.inicio === horaElegida && cita.empleado_id === empleadoNuevo
-            ? `El servicio nuevo no cabe a las ${hora(horaElegida)} con esta especialista. Te mostramos las horas libres de ese día.`
-            : `Las ${hora(horaElegida)} ya no están disponibles con estos cambios. Elige otra hora de las que aparecen abajo.`;
-          actualizarNotaHora();
-          requestAnimationFrame(() => $("#nota-hora")?.scrollIntoView({
-            behavior: "smooth", block: "nearest",
-          }));
+          if (mantieneOriginal) {
+            // La cita ya se hizo con esa hora: se conserva aunque la agenda de
+            // hoy ya no la ofrezca. La API valida los cruces reales.
+            notaHora = "";
+            actualizarNotaHora();
+            if (!resultado.slots.length) {
+              horarios.limpiar(
+                `Se mantiene la hora original de la cita (${hora(horaElegida)}).`
+              );
+            }
+          } else {
+            slot = null;
+            notaHora = cita.inicio === horaElegida && cita.empleado_id === empleadoNuevo
+              ? `El servicio nuevo no cabe a las ${hora(horaElegida)} con esta especialista. Te mostramos las horas libres de ese día.`
+              : `Las ${hora(horaElegida)} ya no están disponibles con estos cambios. Elige otra hora de las que aparecen abajo.`;
+            actualizarNotaHora();
+            requestAnimationFrame(() => $("#nota-hora")?.scrollIntoView({
+              behavior: "smooth", block: "nearest",
+            }));
+          }
         }
         actualizarConfirmar();
       };
