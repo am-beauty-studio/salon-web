@@ -12,7 +12,7 @@ import { iniciarDespertar, terminarDespertar } from "./espera.js?v=1";
 
 import { render as vistaLogin } from "./vistas/login.js?v=63";
 import { render as vistaAgenda } from "./vistas/agenda.js?v=64";
-import { render as vistaCitaNueva } from "./vistas/cita-nueva.js?v=60";
+import { render as vistaCitaNueva } from "./vistas/cita-nueva.js?v=63";
 import { render as vistaCitaDetalle } from "./vistas/cita-detalle.js?v=82";
 import { render as vistaClientes } from "./vistas/clientes.js?v=52";
 import { render as vistaClienteFicha } from "./vistas/cliente-ficha.js?v=64";

@@ -2466,6 +2466,74 @@ body.en-login .app { padding-bottom: 16px; }
 }
 
 /* ===== Wizard nueva cita ===== */
+/* Stepper vertical: cada item envuelve el paso del formulario que le
+   corresponde. El círculo y la etiqueta van a la izquierda del contenido y
+   una línea los une con el paso siguiente. */
+.stepper-cita { margin: 10px 0 4px; }
+.stepper-item {
+  position: relative;
+  padding: 0 0 16px 38px;
+}
+.stepper-item::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 34px;
+  bottom: 0;
+  width: 2px;
+  background: var(--border);
+}
+.stepper-item:last-child::before { display: none; }
+.stepper-circulo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+/* Los pasos verificados conservan su color: solo cambia el número por ✓. */
+.stepper-item.activo .stepper-circulo {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(206, 124, 148, .18);
+}
+.stepper-etiqueta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.stepper-item.activo .stepper-etiqueta { color: var(--gold-dark); }
+.stepper-nota {
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+@media (max-width: 420px) {
+  .stepper-item { padding-left: 32px; padding-bottom: 14px; }
+  .stepper-item::before { left: 12px; top: 30px; }
+  .stepper-circulo { width: 26px; height: 26px; font-size: 12px; }
+  .stepper-etiqueta { font-size: 12px; letter-spacing: .6px; }
+}
 .paso-titulo {
   color: var(--gold-dark);
   font-size: 13px;

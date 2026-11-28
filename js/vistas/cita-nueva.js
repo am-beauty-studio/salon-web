@@ -69,26 +69,71 @@ export async function render(raiz, _params, query) {
         <div style="font-weight:700;color:var(--gold-dark)">Archivar cita ya realizada</div>
         <p class="nota" style="margin:4px 0 0">Elige un día anterior a hoy. La cita quedará completada y contará en Ganancias.</p>
       </div>` : ""}
-    <div id="paso1"></div>
-    <div id="paso-reserva"></div>
-    <div id="paso2"></div>
-    <div id="paso3"></div>
-    <div id="paso4"></div>
-    <div id="paso5"></div>
-    <div id="paso-agregar"></div>
-    <div id="paso-moneda"></div>
-    <div id="paso-notas"></div>
-    <div id="resumen-final"></div>
-    <p class="error-txt oculto" id="error-cita"></p>
-    <button class="btn btn-dorado btn-bloque" id="btn-agendar" type="button" disabled>${archivar ? "Archivar cita" : "Agendar cita"}</button>
+    <div class="stepper-cita" role="list" aria-label="Pasos para agendar la cita">
+      <section class="stepper-item" id="paso1" role="listitem">
+        <span class="stepper-circulo" aria-hidden="true">1</span>
+        <div class="stepper-cuerpo">
+          <div class="stepper-etiqueta">Clienta</div>
+          <div class="paso-contenido"></div>
+        </div>
+      </section>
+      <section class="stepper-item" id="paso2" role="listitem">
+        <span class="stepper-circulo" aria-hidden="true">2</span>
+        <div class="stepper-cuerpo">
+          <div class="stepper-etiqueta">Servicio</div>
+          <div class="paso-contenido"></div>
+        </div>
+      </section>
+      <section class="stepper-item oculto" id="paso-subtipo" role="listitem">
+        <span class="stepper-circulo" aria-hidden="true">3</span>
+        <div class="stepper-cuerpo">
+          <div class="stepper-etiqueta">Tipo</div>
+          <div class="paso-contenido"></div>
+        </div>
+      </section>
+      <section class="stepper-item" id="paso3" role="listitem">
+        <span class="stepper-circulo" aria-hidden="true">3</span>
+        <div class="stepper-cuerpo">
+          <div class="stepper-etiqueta">Adicionales <span class="stepper-nota">opcional</span></div>
+          <div class="paso-contenido"></div>
+        </div>
+      </section>
+      <section class="stepper-item" id="paso4" role="listitem">
+        <span class="stepper-circulo" aria-hidden="true">4</span>
+        <div class="stepper-cuerpo">
+          <div class="stepper-etiqueta">Especialista</div>
+          <div class="paso-contenido"></div>
+        </div>
+      </section>
+      <section class="stepper-item" id="paso5" role="listitem">
+        <span class="stepper-circulo" aria-hidden="true">5</span>
+        <div class="stepper-cuerpo">
+          <div class="stepper-etiqueta">Día y hora${archivar ? " (pasado)" : ""}</div>
+          <div class="paso-contenido"></div>
+        </div>
+      </section>
+      <section class="stepper-item" id="paso6" role="listitem">
+        <span class="stepper-circulo" aria-hidden="true">6</span>
+        <div class="stepper-cuerpo">
+          <div class="stepper-etiqueta">Confirmar <span class="stepper-nota">moneda y notas</span></div>
+          <div class="paso-contenido">
+            <div id="paso-reserva"></div>
+            <div id="paso-moneda"></div>
+            <div id="paso-notas"></div>
+            <div id="resumen-final"></div>
+            <p class="error-txt oculto" id="error-cita"></p>
+            <button class="btn btn-dorado btn-bloque" id="btn-agendar" type="button" disabled>${archivar ? "Archivar cita" : "Agendar cita"}</button>
+          </div>
+        </div>
+      </section>
+    </div>
     <div style="height:20px"></div>`;
 
   // ---------- Paso 1: clienta ----------
   function pintarPaso1() {
-    const caja = $("#paso1");
+    const caja = $("#paso1 .paso-contenido");
     if (clienteId) {
       caja.innerHTML = `
-        <div class="paso-titulo">1 · Clienta</div>
         <div class="tarjeta" style="border-color:var(--gold);display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px">
           <div style="font-weight:600">${escapeHtml(clienteNombre || "Clienta")}</div>
           <button class="btn btn-contorno btn-mini" id="cambiar-clienta" type="button" style="flex:none">Cambiar</button>
@@ -100,7 +145,6 @@ export async function render(raiz, _params, query) {
     }
 
     caja.innerHTML = `
-      <div class="paso-titulo">1 · Clienta</div>
       <div class="campo-ico">
         ${icono.lupa()}
         <input class="input" id="buscar-clienta" placeholder="Buscar por nombre o teléfono" />
@@ -153,7 +197,7 @@ export async function render(raiz, _params, query) {
         clienteId = nueva.id;
         clienteNombre = nueva.nombre;
         aviso("Clienta creada", "ok");
-        pintarPaso1();
+        pintarPaso1(); actualizar();
       } catch (err) {
         error.textContent = err.message;
         error.classList.remove("oculto");
@@ -177,7 +221,7 @@ export async function render(raiz, _params, query) {
         fila.onclick = () => {
           const c = lista.find((x) => x.id === Number(fila.dataset.id));
           clienteId = c.id; clienteNombre = c.nombre;
-          pintarPaso1();
+          pintarPaso1(); actualizar();
         };
       });
     }
@@ -223,15 +267,16 @@ export async function render(raiz, _params, query) {
 
   function pintarPasosServicio() {
     const lleno = items.length >= MAX_SERVICIOS;
-    $("#paso2").innerHTML = "";
-    $("#paso3").innerHTML = "";
-    $("#paso4").innerHTML = "";
+    $("#paso2 .paso-contenido").innerHTML = "";
+    $("#paso-subtipo .paso-contenido").innerHTML = "";
+    $("#paso3 .paso-contenido").innerHTML = "";
+    $("#paso4 .paso-contenido").innerHTML = "";
     $("#paso-agregar").innerHTML = "";
     // El paso 5 (día y hora) se crea una sola vez; solo se oculta si la
     // reserva ya tiene el máximo de servicios.
     cajaDia.classList.toggle("oculto", lleno);
     if (lleno) return;
-    pintarPaso2(); pintarPaso3(); pintarPaso4(); pintarAgregar();
+    pintarPaso2(); pintarPasoSubtipo(); pintarPaso3(); pintarPaso4(); pintarAgregar();
   }
 
   function pintarPaso2() {
@@ -240,7 +285,7 @@ export async function render(raiz, _params, query) {
     // ningún servicio (igual que en la app móvil).
     if (categoriaActiva !== null && !cats.includes(categoriaActiva)) categoriaActiva = null;
 
-    const caja = $("#paso2");
+    const caja = $("#paso2 .paso-contenido");
     if (!cats.length) {
       caja.innerHTML = `<div class="vacio">No hay servicios registrados.</div>`;
       return;
@@ -253,7 +298,6 @@ export async function render(raiz, _params, query) {
         .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
 
     caja.innerHTML = `
-      <div class="paso-titulo">2 · Servicio</div>
       <div class="chips fila">
         ${cats.map((cat) => {
           const ico = icoCategoria(cat);
@@ -265,26 +309,10 @@ export async function render(raiz, _params, query) {
       </div>
       ${categoriaActiva === null
         ? `<p class="nota">Elige una categoría.</p>`
-        : `<div id="servicios-lista"></div>`}
-      ${servicio?.subtipos?.length ? `
-        <div class="paso-titulo">${servicio.categoria === "Pestañas" ? "Tipo de pestaña" : servicio.categoria === "Cejas" ? "Color de tinte" : "Tipo"}</div>
-        <div class="radio-fila">
-          ${servicio.subtipos.map((t) => `
-            <button type="button" class="radio-op ${subtipo === t ? "activo" : ""}" data-subtipo="${escapeHtml(t)}">
-              ${escapeHtml(t.length === 1 ? `Tipo ${t}` : t)}
-            </button>`).join("")}
-        </div>` : ""}`;
+        : `<div id="servicios-lista"></div>`}`;
 
     $$("#paso2 .chip").forEach((chip) => {
-      chip.onclick = () => { categoriaActiva = chip.dataset.cat; pintarPaso2(); };
-    });
-
-    $$("#paso2 .radio-op").forEach((boton) => {
-      boton.onclick = () => {
-        subtipo = boton.dataset.subtipo;
-        $$("#paso2 .radio-op").forEach((b) => b.classList.toggle("activo", b === boton));
-        actualizar();
-      };
+      chip.onclick = () => { categoriaActiva = chip.dataset.cat; pintarPaso2(); pintarPasoSubtipo(); actualizar(); };
     });
 
     const lista = $("#servicios-lista");
@@ -301,15 +329,42 @@ export async function render(raiz, _params, query) {
           subtipo = null;
           adicionales = new Set();
           slot = null;
-          pintarPaso2(); pintarPaso3(); pintarPaso4(); pintarAgregar(); recargarHorarios(); actualizar();
+          pintarPaso2(); pintarPasoSubtipo(); pintarPaso3(); pintarPaso4(); pintarAgregar(); recargarHorarios(); actualizar();
         };
       });
     }
   }
 
+  // ---------- Paso: subtipo (solo si el servicio lo tiene) ----------
+  function etiquetaSubtipo() {
+    return servicio?.categoria === "Pestañas" ? "Tipo de pestaña"
+      : servicio?.categoria === "Cejas" ? "Color de tinte" : "Tipo";
+  }
+
+  function pintarPasoSubtipo() {
+    const caja = $("#paso-subtipo .paso-contenido");
+    const etiqueta = $("#paso-subtipo .stepper-etiqueta");
+    if (etiqueta) etiqueta.textContent = etiquetaSubtipo();
+    if (!servicio?.subtipos?.length) { caja.innerHTML = ""; return; }
+    caja.innerHTML = `
+      <div class="radio-fila">
+        ${servicio.subtipos.map((t) => `
+          <button type="button" class="radio-op ${subtipo === t ? "activo" : ""}" data-subtipo="${escapeHtml(t)}">
+            ${escapeHtml(t.length === 1 ? `Tipo ${t}` : t)}
+          </button>`).join("")}
+      </div>`;
+    $$("#paso-subtipo .radio-op").forEach((boton) => {
+      boton.onclick = () => {
+        subtipo = boton.dataset.subtipo;
+        $$("#paso-subtipo .radio-op").forEach((b) => b.classList.toggle("activo", b === boton));
+        actualizar();
+      };
+    });
+  }
+
   // ---------- Paso 3: adicionales ----------
   function pintarPaso3() {
-    const caja = $("#paso3");
+    const caja = $("#paso3 .paso-contenido");
     const disponibles = servicio
       ? servicios.filter((x) => x.es_adicional && compatible(servicio, x))
       : [];
@@ -318,7 +373,6 @@ export async function render(raiz, _params, query) {
       return;
     }
     caja.innerHTML = `
-      <div class="paso-titulo">3 · Adicionales (opcional)</div>
       ${disponibles.map((a) => `
         <button type="button" class="sel-card ${adicionales.has(a.id) ? "activo" : ""}" data-id="${a.id}">
           <div class="sel-titulo">${adicionales.has(a.id) ? "✓ " : ""}${escapeHtml(a.nombre)}</div>
@@ -344,12 +398,11 @@ export async function render(raiz, _params, query) {
   }
 
   function pintarPaso4() {
-    const caja = $("#paso4");
+    const caja = $("#paso4 .paso-contenido");
     const aptas = especialistasAptas();
     if (!servicio) { caja.innerHTML = ""; return; }
     if (!aptas.length) {
       caja.innerHTML = `
-        <div class="paso-titulo">4 · Especialista</div>
         <div class="vacio">Ninguna especialista realiza esta combinación de servicios.</div>`;
       return;
     }
@@ -360,7 +413,6 @@ export async function render(raiz, _params, query) {
     }
 
     caja.innerHTML = `
-      <div class="paso-titulo">4 · Especialista</div>
       <div class="chips">
         ${aptas.map((e) => `
           <button type="button" class="chip ${empleadoId === e.id ? "activo" : ""}" data-id="${e.id}">
@@ -377,8 +429,8 @@ export async function render(raiz, _params, query) {
   }
 
   // ---------- Paso 5: día y hora ----------
-  const cajaDia = $("#paso5");
-  cajaDia.innerHTML = `<div class="paso-titulo">5 · Día y hora${archivar ? " (pasado)" : ""}</div><div id="sel-dia"></div><p class="nota oculto" id="nota-continua"></p><div id="sel-hora" style="margin-top:6px"></div>`;
+  const cajaDia = $("#paso5 .paso-contenido");
+  cajaDia.innerHTML = `<div id="sel-dia"></div><p class="nota oculto" id="nota-continua"></p><div id="sel-hora" style="margin-top:6px"></div><div id="paso-agregar"></div>`;
   const selectorDia = crearSelectorDia($("#sel-dia"), fecha, (nueva) => {
     fecha = nueva; slot = null;
     selectorDia.actualizar(nueva);
@@ -536,8 +588,60 @@ export async function render(raiz, _params, query) {
     });
   }
 
+  // ---------- Stepper vertical ----------
+  // Cada item del stepper ES el paso del formulario: el círculo y la etiqueta
+  // quedan junto a su contenido, unidos por una línea vertical. Se marca como
+  // completado, activo o pendiente según el estado de la reserva.
+  function pintarStepper() {
+    const sinAdicionales = !servicio || !servicios.some(
+      (x) => x.es_adicional && compatible(servicio, x)
+    );
+    // El paso de subtipo solo existe cuando el servicio elegido lo requiere.
+    const conSubtipos = Boolean(servicio?.subtipos?.length);
+    const seccionSubtipo = $("#paso-subtipo");
+    seccionSubtipo.classList.toggle("oculto", !conSubtipos);
+    if (!conSubtipos) {
+      seccionSubtipo.classList.remove("hecho", "activo");
+      seccionSubtipo.removeAttribute("aria-current");
+    }
+
+    const pasos = [
+      { el: $("#paso1"), hecho: Boolean(clienteId) },
+      { el: $("#paso2"), hecho: Boolean(servicio) },
+    ];
+    if (conSubtipos) {
+      pasos.push({ el: seccionSubtipo, hecho: Boolean(subtipo) });
+    }
+    pasos.push(
+      // Los adicionales son opcionales: listos al elegir especialista (o de
+      // entrada si el servicio no tiene adicionales compatibles).
+      { el: $("#paso3"), hecho: Boolean(servicio && (sinAdicionales || empleadoId)) },
+      { el: $("#paso4"), hecho: Boolean(servicio && empleadoId) },
+      { el: $("#paso5"), hecho: Boolean(slot) },
+      { el: $("#paso6"), hecho: Boolean(clienteId && (items.length > 0 || draftCompleto())) },
+    );
+    let activo = pasos.findIndex((p) => !p.hecho);
+    if (activo < 0) activo = pasos.length - 1;
+    // Si ya hay servicios en la reserva y el borrador está vacío, el paso
+    // siguiente es confirmar (o elegir otro servicio para seguir agregando).
+    if (items.length > 0 && !servicio && !empleadoId && !slot) {
+      activo = pasos.length - 1;
+    }
+
+    pasos.forEach((p, i) => {
+      if (!p.el) return;
+      p.el.classList.toggle("hecho", p.hecho);
+      p.el.classList.toggle("activo", i === activo);
+      const circulo = $(".stepper-circulo", p.el);
+      if (circulo) circulo.textContent = p.hecho ? "✓" : String(i + 1);
+      if (i === activo) p.el.setAttribute("aria-current", "step");
+      else p.el.removeAttribute("aria-current");
+    });
+  }
+
   function actualizar() {
     const { todos, duracion, precio } = totales();
+    pintarStepper();
 
     // El botón de agregar otro servicio habilita solo con el borrador completo
     // (servicio + especialista + hora) y si la reserva aún no está llena.
