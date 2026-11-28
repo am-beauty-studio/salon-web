@@ -5,7 +5,7 @@ import { get, post, patch, del } from "../api.js?v=49";
 import {
   $, $$, aviso, confirmar, escapeHtml, categoriasDe, categoriaCanonica,
   compararCategorias, mostrarCategoria, normalizarClave, textoSubtipo,
-} from "../util.js?v=56";
+} from "../util.js?v=57";
 import { icono, icoCategoria } from "../iconos.js?v=65";
 
 function numero(valor, defecto = 0) {

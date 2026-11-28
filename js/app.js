@@ -1,7 +1,7 @@
 // Enrutador principal (equivalente al Stack de Expo Router en salon_app).
 // Rutas por hash: #/agenda, #/cita/nueva, #/clientes/3, etc.
 
-import { $, esperar, soltar } from "./util.js?v=56";
+import { $, esperar, soltar } from "./util.js?v=57";
 import {
   haySesion, esAdmin, esSuperadmin, usuario, cerrarSesion, restaurarSesion,
   iniciarPresencia,

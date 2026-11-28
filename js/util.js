@@ -149,10 +149,12 @@ export function categoriasDe(servicio) {
   return [...new Set(lista.filter(Boolean))];
 }
 
-/** Texto visible de una categoría: "Paquete" se muestra como "Full Service". */
+/** Texto visible de una categoría: "Paquete" y las variantes de "Full Service"
+ *  (con mayúsculas o minúsculas) se muestran todas como "Full Service". */
 export function mostrarCategoria(cat) {
   const t = (cat || "").trim();
-  return t.toLowerCase().startsWith("paquete") ? "Full Service" : t;
+  const clave = normalizarClave(t);
+  return clave.startsWith("paquete") || clave === "full service" ? "Full Service" : t;
 }
 
 // ---------- Orden y colores de categorías ----------

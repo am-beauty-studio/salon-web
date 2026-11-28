@@ -2,7 +2,7 @@
 // Equivalente a ServicioForm + zonas de peligro de src/app/servicios/*.
 
 import { get, post, patch, del } from "../api.js?v=49";
-import { $, $$, aviso, confirmar, escapeHtml, categoriasDe, mostrarCategoria, categoriaCanonica, nombreCorto, compararCategorias, normalizarClave, usd } from "../util.js?v=56";
+import { $, $$, aviso, confirmar, escapeHtml, categoriasDe, mostrarCategoria, categoriaCanonica, nombreCorto, compararCategorias, normalizarClave, usd } from "../util.js?v=57";
 import { icono, icoCategoria } from "../iconos.js?v=65";
 
 const ROSAS = [

@@ -7,7 +7,7 @@ import {
   etiquetaMoneda, normalizarMoneda, convertirMoneda,
   badgeCita, textoSubtipo, marcarReprogramadas, nombreCorto, esReprogramada,
   combinables, compatible, duracionTxt, mostrarCategoria, normalizarClave,
-} from "../util.js?v=56";
+} from "../util.js?v=57";
 import { esAdmin } from "../auth.js?v=52";
 import { icono, icoCategoria } from "../iconos.js?v=65";
 import { crearSelectorDia, crearHorarios, consultaDisponibilidad } from "./componentes.js?v=52";

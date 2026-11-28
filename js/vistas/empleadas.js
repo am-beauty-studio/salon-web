@@ -1,7 +1,7 @@
 // Gestión de empleadas (solo admin). Equivalente a src/app/empleadas/index.tsx.
 
 import { get } from "../api.js?v=49";
-import { $, escapeHtml, diasTxt } from "../util.js?v=56";
+import { $, escapeHtml, diasTxt } from "../util.js?v=57";
 import { icono } from "../iconos.js?v=65";
 
 export async function render(raiz) {

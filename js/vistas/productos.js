@@ -5,7 +5,7 @@ import { get } from "../api.js?v=49";
 import {
   $, compararCategorias, escapeHtml, mostrarCategoria, textoSubtipo,
   colorCategoria, colorCategoriaCabecera,
-} from "../util.js?v=56";
+} from "../util.js?v=57";
 import { icono, icoCategoria } from "../iconos.js?v=65";
 import { activarFabAlDesplazar } from "../fab-flotante.js?v=1";
 
@@ -96,8 +96,11 @@ export async function render(raiz, _params, query) {
     const grupos = new Map();
     visibles.forEach((p) => {
       (p.categorias?.length ? p.categorias : [p.categoria]).forEach((cat) => {
-        if (!grupos.has(cat)) grupos.set(cat, []);
-        grupos.get(cat).push(p);
+        // Se agrupa por el nombre visible: "Paquete", "Full Service" y
+        // "Full service" son la misma categoría y deben salir juntos.
+        const grupo = mostrarCategoria(cat);
+        if (!grupos.has(grupo)) grupos.set(grupo, []);
+        grupos.get(grupo).push(p);
       });
     });
 

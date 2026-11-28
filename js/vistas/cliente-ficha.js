@@ -5,7 +5,7 @@ import { get, post, patch, del } from "../api.js?v=49";
 import {
   $, $$, aviso, confirmar, escapeHtml, hora, importe, etiquetaMoneda, badgeCita,
   textoSubtipo, errorTelefonoCuba, esReprogramada,
-} from "../util.js?v=56";
+} from "../util.js?v=57";
 import { icono } from "../iconos.js?v=65";
 import { esAdmin } from "../auth.js?v=52";
 

@@ -13,7 +13,7 @@ import {
   convertirMoneda, duracionTxt,
   compatible, combinables, textoSubtipo, mostrarCategoria, sumarDias, nombreCorto,
   compararCategorias,
-} from "../util.js?v=56";
+} from "../util.js?v=57";
 import { crearSelectorDia, crearHorarios, consultaDisponibilidad } from "./componentes.js?v=52";
 import { icono, icoCategoria } from "../iconos.js?v=65";
 import { mostrarExitoCita } from "../modal-exito.js?v=50";

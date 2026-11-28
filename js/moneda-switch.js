@@ -1,7 +1,7 @@
 // Selector USD/CUP con aspecto de interruptor deslizante.
 // Se usa en los filtros de Ganancias/Estadísticas y al elegir la moneda de una cita.
 
-import { normalizarMoneda } from "./util.js?v=56";
+import { normalizarMoneda } from "./util.js?v=57";
 
 /** HTML del interruptor. La moneda activa queda marcada con `data-valor`. */
 export function selectorMoneda(moneda = "USD", opciones = {}) {

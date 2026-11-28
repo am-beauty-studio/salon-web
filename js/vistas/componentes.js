@@ -5,7 +5,7 @@ import { get } from "../api.js?v=49";
 import {
   $, $$, escapeHtml, aISO, sumarDias, sumarMeses, etiqueta, esHoy, hora,
   tituloMes,
-} from "../util.js?v=56";
+} from "../util.js?v=57";
 import { icono } from "../iconos.js?v=65";
 
 const SEMANA = ["lu", "ma", "mi", "ju", "vi", "sá", "do"];

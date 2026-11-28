@@ -1,7 +1,7 @@
 // Gestión de servicios (solo admin). Equivalente a src/app/servicios/index.tsx.
 
 import { get } from "../api.js?v=49";
-import { $, categoriasDe, escapeHtml, mostrarCategoria, usd, compararCategorias, colorCategoria, colorCategoriaCabecera, textoSubtipo } from "../util.js?v=56";
+import { $, categoriasDe, escapeHtml, mostrarCategoria, usd, compararCategorias, colorCategoria, colorCategoriaCabecera, textoSubtipo } from "../util.js?v=57";
 import { icono, icoCategoria } from "../iconos.js?v=65";
 import { activarFabAlDesplazar } from "../fab-flotante.js?v=1";
 
