@@ -5,8 +5,8 @@ import {
   $, $$, escapeHtml, sumarDias, sumarMeses, etiqueta, etiquetaSemana, tituloMes,
   tituloTrimestre, tituloSemestre, tituloAnio, mesCorto,
   diaCorto, importe, mostrarCategoria, compararCategorias,
-} from "../util.js?v=55";
-import { icoCategoria, icono } from "../iconos.js?v=64";
+} from "../util.js?v=56";
+import { icoCategoria, icono } from "../iconos.js?v=65";
 import { abrirCalendario } from "./componentes.js?v=52";
 import { selectorMoneda, conectarSelectorMoneda } from "../moneda-switch.js?v=1";
 

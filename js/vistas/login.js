@@ -6,8 +6,8 @@ import {
   apiUrl, fijarApiUrl, API_URL_LOCAL, API_URL_RENDER,
 } from "../config.js?v=50";
 import { calentarServidor } from "../api.js?v=49";
-import { $, aviso } from "../util.js?v=55";
-import { icono } from "../iconos.js?v=64";
+import { $, aviso } from "../util.js?v=56";
+import { icono } from "../iconos.js?v=65";
 
 const CLAVE_GUARDAR = "salon_recordar_login";
 const CLAVE_USUARIO = "salon_login_usuario";

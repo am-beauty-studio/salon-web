@@ -3,8 +3,8 @@
 
 import { get, post, patch, del } from "../api.js?v=49";
 import { actualizarUsuario, usuario as usuarioActual } from "../auth.js?v=52";
-import { $, $$, aviso, confirmar, escapeHtml } from "../util.js?v=55";
-import { icono } from "../iconos.js?v=64";
+import { $, $$, aviso, confirmar, escapeHtml } from "../util.js?v=56";
+import { icono } from "../iconos.js?v=65";
 
 const ETIQUETA_ROL = {
   superadmin: "Superadmin",

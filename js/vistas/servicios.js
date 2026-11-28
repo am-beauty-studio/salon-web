@@ -1,8 +1,8 @@
 // Gestión de servicios (solo admin). Equivalente a src/app/servicios/index.tsx.
 
 import { get } from "../api.js?v=49";
-import { $, categoriasDe, escapeHtml, mostrarCategoria, usd, compararCategorias, colorCategoria, colorCategoriaCabecera, textoSubtipo } from "../util.js?v=55";
-import { icono, icoCategoria } from "../iconos.js?v=64";
+import { $, categoriasDe, escapeHtml, mostrarCategoria, usd, compararCategorias, colorCategoria, colorCategoriaCabecera, textoSubtipo } from "../util.js?v=56";
+import { icono, icoCategoria } from "../iconos.js?v=65";
 import { activarFabAlDesplazar } from "../fab-flotante.js?v=1";
 
 /** Duración compacta para el catálogo: "45m", "1h", "1h 30m". */

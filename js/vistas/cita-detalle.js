@@ -7,9 +7,9 @@ import {
   etiquetaMoneda, normalizarMoneda, convertirMoneda,
   badgeCita, textoSubtipo, marcarReprogramadas, nombreCorto, esReprogramada,
   combinables, compatible, duracionTxt, mostrarCategoria, normalizarClave,
-} from "../util.js?v=55";
+} from "../util.js?v=56";
 import { esAdmin } from "../auth.js?v=52";
-import { icono, icoCategoria } from "../iconos.js?v=64";
+import { icono, icoCategoria } from "../iconos.js?v=65";
 import { crearSelectorDia, crearHorarios, consultaDisponibilidad } from "./componentes.js?v=52";
 import { mostrarExitoReprogramar } from "../modal-exito.js?v=50";
 import { selectorMoneda, conectarSelectorMoneda } from "../moneda-switch.js?v=1";

@@ -1,12 +1,12 @@
 // Enrutador principal (equivalente al Stack de Expo Router en salon_app).
 // Rutas por hash: #/agenda, #/cita/nueva, #/clientes/3, etc.
 
-import { $, esperar, soltar } from "./util.js?v=55";
+import { $, esperar, soltar } from "./util.js?v=56";
 import {
   haySesion, esAdmin, esSuperadmin, usuario, cerrarSesion, restaurarSesion,
   iniciarPresencia,
 } from "./auth.js?v=52";
-import { icono } from "./iconos.js?v=64";
+import { icono } from "./iconos.js?v=65";
 import { cerrarCuenta, marcarMenuInferior, pintarMenuInferior } from "./menu-inferior.js?v=57";
 import { iniciarDespertar, terminarDespertar } from "./espera.js?v=1";
 

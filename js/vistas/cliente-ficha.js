@@ -5,8 +5,8 @@ import { get, post, patch, del } from "../api.js?v=49";
 import {
   $, $$, aviso, confirmar, escapeHtml, hora, importe, etiquetaMoneda, badgeCita,
   textoSubtipo, errorTelefonoCuba, esReprogramada,
-} from "../util.js?v=55";
-import { icono } from "../iconos.js?v=64";
+} from "../util.js?v=56";
+import { icono } from "../iconos.js?v=65";
 import { esAdmin } from "../auth.js?v=52";
 
 const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];

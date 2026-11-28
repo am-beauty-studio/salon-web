@@ -8,8 +8,8 @@ import { animarCifras } from "../contador.js?v=3";
 import {
   $, $$, aISO, escapeHtml, fechaCorta, sumarDias, sumarMeses, etiquetaSemana,
   tituloMes, tituloAnio, importe, mostrarCategoria,
-} from "../util.js?v=55";
-import { icoCategoria, icono } from "../iconos.js?v=64";
+} from "../util.js?v=56";
+import { icoCategoria, icono } from "../iconos.js?v=65";
 
 const ROSAS = [
   "#B25572", "#C06A86", "#CD7E97", "#D992A8",

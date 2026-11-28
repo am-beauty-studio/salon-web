@@ -7,8 +7,8 @@
 // El Promise se resuelve cuando la persona pulsa OK, la X, fuera de la tarjeta
 // o la tecla Esc.
 
-import { $, escapeHtml, importe, etiquetaMoneda } from "./util.js?v=55";
-import { icono } from "./iconos.js?v=64";
+import { $, escapeHtml, importe, etiquetaMoneda } from "./util.js?v=56";
+import { icono } from "./iconos.js?v=65";
 
 export function mostrarExitoCita(datos) {
   return new Promise((resolver) => {

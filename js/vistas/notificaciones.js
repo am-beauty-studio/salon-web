@@ -3,10 +3,10 @@
 
 import { get, patch, del } from "../api.js?v=49";
 import { esAdmin } from "../auth.js?v=52";
-import { icono } from "../iconos.js?v=64";
+import { icono } from "../iconos.js?v=65";
 import { confirmarPeligro } from "../modal-confirmar.js?v=1";
 import { refrescarBadgeNotificaciones } from "../menu-inferior.js?v=57";
-import { $, aviso, escapeHtml } from "../util.js?v=55";
+import { $, aviso, escapeHtml } from "../util.js?v=56";
 
 const ICONO_TIPO = {
   cita_nueva: icono.calendario(18),

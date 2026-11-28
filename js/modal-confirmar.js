@@ -6,8 +6,8 @@
 //   if (!await confirmarPeligro({ titulo, mensaje, filas, accion })) return;
 // filas = [{ icono: svg, texto: "..." }]
 
-import { $, escapeHtml } from "./util.js?v=55";
-import { icono } from "./iconos.js?v=64";
+import { $, escapeHtml } from "./util.js?v=56";
+import { icono } from "./iconos.js?v=65";
 
 export function confirmarPeligro(datos) {
   return new Promise((resolver) => {

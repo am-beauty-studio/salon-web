@@ -5,8 +5,8 @@ import { del, get, put } from "./api.js?v=49";
 import {
   actualizarUsuario, cerrarSesion, esAdmin, haySesion, usuario,
 } from "./auth.js?v=52";
-import { icono } from "./iconos.js?v=64";
-import { $, aviso, escapeHtml } from "./util.js?v=55";
+import { icono } from "./iconos.js?v=65";
+import { $, aviso, escapeHtml } from "./util.js?v=56";
 
 // Tamaño de la foto de perfil que se guarda (cuadrada) y límites de entrada.
 const FOTO_LADO = 320;

@@ -5,8 +5,8 @@ import { get } from "../api.js?v=49";
 import {
   $, compararCategorias, escapeHtml, mostrarCategoria, textoSubtipo,
   colorCategoria, colorCategoriaCabecera,
-} from "../util.js?v=55";
-import { icono, icoCategoria } from "../iconos.js?v=64";
+} from "../util.js?v=56";
+import { icono, icoCategoria } from "../iconos.js?v=65";
 import { activarFabAlDesplazar } from "../fab-flotante.js?v=1";
 
 /** "69.00" -> "69"; "0.350" -> "0.35" (sin ceros sobrantes). */

@@ -46,10 +46,11 @@ export const icono = {
 /**
  * Ruta del icono de una categoría (img/ico-<categoria>.webp).
  * "Paquete..." y "Full Service" comparten el icono full-service (diamante).
+ * Full Pedicura tiene su propio icono.
  * Devuelve "" si la categoría no tiene icono.
  */
 const CATEGORIAS_CON_ICONO = new Set([
-  "cejas", "full-service", "manicura", "manicura-spa",
+  "cejas", "full-pedicura", "full-service", "manicura", "manicura-spa",
   "pedicura", "pedicura-spa", "pestanas",
 ]);
 
